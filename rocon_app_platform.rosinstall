@@ -16,6 +16,11 @@
 {'git': {'local-name': 'rocon_comms', 'version': 'master', 'uri': 'https://github.com/robotics-in-concert/rocon_comms.git'}},
 
 # App platform
-{'git': {'local-name': 'rocon_app_platform', 'version': 'master', 'uri': 'https://github.com/robotics-in-concert/rocon_app_platform.git'}}
+{'git': {'local-name': 'rocon_app_platform', 'version': 'master', 'uri': 'https://github.com/robotics-in-concert/rocon_app_platform.git'}},
+
+# Old legacy stacks for browsing 
+{'git': {'local-name': 'legacy/rocon_demo', 'version': 'master', 'uri': 'https://github.com/robotics-in-concert/rocon_demo.git'}},
+{'git': {'local-name': 'legacy/rocon_linux_app_platform', 'version': 'master', 'uri': 'https://github.com/robotics-in-concert/rocon_linux_app_platform.git'}},
+{'git': {'local-name': 'legacy/rocon_orchestration', 'version': 'master', 'uri': 'https://github.com/robotics-in-concert/rocon_orchestration.git'}}
 
 ]
