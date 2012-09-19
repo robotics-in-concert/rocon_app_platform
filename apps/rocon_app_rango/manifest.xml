@@ -1,0 +1,24 @@
+<package>
+  <description brief="Rocon app - robosem plays rango for the guide demo.">
+
+     Simple teaching application to play a rango movietrailer for the rocon demo.
+
+  </description>
+  <author>Daniel Stonier</author>
+  <license>BSD</license>
+  <review status="experimental" notes=""/>
+  <url>http://ros.org/wiki/rocon_app_rango</url>
+
+  <depend package="rocon_build"/>
+  <depend package="rospy"/>
+  <depend package="actionlib"/>
+  <depend package="std_msgs"/> 
+  <depend package="sensor_integration_board_comms"/>
+  <depend package="robosem_comms"/>
+
+  <rosdep name="smplayer"/>
+  <rosdep name="espeak"/>
+  
+</package>
+
+

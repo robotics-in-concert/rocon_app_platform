@@ -1,0 +1,27 @@
+<package>
+  <description brief="rocon_app_projector">
+
+     The projector displays different pictures on the screen. Use its topic to scroll through the available pictures.
+
+  </description>
+  <author>Marcus Liebhardt</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/rocon_app_projector</url>
+
+  <!-- rosbuild1 -->
+  <depend package="qt_build"/>
+  <depend package="rocon_build"/>
+  <depend package="roscpp"/>
+  <depend package="std_msgs"/>
+
+  <rosdep name="qt4"/>
+
+  <rosbuild2>
+    <depend package="qt_build"/>
+    <depend package="rocon_build"/>
+    <depend package="roscpp"/>
+    <depend package="std_msgs"/>
+  </rosbuild2>
+  
+</package>

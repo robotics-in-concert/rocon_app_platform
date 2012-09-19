@@ -1,0 +1,4 @@
+display: Example
+description: An example app for rocon app managers - useful for development and testing. 
+icon_format: .png
+icon_url: http://rocon.yujin.com/app_store/rocon_app_example/example.png

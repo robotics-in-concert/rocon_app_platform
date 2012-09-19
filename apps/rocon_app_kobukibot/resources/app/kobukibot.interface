@@ -1,0 +1,8 @@
+subscribed_topics:
+  call: std_msgs/Empty
+  dismiss: std_msgs/Empty
+  take_photo: std_msgs/Empty
+  take_pano: std_msgs/Empty
+published_topics:
+  photo: sensor_msgs/Image
+  panorama: sensor_msgs/Image

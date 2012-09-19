@@ -1,0 +1,11 @@
+<RCC>
+  <qresource prefix="/">
+    <file>images/rocon-logo-digital-blue.png</file>
+    <file>images/dk05.jpg</file>
+    <file>images/dk06.jpg</file>
+    <file>images/dk07.jpg</file>
+    <file>images/dk08.jpg</file>
+    <file>images/dk04.jpg</file>
+    <file>images/rocon-logo-grey-window.png</file>
+  </qresource>
+</RCC>

@@ -1,0 +1,15 @@
+<package>
+  <description brief="rocon_appmanager">
+
+     rocon_appmanager
+
+  </description>
+  <author>Jihoon</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/rocon_appmanager</url>
+  <depend package="rospy"/>
+
+</package>
+
+

@@ -1,0 +1,13 @@
+<launch>
+  <node pkg="rocon_app_rango" type="rango.py" name="rango" output="screen">
+    <remap from="rango/ace_task" to="/robosem/ace/task"/>
+    <remap from="rango/touch_sensors" to="/robosem/sensors/OnOffDevice"/>
+    <remap from="rango/enable" to="/robosem/enable"/>
+    <remap from="rango/disable" to="/robosem/disable"/>
+    <remap from="rango/joint_trajectory/status" to="/robosem/full_body_controller/status"/>                                                        
+    <remap from="rango/joint_trajectory/cancel" to="/robosem/full_body_controller/cancel"/>                                                        
+    <remap from="rango/joint_trajectory/goal" to="/robosem/full_body_controller/goal"/>                                                            
+    <remap from="rango/joint_trajectory/feedback" to="/robosem/full_body_controller/feedback"/>                                                    
+    <remap from="rango/joint_trajectory/result" to="/robosem/full_body_controller/result"/>
+  </node>
+</launch>

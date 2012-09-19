@@ -1,0 +1,26 @@
+<package>
+  <description brief="Rocon app - telepresence/teleoperation application">
+
+     Simple application to show telepresence/teleoperation on a robosem for the rocon demo.
+
+  </description>
+  <author>Jorge Santos</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/teleop</url>
+  <depend package="rosjava"/>
+  <depend package="rocon_build"/>
+  <depend package="sensor_msgs"/>
+  <depend package="device_comms"/>
+  <depend package="v4l4j"/>
+  <export>
+    <!-- Eclipse Helpers -->
+    <rosjava-src location="src/main/java" />
+    <!-- Only need this if v4l4j weren't supplying it -->
+    <!-- <rosjava-pathelement location="/usr/share/java/v4l4j.jar"/> --> 
+    <!-- Build this jar file -->
+    <rosjava-pathelement location="bin" groupId="org.rocon.museum" artifactId="museum-teleop" version="0.10.1" built="true" />
+  </export>
+</package>
+
+

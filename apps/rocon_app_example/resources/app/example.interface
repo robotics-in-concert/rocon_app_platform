@@ -1,0 +1,4 @@
+subscribed_topics:
+  float: std_msgs/Float32
+published_topics:
+  result: std_msgs/String

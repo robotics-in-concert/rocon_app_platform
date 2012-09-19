@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="default" name="rocon_app_teleop">
+
+  <property file="ros.properties" />
+
+  <include file="dependencies.xml" />
+
+  <property name="src.main" location="src/main/java" />
+  <property name="build" location="build" />
+  <property name="build.classes" location="build/classes" />
+
+  <property name="javac-source" value="1.6" />
+  <property name="javac-target" value="1.6" />
+  <property name="debuglevel" value="source,lines,vars" />
+  <property name="jar" location="${ros.artifact.built}" />
+
+  <path id="classpath">
+    <pathelement path="${ros.compile.classpath}" />
+  	<!-- 
+       we're including it via the ros pkg v4l4j dependency, but we could also
+       do like this which is annoying, because rosjava via ros.properties should
+       handle it.
+    -->
+  	<!-- <pathelement path="/usr/share/java/v4l4j.jar"/> -->
+  </path>
+
+  <target name="default" depends="init, compile, jar" />
+
+  <target name="init">
+    <fail unless="ros.compile.classpath" message="ros.properties is missing. Run 'rosmake rosjava' first."/>
+    <mkdir dir="${build}" />
+    <mkdir dir="${build.classes}" />
+  </target>
+
+  <target name="compile" depends="init">
+    <javac debug="true" debuglevel="${debuglevel}" destdir="${build.classes}" source="${javac-source}"
+        target="${javac-target}" includeantruntime="false">
+      <classpath refid="classpath" />
+      <src path="${src.main}" />
+    </javac>
+  </target>
+
+  <target name="jar" depends="compile">
+    <jar destfile="${jar}">
+      <fileset dir="${build.classes}" />
+    </jar>
+  </target>
+
+  <target name="clean">
+    <delete dir="${build.main}" />
+    <delete dir="${build}" />
+    <delete dir="bin" />
+  </target>
+</project>
+

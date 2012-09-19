@@ -1,0 +1,6 @@
+app_from_source_directory: '/home/jihoonl/ros/yujin/rocon/rocon_app_platform/apps'
+app_store_url: []
+platform_info: 'linux.ros.*'
+
+white_list: []
+black_list: []

@@ -1,0 +1,2 @@
+subscribed_topics:
+  change_background: std_msgs/Int8

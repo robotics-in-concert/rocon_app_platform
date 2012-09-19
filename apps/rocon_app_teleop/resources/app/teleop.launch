@@ -1,0 +1,47 @@
+<launch>
+
+  <!-- ns should suggest the device these nodes are running -->
+  <group ns="robosem">
+  
+    <param name="/audio/sample_rate" value="16000" />
+    <param name="/audio/sample_size" value=   "16" />
+    <param name="/audio/channels"    value=    "1" />
+    <param name="/audio/signed"      value= "true" />
+    <param name="/audio/big_endian"  value= "true" />
+
+    <node name="audio" pkg="rocon_app_teleop" type="audio.sh"
+      output="screen">
+      <remap from="/server/audio" to="/robosem/audio"/>
+    </node>
+
+    <param name="/video/fr_rate" value=  "5" />
+    <param name="/video/width"   value="320" />
+    <param name="/video/height"  value="240" />
+    <param name="/video/quality" value= "40" />
+    <param name="/video/device"  value="/dev/video0" />
+
+    <node name="video" pkg="rocon_app_teleop" type="video.sh"
+      output="screen">
+      <remap from="/server/video" to="/robosem/video"/>
+    </node>
+
+    <node name="teleop" pkg="rocon_app_teleop" type="teleop.sh"
+      output="screen">
+      <remap from="/client/audio" to="/android/audio"/>
+      <remap from="/client/video" to="/android/video"/>
+      <remap from="/server/keyop" to="/robosem/teleop_key"/>
+      <remap from="/client/cmdop" to="/android/teleop_cmd"/>
+      <!-- don't remap /teleop_cmd; i'ts a public iface. -->
+    </node>
+
+  </group>
+
+  <node pkg="keyop_core" type="keyop" name="keyop" output="screen">
+    <remap from="keyop/teleop"  to="/robosem/teleop_key"/>
+    <remap from="keyop/enable"  to="/robosem/enable"/>
+    <remap from="keyop/disable" to="/robosem/disable"/>
+    <remap from="keyop/cmd_vel" to="/robosem/cmd_vel"/>
+    <remap from="keyop/mobile_robot/reset_odometry" to="/robosem/mobile_robot/reset_odometry"/>
+  </node>
+
+</launch>

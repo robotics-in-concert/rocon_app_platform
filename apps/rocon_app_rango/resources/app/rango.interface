@@ -1,0 +1,4 @@
+subscribed_topics:
+  start_lesson: std_msgs/Empty
+published_topics:
+  finished_lesson: std_msgs/Empty

@@ -1,0 +1,13 @@
+/**
+\mainpage
+\htmlinclude manifest.html
+
+@section Status
+
+This is currently disabled (ROS_NOBUILD). It was built against an older version of rosjava and needs to be updated.
+
+If you want to build, install from rocon_museum.rosinstall, or more specifically, use the rosjava revision:
+
+hg clone https://rosjava.googlecode.com/hg -r 8d98d3c96d7d 
+
+*/

@@ -1,0 +1,39 @@
+<launch>
+
+  <!-- ns should suggest the device these nodes are running -->
+  <group ns="android">
+  
+    <param name="/audio/sample_rate" value="16000" />
+    <param name="/audio/sample_size" value=   "16" />
+    <param name="/audio/channels"    value=    "1" />
+    <param name="/audio/signed"      value= "true" />
+    <param name="/audio/big_endian"  value= "true" />
+
+    <node name="audio" pkg="rocon_app_teleop" type="audio.sh"
+      output="screen">
+      <remap from="/server/audio" to="/android/audio"/>
+    </node>
+
+    <param name="/video/fr_rate" value=  "5" />
+    <param name="/video/width"   value="320" />
+    <param name="/video/height"  value="240" />
+    <param name="/video/quality" value= "40" />
+    <param name="/video/device"  value="/dev/video0" />
+
+    <node name="video" pkg="rocon_app_teleop" type="video.sh"
+      output="screen">
+      <remap from="/server/video" to="/android/video"/>
+    </node>
+
+    <node name="teleop" pkg="rocon_app_teleop" type="teleop.sh"
+      output="screen">
+      <remap from="/client/audio" to="/robosem/audio"/>
+      <remap from="/client/video" to="/robosem/video"/>
+      <remap from="/server/keyop" to="/robosem/teleop_key"/>
+      <remap from="/teleop_cmd" to="/android/teleop_cmd"/>
+      <remap from="/client/cmdop" to="/dummy_topic"/>
+    </node>
+
+  </group>
+
+</launch>

@@ -1,0 +1,7 @@
+<launch>
+  <node pkg="pano_ros" type="capture_server.py" name="pano_capture" output="screen"/>
+  <node pkg="remote_mutex" type="mutex" name="mutex_iclebo" args="iclebo" output="screen"/>
+  <node pkg="kobukibot_panorama" type="panorama" name="pano_app" output="screen"/>
+  <node pkg="kobukibot_photo" type="photo_app" name="photo_app" output="screen"/>
+  <node pkg="kobukibot_controller" type="controller_app" name="control_app" output="screen"/>
+</launch>

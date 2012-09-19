@@ -1,0 +1,2 @@
+published_topics:
+  teleop_cmd: std_msgs/String
