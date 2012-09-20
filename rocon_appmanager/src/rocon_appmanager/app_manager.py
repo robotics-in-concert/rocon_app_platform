@@ -33,6 +33,7 @@
 
 import rospy
 import os
+from .app import App
 """
   AppManager - Jihoon Lee(jihoonl@yujinrobot.com)
 
@@ -91,19 +92,23 @@ class AppManager(object):
     
     # Getting apps from source
     directory = self.param['app_from_source_directory']
-    apps['from_source'] = self.load(directory,'app')
+    apps['from_source'] = self.load(directory,'.app')
+    apps['from_source'] = [App(a[0],a[1]) for a in apps['from_source']]
 
     # Getting apps in store
+    print str(apps['from_source'])
+
 
     
-
   # It searchs *.app in directories
   def load(self,directory,typ):
     applist = []
     for dpath,_ ,files in os.walk(directory):
       apps = [f for f in files if f.endswith(typ)]
-      apps_with_path = [dpath + a for a in apps]
-      applist += apps_with_path 
+      apps_with_path = [dpath + '/' +  a for a in apps]
+      apps_name = [a[0:len(a)-len(typ)] for a in apps]
+
+      applist += list(zip(apps_name,apps_with_path))
 
     return applist        
 
