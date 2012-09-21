@@ -34,6 +34,7 @@
 import rospy
 import os
 from .app import App
+from concert_client.concert_client import ConcertClient
 """
     AppManager - Jihoon Lee(jihoonl@yujinrobot.com)
 
@@ -71,6 +72,7 @@ class AppManager(ConcertClient):
         # load configuration from rosparam
         rospy.loginfo("Parsing Parameters")
         self.parseParams()
+        super(AppManager,self).__init__(self.param['white_list'], self.param['black_list'])
 
         # It sets up an app directory and load installed app list from directory
         rospy.loginfo("Loading app lists")
