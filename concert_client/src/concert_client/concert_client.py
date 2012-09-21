@@ -114,10 +114,8 @@ class ConcertClient(object):
         new_masters = [m for m in disconvered_masterlist if m not in self.concertmasterlist]
         
         print str(new_masters)
-        print "here"
         for master in new_masters:
             self.openInvitationChannel(master)
-        print "umhere"
 
         self.concertmasterlist += new_masters
     
@@ -132,14 +130,14 @@ class ConcertClient(object):
 
         req = PublicHandlerRequest()
         req.command = "flipout_service"
-        req.list = ['1',gateway_name,srv_name]
+        req.list = ['1',gateway_name,srvinfo]
         resp = self.gateway_srv(req)
-        print "Fliping Service to %s : %s",gateway_name,str(resp.success)
+        print "Fliping Service to "+gateway_name + " : " + str(resp.success)
         
         topic_name, topic_type, node_uri = get_topic_info(self.platforminfo_name)
         topicinfo = topic_name +","+topic_type +"," +node_uri[0]
         req.command = "flipout_topic"        
-        req.list = ['1',gateway_name,topic_name]
+        req.list = ['1',gateway_name,topicinfo]
         resp = self.gateway_srv(req)
         print "Fliping Service to "+gateway_name + " : " + str(resp.success)
 
