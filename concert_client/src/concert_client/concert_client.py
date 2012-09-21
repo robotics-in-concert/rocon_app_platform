@@ -31,7 +31,11 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import roslib;roslib.load_manifest('concert_client')
+
 import rospy
+import threading
+from gateway_comms.srv import *
 
 """
   ConcertClient - Jihoon Lee(jihoonl@yujinrobot.com)
@@ -42,9 +46,60 @@ import rospy
     - Have install/uninstall/start/stop an app services
 """
 
+# It polls redis server to discover currently connected concertmaster 
+# and notifis concert client
+class ConcertMasterDiscovery(threading.Thread):
+    params = {}
+      
+    def __init__(self,service,cmlist_key,processNewMaster):
+        threading.Thread.__init__(self)
+        self.service = service
+        self.concertmasterlist_key = cmlist_key
+
+        self.processNewMaster = processNewMaster
+        self._stop = False
+        self.start()
+
+    def run(self):
+        print "Concert Master Discovery has started"
+        command = "post"
+        msg = ["getmembers",self.concertmasterlist_key,""]
+
+        while not rospy.is_shutdown() and not self._stop:
+            resp = self.service(command,msg)
+            print str(resp.concertmaster_list)
+            rospy.sleep(3)
+
+        print "Concert Master Discovery has stopped"
+
+    def setStop(self):
+        self._stop = True
+
+
+
 class ConcertClient(object):
-  subscribers = {}
-  publishers = {}
+    subscribers = {}
+    publishers = {}
 
-  def __init__(self,whitelist,blacklist):
+    concertmasterlist = []
+    concertmasterlist_key = "rocon:concertmasterlist"
 
+    gateway_srv_name = "/gateway/request"
+    gateway_srv = None
+
+    def __init__(self,whitelist,blacklist):
+        self.whitelist = whitelist
+        self.blacklist = blacklist
+
+        self.gateway_srv = rospy.ServiceProxy(self.gateway_srv_name,PublicHandler)
+        self.masterdiscovery = ConcertMasterDiscovery(self.gateway_srv,self.concertmasterlist_key,self.processNewMaster)
+
+ 
+
+    def spin(self):
+        rospy.spin()
+
+    def processNewMaster(self,disconvered_masterlist):
+        print str(disconvered_masterlist)
+      
+      

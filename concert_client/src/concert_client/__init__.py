@@ -31,35 +31,3 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import roslib; roslib.load_manifest('concert_master')
-import rospy
-from gateway_comms.srv import *
-
-class ConcertMaster(object):
-  publishers = {}
-  subscribers = {}
-
-  gateway_srv = None
-  gateway_srv_name = '/gateway/request'
-  
-  concertmaster_key = "rocon:concertmasterlist"
-  
-  def __init__(self):
-    self.gateway_srv = rospy.ServiceProxy(self.gateway_srv_name,PublicHandler)
-    self.gateway_srv.wait_for_service()
-    self.cm_name = "concertmaster2"
-
-
-  def spin(self):
-    command = "post"
-    msg = ["addmember",self.concertmaster_key,self.cm_name]
-    print "Advertising concertmaster = " + str(msg)
-    resp = self.gateway_srv(command,msg)
-    print resp
-
-    rospy.spin()
-
-    msg = ["removemember",self.concertmaster_key,self.cm_name]
-    print "Advertising concertmaster = " + str(msg)
-    resp = self.gateway_srv(command,msg)
-    print resp
