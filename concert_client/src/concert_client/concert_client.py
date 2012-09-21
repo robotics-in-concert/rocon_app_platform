@@ -36,6 +36,8 @@ import roslib;roslib.load_manifest('concert_client')
 import rospy
 import threading
 from gateway_comms.srv import *
+from rocon_gateway_helper import *
+from std_msgs.msg import String
 
 """
   ConcertClient - Jihoon Lee(jihoonl@yujinrobot.com)
@@ -68,6 +70,7 @@ class ConcertMasterDiscovery(threading.Thread):
         while not rospy.is_shutdown() and not self._stop:
             resp = self.service(command,msg)
             print str(resp.concertmaster_list)
+            self.processNewMaster(resp.concertmaster_list)
             rospy.sleep(3)
 
         print "Concert Master Discovery has stopped"
@@ -87,19 +90,58 @@ class ConcertClient(object):
     gateway_srv_name = "/gateway/request"
     gateway_srv = None
 
-    def __init__(self,whitelist,blacklist):
+    invitation_srv_name = "/concert/invitation"
+    invitation_srv = None
+    platforminfo_name = "/concert/platforminfo"
+
+    def __init__(self,whitelist,blacklist,platform_info):
+        self.platform_info = platform_info
         self.whitelist = whitelist
         self.blacklist = blacklist
 
         self.gateway_srv = rospy.ServiceProxy(self.gateway_srv_name,PublicHandler)
-        self.masterdiscovery = ConcertMasterDiscovery(self.gateway_srv,self.concertmasterlist_key,self.processNewMaster)
+        self.invitation_srv = rospy.Service(self.invitation_srv_name,Invitation,self.processInvitation)
+        self.platforminfo_pub = rospy.Publisher(self.platforminfo_name,String, latch=True)
 
- 
+        self.masterdiscovery = ConcertMasterDiscovery(self.gateway_srv,self.concertmasterlist_key,self.processNewMaster)
+        self.platforminfo_pub.publish(platform_info)
 
     def spin(self):
         rospy.spin()
 
     def processNewMaster(self,disconvered_masterlist):
-        print str(disconvered_masterlist)
-      
-      
+        
+        new_masters = [m for m in disconvered_masterlist if m not in self.concertmasterlist]
+        
+        print str(new_masters)
+        print "here"
+        for master in new_masters:
+            self.openInvitationChannel(master)
+        print "umhere"
+
+        self.concertmasterlist += new_masters
+    
+    # Opens invitation service
+    # Also flip platform info publisher
+    def openInvitationChannel(self,master):
+        cm_name, gateway_name = master.split(",")
+         
+        # flip inivitation service
+        srv_name, srv_uri, node_uri = get_service_info(self.invitation_srv_name)
+        srvinfo = srv_name + "," + srv_uri +","+node_uri 
+
+        req = PublicHandlerRequest()
+        req.command = "flipout_service"
+        req.list = ['1',gateway_name,srv_name]
+        resp = self.gateway_srv(req)
+        print "Fliping Service to %s : %s",gateway_name,str(resp.success)
+        
+        topic_name, topic_type, node_uri = get_topic_info(self.platforminfo_name)
+        topicinfo = topic_name +","+topic_type +"," +node_uri[0]
+        req.command = "flipout_topic"        
+        req.list = ['1',gateway_name,topic_name]
+        resp = self.gateway_srv(req)
+        print "Fliping Service to "+gateway_name + " : " + str(resp.success)
+
+    def processInvitation(self,msg):
+        print "Here"

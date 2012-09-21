@@ -38,7 +38,7 @@ from concert_client.concert_client import *
 if __name__ == '__main__' :
     
     rospy.init_node('concert_client')
-    client = ConcertClient([],[])
+    client = ConcertClient([],[],"linux.ros")
     rospy.loginfo('Initialized')
     client.spin()
     rospy.loginfo('Done')

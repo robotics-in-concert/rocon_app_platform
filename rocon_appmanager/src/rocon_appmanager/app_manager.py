@@ -72,7 +72,7 @@ class AppManager(ConcertClient):
         # load configuration from rosparam
         rospy.loginfo("Parsing Parameters")
         self.parseParams()
-        super(AppManager,self).__init__(self.param['white_list'], self.param['black_list'])
+        super(AppManager,self).__init__(self.param['white_list'], self.param['black_list'],self.param['platform_info'])
 
         # It sets up an app directory and load installed app list from directory
         rospy.loginfo("Loading app lists")

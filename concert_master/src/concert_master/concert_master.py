@@ -41,25 +41,30 @@ class ConcertMaster(object):
 
   gateway_srv = None
   gateway_srv_name = '/gateway/request'
+
+  gatewayinfo_srv_name = '/gateway/info'
   
   concertmaster_key = "rocon:concertmasterlist"
   
   def __init__(self):
     self.gateway_srv = rospy.ServiceProxy(self.gateway_srv_name,PublicHandler)
     self.gateway_srv.wait_for_service()
+    self.gateway_info_srv = rospy.ServiceProxy(self.gatewayinfo_srv_name,GatewayInfo)
     self.cm_name = "concertmaster2"
 
 
   def spin(self):
+    resp = self.gateway_info_srv()
     command = "post"
-    msg = ["addmember",self.concertmaster_key,self.cm_name]
+    self.fullname = self.cm_name + "," + resp.gateway_name
+    msg = ["addmember",self.concertmaster_key,self.fullname]
     print "Advertising concertmaster = " + str(msg)
     resp = self.gateway_srv(command,msg)
     print resp
 
     rospy.spin()
 
-    msg = ["removemember",self.concertmaster_key,self.cm_name]
-    print "Advertising concertmaster = " + str(msg)
+    msg = ["removemember",self.concertmaster_key,self.fullname]
+    print "Stop advertising concertmaster = " + str(msg)
     resp = self.gateway_srv(command,msg)
     print resp
