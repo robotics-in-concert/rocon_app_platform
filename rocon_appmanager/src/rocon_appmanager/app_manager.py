@@ -38,19 +38,22 @@ from .app import App
   AppManager - Jihoon Lee(jihoonl@yujinrobot.com)
 
   Feature:
+    Configuration
+      - app_list_directory by yaml(Done)
+
+    App Management
+      - Load installed apps from app_list directory. 
 
   Todo:
     Configuration
-      - app_list_directory by yaml
       - app_store url      by yaml
 
-    Concert Master Relation
+    Concert Master Relation(in concert_client.py)
       - When a new concert master comes in network, it flips out publisher that informs platform-info, and service to listen an invitation.
       - When it receives a invitation from concert master, it validates the inviter with it's white/black list, then closes channels to other concert masters.
       - Have install/uninstall/start/stop an app services
   
     App Management
-      - Load installed apps from app_list directory. 
       - have publisher that send out installed app list, available app list, and some more info. maybe latched=true one.
       - 'apt-get' app from app store
 
@@ -61,7 +64,7 @@ class AppManager(object):
   param = {}
   apps = {}
   app_list = None
-  DEFAULT_APP_LIST_DIRECTORY = '/opt/ros/'
+  DEFAULT_APP_LIST_DIRECTORY = '/opt/ros/fuerte/stacks/'
 
   def __init__(self):
 
@@ -98,8 +101,9 @@ class AppManager(object):
     # Getting apps in store
     print str(apps['from_source'])
 
+    self.apps = apps
 
-    
+
   # It searchs *.app in directories
   def load(self,directory,typ):
     applist = []

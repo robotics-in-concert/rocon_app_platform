@@ -1,0 +1,15 @@
+<package>
+  <description brief="concert_client">
+
+     concert_client
+
+  </description>
+  <author>Jihoon</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/concert_client</url>
+  <depend package="rospy"/>
+
+</package>
+
+
