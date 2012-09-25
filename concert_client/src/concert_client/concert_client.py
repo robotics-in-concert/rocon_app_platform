@@ -69,7 +69,6 @@ class ConcertMasterDiscovery(threading.Thread):
 
         while not rospy.is_shutdown() and not self._stop:
             resp = self.service(command,msg)
-            print str(resp.concertmaster_list)
             self.processNewMaster(resp.concertmaster_list)
             rospy.sleep(3)
 
@@ -113,7 +112,6 @@ class ConcertClient(object):
         
         new_masters = [m for m in disconvered_masterlist if m not in self.concertmasterlist]
         
-        print str(new_masters)
         for master in new_masters:
             self.openInvitationChannel(master)
 
@@ -141,5 +139,19 @@ class ConcertClient(object):
         resp = self.gateway_srv(req)
         print "Fliping Service to "+gateway_name + " : " + str(resp.success)
 
+    def acceptInvitation(self,msg):
+        print "Accepting invitation from " + msg.name
+        
+        return InvitationResponse(True) 
+
     def processInvitation(self,msg):
-        print "Here"
+        cm_name = msg.name
+
+        # Check if concert master is in white list
+        if cm_name in self.whitelist: 
+            return self.acceptInvitation(msg)
+        elif len(self.whitelist) == 0 and cm_name not in self.blacklist:
+            return self.acceptInvitation(msg)
+        else 
+            return InvitationResponse(False) 
+

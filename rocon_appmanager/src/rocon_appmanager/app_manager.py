@@ -57,6 +57,8 @@ from concert_client.concert_client import ConcertClient
         App Management
             - have publisher that send out installed app list, available app list, and some more info. maybe latched=true one.
             - 'apt-get' app from app store
+            - launches app
+            - cache-ing the app lists
 
 """
 

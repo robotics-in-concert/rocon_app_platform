@@ -52,7 +52,6 @@ class ConcertMaster(object):
     self.gateway_info_srv = rospy.ServiceProxy(self.gatewayinfo_srv_name,GatewayInfo)
     self.cm_name = "concertmaster2"
 
-
   def spin(self):
     resp = self.gateway_info_srv()
     command = "post"
