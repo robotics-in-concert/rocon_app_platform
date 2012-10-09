@@ -94,16 +94,21 @@ class ConcertClient(object):
     platforminfo_name = "/concert/platforminfo"
 
     def __init__(self,whitelist,blacklist,platform_info):
-        self.platform_info = platform_info
-        self.whitelist = whitelist
-        self.blacklist = blacklist
+        try :
+            self.platform_info = platform_info
+            self.whitelist = whitelist
+            self.blacklist = blacklist
 
-        self.gateway_srv = rospy.ServiceProxy(self.gateway_srv_name,PublicHandler)
-        self.invitation_srv = rospy.Service(self.invitation_srv_name,Invitation,self.processInvitation)
-        self.platforminfo_pub = rospy.Publisher(self.platforminfo_name,String, latch=True)
+            self.gateway_srv = rospy.ServiceProxy(self.gateway_srv_name,PublicHandler)
+            self.invitation_srv = rospy.Service(self.invitation_srv_name,Invitation,self.processInvitation)
+            self.platforminfo_pub = rospy.Publisher(self.platforminfo_name,String, latch=True)
 
-        self.masterdiscovery = ConcertMasterDiscovery(self.gateway_srv,self.concertmasterlist_key,self.processNewMaster)
-        self.platforminfo_pub.publish(platform_info)
+            self.masterdiscovery = ConcertMasterDiscovery(self.gateway_srv,self.concertmasterlist_key,self.processNewMaster)
+            self.platforminfo_pub.publish(platform_info)
+        except Exception as e :
+            rospy.logerror("Error while connecting to gateway!")
+
+
 
     def spin(self):
         rospy.spin()
@@ -152,6 +157,6 @@ class ConcertClient(object):
             return self.acceptInvitation(msg)
         elif len(self.whitelist) == 0 and cm_name not in self.blacklist:
             return self.acceptInvitation(msg)
-        else 
+        else :
             return InvitationResponse(False) 
 

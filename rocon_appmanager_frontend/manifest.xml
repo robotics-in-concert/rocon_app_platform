@@ -1,0 +1,14 @@
+<package>
+  <description brief="rocon_appmanager_frontend">
+
+     rocon_appmanager_frontend
+
+  </description>
+  <author>Jihoon</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/rocon_appmanager_frontend</url>
+
+</package>
+
+

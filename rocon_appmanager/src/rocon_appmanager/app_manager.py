@@ -34,6 +34,8 @@
 import rospy
 import os
 from .app import App
+from appmanager_comms.srv import *
+from appmanager_comms.msg import *
 from concert_client.concert_client import ConcertClient
 """
     AppManager - Jihoon Lee(jihoonl@yujinrobot.com)
@@ -69,17 +71,25 @@ class AppManager(ConcertClient):
     app_list = None
     DEFAULT_APP_LIST_DIRECTORY = '/opt/ros/fuerte/stacks/'
 
+    get_applist_srv_name = '~/get_applist'
+
     def __init__(self):
 
         # load configuration from rosparam
         rospy.loginfo("Parsing Parameters")
         self.parseParams()
-        super(AppManager,self).__init__(self.param['white_list'], self.param['black_list'],self.param['platform_info'])
+
+        if self.param['is_alone'] == False:
+            super(AppManager,self).__init__(self.param['white_list'], self.param['black_list'],self.param['platform_info'])
 
         # It sets up an app directory and load installed app list from directory
         rospy.loginfo("Loading app lists")
         self.getInstalledApplist()
         rospy.loginfo("Done")
+
+        rospy.loginfo("Advertising Services");
+        self.services = {}
+        self.services['get_applist'] = rospy.Service(self.get_applist_srv_name,GetAppList,self.processGetAppList)
 
 
     def parseParams(self):
@@ -89,6 +99,7 @@ class AppManager(ConcertClient):
         param['platform_info'] = rospy.get_param('~platform_info','')
         param['white_list'] = rospy.get_param('~whitelist','')
         param['black_list'] = rospy.get_param('~black_list','')
+        param['is_alone'] = rospy.get_param('~is_alone',False)
 
         self.param = param
 
@@ -96,16 +107,20 @@ class AppManager(ConcertClient):
     # it sets up an app directory and load installed app from given directory
     def getInstalledApplist(self):
         apps = {}
+        apps_str = {}
         
         # Getting apps from source
         directory = self.param['app_from_source_directory']
-        apps['from_source'] = self.load(directory,'.app')
-        apps['from_source'] = [App(a[0],a[1]) for a in apps['from_source']]
+        apps_str['from_source'] = self.load(directory,'.app')
+        apps['from_source'] = {}
+        for app_str in apps_str['from_source']:
+            apps['from_source'][app_str[0]] = App(app_str[0],app_str[1])
 
         # Getting apps in store
-        print str(apps['from_source'])
+        print str(apps['from_source'].keys())
 
         self.apps = apps
+        self.apps_str = apps_str
 
 
     # It searchs *.app in directories
@@ -119,6 +134,23 @@ class AppManager(ConcertClient):
             applist += list(zip(apps_name,apps_with_path))
 
         return applist                
+
+    def processGetAppList(self,req):
+        apps_description = GetAppListResponse()
+
+        for app_name in self.apps['from_source']:
+            app = self.apps['from_source'][app_name]
+            a = AppDescription()
+            a.name = app.data['name']
+            a.display = app.data['display']
+            a.description = app.data['description']
+            a.display = app.data['platform']
+            a.status = app.data['status']
+            print str(a)
+            apps_description.apps.append(a)
+
+        return apps_description
+
 
     def spin(self):
         rospy.spin()

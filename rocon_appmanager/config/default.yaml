@@ -1,6 +1,10 @@
+# Standalone mode.
+is_alone: true
+
 app_from_source_directory: '/home/jihoonl/ros/yujin/rocon/rocon_app_platform/apps'
 app_store_url: []
 platform_info: 'linux.ros.*'
 
 white_list: ["concert_master"]
 black_list: ["pirate_master"]
+

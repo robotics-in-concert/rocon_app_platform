@@ -1,0 +1,76 @@
+body {
+	margin: 0;
+	padding-left: 10px;
+	padding-right: 10px;
+}
+
+.logo {
+    margin:1pt;
+    padding-top:10px;
+    height: 30px;
+    float:left;
+	position: relative;	
+}
+
+.headtools {
+    text-align:right;
+    padding-top:10px;
+    padding-bottom:10px;
+    position:relative;
+    float:right;
+    display:block;
+}
+
+.navpopup {
+    padding-top:2px;
+    float:left;
+}
+
+.connectionpanel {
+    float:left;
+}
+
+.leftbody {
+    width:30%;
+    float:left;
+    text-align: center;
+}
+
+.rightbody { 
+    margin:10px;
+    width:65%;
+    float:left;
+}
+
+
+.middlepanel {
+margin:auto;
+display:inline-block;
+  height: 100%
+	margin-top: 10px;
+	border: 1px solid #759DC0;
+	border-top-right-radius: 7px;
+	border-bottom-right-radius: 7px;
+  border-top-left-radius: 7px;
+  border-bottom-left-radius: 7px;
+	box-sizing:border-box;
+    -moz-box-sizing:border-box;
+    -webkit-box-sizing:border-box;
+
+  width: 100%;
+}
+
+.headers {
+    height:15%;
+    overflow:visible;
+	margin-top: 10px;
+	border: 1px solid #759DC0;
+	border-top-right-radius: 7px;
+	border-bottom-right-radius: 7px;
+  border-top-left-radius: 7px;
+  border-bottom-left-radius: 7px;
+	box-sizing:border-box;
+    -moz-box-sizing:border-box;
+    -webkit-box-sizing:border-box;
+}
+

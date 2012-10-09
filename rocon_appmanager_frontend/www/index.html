@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>App Manager Frontend (Beta)</title>
+<!-- load Dojo and the default dojo theme, claro -->
+<link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="../dojo_common/dijit/themes/claro/claro.css"/>
+<script src="../dojo_common/dojo/dojo.js.uncompressed.js" data-dojo-config="async: true"></script>
+<script>
+        var ros;
+		require({
+                aliases: [
+                    [ "eventemitter2","rosjs/dist/eventemitter2"],
+                    [ "actionclient", "robotwebtools_amd/actionlibjs/actionclint"],
+                    [ "map", "robotwebtools_amd/map2djs/map"],
+                ]
+                ,
+                packages: [ 
+                    { name:"robotwebtools_amd", location:"/robotwebtools_amd"},
+                    { name:"yujin_webtools", location: "/yujin_webtools"},
+                    { name:"appmanager",location:"/yujin_webtools/appmanager"},
+                    { name:"rosjs", location:"/robotwebtools_amd/rosjs"},
+                    { name:"roswidgets", location:"/yujin_webtools/roswidgets"},
+                ]},
+        [
+            "dojo/parser",
+            "dojo/ready",
+            "dojo/on",
+            "dijit/registry",
+            "roswidgets/ConnectionPanel",
+            "rosjs/ros",
+            "appmanager/AppListView",
+            "appmanager/AppDetailView",
+		],
+        function(parser,ready,on,registry,CPanel,ROS,NavCanvas,NavPopup)
+        {
+            var initialize = function() {
+                ros = new ROS('ws://localhost:9090');
+                parser.parse();
+                var applistview = registry.byId("applistview");
+                var detailview = registry.byId("detailview");
+                dojo.connect(applistview,"onClick",function(e) { detailview.display(e.selectedObject);});
+            }
+            ready(initialize);
+        }
+        );
+</script>
+</head>
+<body class="claro" style="font: 14px Myriad,Helvetica,Tahoma,Arial,clean,sans-serif;">
+	<div id="headers" class="headers">
+        <img class="logo" src="img/logo.jpg"></img>
+        <p class="logo"> It is just for testing app manager APIs.</p>
+        <div class="headtools">
+            <div data-dojo-type="roswidgets.ConnectionPanel"></div>
+        </div>
+	</div>
+    <div id="body" class="middlepanel">
+        <div id="leftbody" class="leftbody">
+            <div id="applistview" data-dojo-type="appmanager.AppListView"> </div>
+        </div>
+        <div id="rightbody" class="rightbody">
+            <div id="detailview" data-dojo-type="appmanager.AppDetailView"></div>
+        </div>
+    </div>
+</body>
+</html>
