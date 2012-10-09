@@ -71,7 +71,9 @@ class AppManager(ConcertClient):
     app_list = None
     DEFAULT_APP_LIST_DIRECTORY = '/opt/ros/fuerte/stacks/'
 
-    get_applist_srv_name = '~/get_applist'
+    listapp_srv_name = '~list_apps'
+    start_app_srv_name = '~start_app'
+    stop_app_srv_name = '~stop_app'
 
     def __init__(self):
 
@@ -89,7 +91,9 @@ class AppManager(ConcertClient):
 
         rospy.loginfo("Advertising Services");
         self.services = {}
-        self.services['get_applist'] = rospy.Service(self.get_applist_srv_name,GetAppList,self.processGetAppList)
+        self.services['get_applist'] = rospy.Service(self.listapp_srv_name,GetAppList,self.processGetAppList)
+        self.services['start_app'] = rospy.Service(self.start_app_srv_name,StartApp,self.processStartApp)
+        self.services['stop_app'] = rospy.Service(self.stop_app_srv_name,StopApp,self.processStopApp)
 
 
     def parseParams(self):
@@ -146,10 +150,15 @@ class AppManager(ConcertClient):
             a.description = app.data['description']
             a.display = app.data['platform']
             a.status = app.data['status']
-            print str(a)
             apps_description.apps.append(a)
 
         return apps_description
+
+    def processStartApp(self,req):
+        return StartAppResponse()
+
+    def processStopApp(self,req):
+        return StopAppResponse()
 
 
     def spin(self):

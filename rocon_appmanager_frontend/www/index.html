@@ -19,7 +19,7 @@
                 packages: [ 
                     { name:"robotwebtools_amd", location:"/robotwebtools_amd"},
                     { name:"yujin_webtools", location: "/yujin_webtools"},
-                    { name:"appmanager",location:"/yujin_webtools/appmanager"},
+                    { name:"appmanager",location:"/rocon_appmanager_frontend/js/appmanager"},
                     { name:"rosjs", location:"/robotwebtools_amd/rosjs"},
                     { name:"roswidgets", location:"/yujin_webtools/roswidgets"},
                 ]},
@@ -57,10 +57,10 @@
 	</div>
     <div id="body" class="middlepanel">
         <div id="leftbody" class="leftbody">
-            <div id="applistview" data-dojo-type="appmanager.AppListView"> </div>
+            <div id="applistview" data-dojo-type="appmanager.AppListView" data-dojo-props="listapp_srv_name : '/app_manager/list_apps'"> </div>
         </div>
         <div id="rightbody" class="rightbody">
-            <div id="detailview" data-dojo-type="appmanager.AppDetailView"></div>
+            <div id="detailview" data-dojo-type="appmanager.AppDetailView" data-dojo-props="startapp_srv_name:'/app_manager/start_app'"></div>
         </div>
     </div>
 </body>
