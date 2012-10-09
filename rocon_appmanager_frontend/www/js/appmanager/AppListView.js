@@ -4,6 +4,7 @@
  */
 
 define(["dojo/_base/declare",
+        "dojo/_base/lang",
         "dijit/_WidgetBase",
         "dojo/dom-style",
         "dojo/on",
@@ -13,7 +14,7 @@ define(["dojo/_base/declare",
         "yujin_webtools/widgets/Loader",
         "dijit/Tooltip",
         ],
-function(declare,widgetbase,domStyle,on,DataGrid,Store,Button,Loader,Tooltip)
+function(declare,lang,widgetbase,domStyle,on,DataGrid,Store,Button,Loader,Tooltip)
 {
     var AppListView = declare("appmanager.AppListView",[widgetbase],
         {
@@ -34,10 +35,12 @@ function(declare,widgetbase,domStyle,on,DataGrid,Store,Button,Loader,Tooltip)
                 this.srvRequest = new ros.ServiceRequest({});
 
                 this.createDataGrid();
-                this.createButton();
+//                this.createButton();
 
                 ros.on('error',function(e) { console.log(e);});
                 this.updateAppList();
+
+                window.setInterval(lang.hitch(this,this.updateAppList),1000);
 
                 this.connect(this.grid,"onClick","onClick");
             },
@@ -80,16 +83,16 @@ function(declare,widgetbase,domStyle,on,DataGrid,Store,Button,Loader,Tooltip)
 
             updateAppList : function() {
                 var that = this;
-                this.button.setAttribute('disabled',true);
+//                this.button.setAttribute('disabled',true);
                 this.updateAppListSrv.callService(this.srvRequest,function(result) {
                     var data = that.createData(result.apps);
                     that.currentStore.close();
                     that.currentStore = new Store({data:data});
                     that.grid.setStore(that.currentStore);
-                    that.button.setAttribute('disabled',false);
+//                    that.button.setAttribute('disabled',false);
 
-                    Tooltip.show("Updated",that.button.domNode);
-                    window.setTimeout(function() {  Tooltip.hide(that.button.domNode);  },1000);
+//                    Tooltip.show("Updated",that.button.domNode);
+//                    window.setTimeout(function() {  Tooltip.hide(that.button.domNode);  },1000);
                 });
             },
 

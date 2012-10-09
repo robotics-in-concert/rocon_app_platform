@@ -33,6 +33,7 @@
 
 import rospy
 import os
+import roslaunch.pmon
 from .app import App
 from appmanager_comms.srv import *
 from appmanager_comms.msg import *
@@ -95,6 +96,8 @@ class AppManager(ConcertClient):
         self.services['start_app'] = rospy.Service(self.start_app_srv_name,StartApp,self.processStartApp)
         self.services['stop_app'] = rospy.Service(self.stop_app_srv_name,StopApp,self.processStopApp)
 
+        roslaunch.pmon._init_signal_handlers()
+
 
     def parseParams(self):
         param = {}
@@ -155,10 +158,19 @@ class AppManager(ConcertClient):
         return apps_description
 
     def processStartApp(self,req):
-        return StartAppResponse()
+        
+        rospy.loginfo("Starting App : " + req.name)
+        resp = StartAppResponse()
+        resp.started, resp.message = self.apps['from_source'][req.name].start()
+        return resp
 
     def processStopApp(self,req):
-        return StopAppResponse()
+        rospy.loginfo("Stopping App : " + req.name)
+        resp = StopAppResponse()
+        
+        resp.stopped, resp.message = self.apps['from_source'][req.name].stop() 
+
+        return resp
 
 
     def spin(self):

@@ -32,8 +32,9 @@
             "rosjs/ros",
             "appmanager/AppListView",
             "appmanager/AppDetailView",
+            "appmanager/AppLogView",
 		],
-        function(parser,ready,on,registry,CPanel,ROS,NavCanvas,NavPopup)
+        function(parser,ready,on,registry,CPanel,ROS)
         {
             var initialize = function() {
                 ros = new ROS('ws://localhost:9090');
@@ -56,11 +57,16 @@
         </div>
 	</div>
     <div id="body" class="middlepanel">
-        <div id="leftbody" class="leftbody">
-            <div id="applistview" data-dojo-type="appmanager.AppListView" data-dojo-props="listapp_srv_name : '/app_manager/list_apps'"> </div>
+        <div style="height:50%">
+            <div id="leftbody" class="leftbody">
+                <div id="applistview" data-dojo-type="appmanager.AppListView" data-dojo-props="listapp_srv_name : '/app_manager/list_apps'"> </div>
+            </div>
+            <div id="rightbody" class="rightbody">
+                <div id="detailview" data-dojo-type="appmanager.AppDetailView" data-dojo-props="start_app_srv_name:'/app_manager/start_app', stop_app_srv_name:'/app_manager/stop_app'"></div>
+            </div>
         </div>
-        <div id="rightbody" class="rightbody">
-            <div id="detailview" data-dojo-type="appmanager.AppDetailView" data-dojo-props="startapp_srv_name:'/app_manager/start_app'"></div>
+        <div style="height:40%">
+            <div id="logview" data-dojo-type="appmanager.AppLogView" data-dojo-props="log_topic_name:'/app_manager/log'"></div>
         </div>
     </div>
 </body>

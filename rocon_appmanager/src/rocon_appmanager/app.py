@@ -35,8 +35,15 @@ import os
 import errno
 import yaml
 import utils
+import rospy
+import roslaunch.parent
+import roslaunch.pmon
+
 from .exceptions import AppException
 from roslib.packages import InvalidROSPkgException
+
+
+
 
 """
     App - Jihoon Lee(jihoonl@yujinrobot.com)
@@ -104,7 +111,7 @@ class App(object):
                 data['icon'] = None
             else:
                 data['icon'] = self.loadFromFile(app_data['icon'],'icon',app_name)
-            data['status'] = 'installed'
+            data['status'] = 'Ready'
 
         self.data = data
             
@@ -123,3 +130,52 @@ class App(object):
         except InvalidROSPkgException as e:
             raise AppException("App file [%s] feres to %s that is not installed: %s"%(app_name,log,str(e)))
             
+    def start(self):
+        data = self.data
+        rospy.loginfo("Launching: %s"%(data['name']))
+
+        try:
+            self._launch = roslaunch.parent.ROSLaunchParent(rospy.get_param("/run_id"),[data['launch']],is_core=False,process_listeners=())
+            self._launch._load_config()
+    
+            self._launch.start()
+            data['status'] = 'Running'
+        except Exception as e:
+            print str(e)
+            rospy.loginfo("Error While launching "+ data['launch'])
+            data['status'] = "Error While launching "+ data['launch']
+            return False, "Error while launching " + data['name']
+
+        return True, "Success"
+
+    def stop(self):
+        data = self.data
+
+        try:
+            if self._launch:
+                try:
+                    self._launch.shutdown()
+                finally:
+                    self._launch = None
+                    data['status'] = 'Ready'
+                rospy.loginfo("Stopped App : " + data['name'])
+        except Exception as e:
+            print str(e)
+            rospy.loginfo("Error while stopping " + data['name'])
+            data['status'] = 'Error'
+            return False, "Error while stopping " + data['name']
+
+        return True , "Success"
+            
+
+    def app_monitor(self):
+        while self._launch:
+            time.sleep(0.1)
+            launch = self._launch
+            if launch:
+                pm = launch.pm
+                if pm:
+                    if pm.done:
+                        time.sleep(1.0)
+                        self.stop()
+                        break
