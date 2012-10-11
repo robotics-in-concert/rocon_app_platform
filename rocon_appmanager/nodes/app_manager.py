@@ -38,7 +38,7 @@ from rocon_appmanager.app_manager import AppManager
 
 if __name__ == '__main__':
 
-  rospy.init_node('app_manager')
+  rospy.init_node('appmanager')
   manager = AppManager()
   rospy.loginfo("Initialized")
   manager.spin()

@@ -33,10 +33,13 @@
 
 import rospy
 import os
+import sys
 import roslaunch.pmon
 from .app import App
+from .logger import Logger
 from appmanager_comms.srv import *
 from appmanager_comms.msg import *
+from std_msgs.msg import String
 from concert_client.concert_client import ConcertClient
 """
     AppManager - Jihoon Lee(jihoonl@yujinrobot.com)
@@ -75,6 +78,7 @@ class AppManager(ConcertClient):
     listapp_srv_name = '~list_apps'
     start_app_srv_name = '~start_app'
     stop_app_srv_name = '~stop_app'
+    log_pub_name = '~log'
 
     def __init__(self):
 
@@ -96,7 +100,14 @@ class AppManager(ConcertClient):
         self.services['start_app'] = rospy.Service(self.start_app_srv_name,StartApp,self.processStartApp)
         self.services['stop_app'] = rospy.Service(self.stop_app_srv_name,StopApp,self.processStopApp)
 
+        self.pubs = {}
+        self.pubs['log'] = rospy.Publisher(self.log_pub_name,String)
+
         roslaunch.pmon._init_signal_handlers()
+
+        self.logger = Logger(sys.stdout)
+        sys.stdout = self.logger
+        self.logger.addCallback(self.process_stdmsg)
 
 
     def parseParams(self):
@@ -171,6 +182,9 @@ class AppManager(ConcertClient):
         resp.stopped, resp.message = self.apps['from_source'][req.name].stop() 
 
         return resp
+
+    def process_stdmsg(self,message):
+        self.pubs['log'].publish(message)
 
 
     def spin(self):
