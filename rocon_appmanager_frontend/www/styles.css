@@ -13,21 +13,19 @@ body {
 }
 
 .headtools {
-    text-align:right;
-    padding-top:10px;
-    padding-bottom:10px;
-    position:relative;
+    display:inline-block;
+    text-align:center;
     float:right;
-    display:block;
+    position:relative;
+    height:100%;
 }
 
-.navpopup {
-    padding-top:2px;
-    float:left;
-}
 
 .connectionpanel {
     float:left;
+    position:relative;
+    padding-top:10px;
+    padding-bottom:10px;
 }
 
 .leftbody {
@@ -62,7 +60,10 @@ display:inline-block;
 
 .headers {
     height:15%;
+	width:100%;
+    display:inline-block;
     overflow:visible;
+	position:relative;
 	margin-top: 10px;
 	border: 1px solid #759DC0;
 	border-top-right-radius: 7px;

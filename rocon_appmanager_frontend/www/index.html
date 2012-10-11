@@ -37,7 +37,8 @@
         function(parser,ready,on,registry,CPanel,ROS)
         {
             var initialize = function() {
-                ros = new ROS('ws://localhost:9090');
+                ros = new ROS();
+                
                 parser.parse();
                 var applistview = registry.byId("applistview");
                 var detailview = registry.byId("detailview");
@@ -53,7 +54,7 @@
         <img class="logo" src="img/logo.jpg"></img>
         <p class="logo"> It is just for testing app manager APIs.</p>
         <div class="headtools">
-            <div data-dojo-type="roswidgets.ConnectionPanel"></div>
+            <div class="connectionpanel" data-dojo-type="roswidgets.ConnectionPanel"></div>
         </div>
 	</div>
     <div id="body" class="middlepanel">
@@ -66,7 +67,7 @@
             </div>
         </div>
         <div style="height:40%">
-            <div id="logview" data-dojo-type="appmanager.AppLogView" data-dojo-props="log_topic_name:'/app_manager/log'"></div>
+<!--            <div id="logview" data-dojo-type="appmanager.AppLogView" data-dojo-props="log_topic_name:'/app_manager/log'"></div>-->
         </div>
     </div>
 </body>

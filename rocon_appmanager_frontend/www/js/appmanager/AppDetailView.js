@@ -34,6 +34,25 @@ function(declare,lang,widgetbase,domStyle,Button,Loader,Tooltip)
                    name : this.stop_app_srv_name,
                    type: this.stop_app_srv_type,
                });
+
+               ros.on('connection',lang.hitch(this,this.onConnect)); 
+               ros.on('close',lang.hitch(this,this.onClose));
+
+               var div = document.createElement('div');
+               var strong = document.createElement('strong');
+               strong.innerHTML = 'No Connection';
+               div.appendChild(strong);
+               this.noConnectDiv = div;
+               this.domNode.appendChild(this.noConnectDiv);
+            },
+
+            onConnect : function() {
+                this.domNode.removeChild(this.noConnectDiv);
+            },
+
+            onClose : function() {
+                this.domNode.innerHTML = "";
+                this.domNode.appendChild(this.noConnectDiv);
             },
 
             createButton : function() {

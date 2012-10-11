@@ -38,11 +38,24 @@ function(declare,lang,widgetbase,domStyle,on,DataGrid,Store,Button,Loader,Toolti
 //                this.createButton();
 
                 ros.on('error',function(e) { console.log(e);});
-                this.updateAppList();
-
-                window.setInterval(lang.hitch(this,this.updateAppList),1000);
+                ros.on('connection',lang.hitch(this,this.onConnect)); 
+                ros.on('close',lang.hitch(this,this.onClose));
 
                 this.connect(this.grid,"onClick","onClick");
+            },
+
+            onConnect : function() {
+                this.updateAppList();
+                this.intervalInt = window.setInterval(lang.hitch(this,this.updateAppList),1000);
+            },
+
+            onClose : function() {
+                window.clearInterval(this.intervalInt);
+                var data = this.createData([]);
+                this.currentStore.close();
+                this.currentStore = new Store({data:data});
+                this.grid.setStore(this.currentStore);
+
             },
 
             onClick : function(e) {
