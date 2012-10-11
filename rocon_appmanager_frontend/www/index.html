@@ -58,7 +58,7 @@
         </div>
 	</div>
     <div id="body" class="middlepanel">
-        <div style="height:50%">
+        <div class="middle-main">
             <div id="leftbody" class="leftbody">
                 <div id="applistview" data-dojo-type="appmanager.AppListView" data-dojo-props="listapp_srv_name : '/app_manager/list_apps'"> </div>
             </div>
@@ -66,8 +66,10 @@
                 <div id="detailview" data-dojo-type="appmanager.AppDetailView" data-dojo-props="start_app_srv_name:'/app_manager/start_app', stop_app_srv_name:'/app_manager/stop_app'"></div>
             </div>
         </div>
-        <div style="height:40%">
-<!--            <div id="logview" data-dojo-type="appmanager.AppLogView" data-dojo-props="log_topic_name:'/app_manager/log'"></div>-->
+        <div class="middle-footer">
+            <center>
+                <div id="logview" data-dojo-type="appmanager.AppLogView" data-dojo-props="log_topic_name:'/app_manager/log'"></div>
+            </center>
         </div>
     </div>
 </body>
