@@ -1,7 +1,8 @@
 # Standalone mode.
 is_alone: true
 
-app_from_source_directory: '/home/jihoonl/ros/yujin/rocon/rocon_app_platform/apps'
+robot_name: 'test_robot'
+app_from_source_directory: '/opt/jihoonl/turtlebot_apps'
 app_store_url: []
 platform_info: 'linux.ros.*'
 

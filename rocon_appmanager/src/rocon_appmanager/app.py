@@ -130,23 +130,39 @@ class App(object):
         except InvalidROSPkgException as e:
             raise AppException("App file [%s] feres to %s that is not installed: %s"%(app_name,log,str(e)))
             
-    def start(self):
+    def start(self,robot_name):
         data = self.data
         rospy.loginfo("Launching: %s"%(data['name']))
 
+        # Starts app
         try:
+            prefix = robot_name + '/'+data['name']
+
+            # Create roslaunch 
             self._launch = roslaunch.parent.ROSLaunchParent(rospy.get_param("/run_id"),[data['launch']],is_core=False,process_listeners=())
             self._launch._load_config()
-    
+
+            # Remap the topics
+            for N in self._launch.config.nodes:
+              for t in data['interface']['published_topics'].keys():
+                N.remap_args.append((t, prefix + '/' +t ))
+              for t in data['interface']['subscribed_topics'].keys():
+                N.remap_args.append((t, prefix + '/' +t ))
+
             self._launch.start()
+
+            self.pullin_topics= [prefix + '/' + x for x in data['interface']['subscribed_topics']]
+            self.advertise_topics = [prefix + '/' + x for x in data['interface']['published_topics']]
+
             data['status'] = 'Running'
+            return True, "Success", pullin_topics, advertise_topics
+
         except Exception as e:
             print str(e)
             rospy.loginfo("Error While launching "+ data['launch'])
             data['status'] = "Error While launching "+ data['launch']
-            return False, "Error while launching " + data['name']
+            return False, "Error while launching " + data['name'], [],[]
 
-        return True, "Success"
 
     def stop(self):
         data = self.data
@@ -163,9 +179,9 @@ class App(object):
             print str(e)
             rospy.loginfo("Error while stopping " + data['name'])
             data['status'] = 'Error'
-            return False, "Error while stopping " + data['name']
+            return False, "Error while stopping " + data['name'], self.pullin_topics, self.advertise_topics
 
-        return True , "Success"
+        return True , "Success",self.pullin_topics,self.advertise_topics
             
 
     def app_monitor(self):

@@ -11,7 +11,6 @@
   <depend package="rospy"/>
   <depend package="gateway_comms"/>
   <depend package="std_msgs" />
-  <depend package="rocon_gateway_helper"/>
 
 </package>
 

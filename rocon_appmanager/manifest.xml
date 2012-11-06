@@ -12,6 +12,7 @@
   <depend package="roslib"/>
   <depend package="appmanager_comms"/>
   <depend package="concert_client"/>
+  <depend package="gateway_comms"/>
 
 </package>
 

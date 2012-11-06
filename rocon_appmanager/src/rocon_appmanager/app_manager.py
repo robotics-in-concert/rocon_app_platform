@@ -40,7 +40,10 @@ from .logger import Logger
 from appmanager_comms.srv import *
 from appmanager_comms.msg import *
 from std_msgs.msg import String
-from concert_client.concert_client import ConcertClient
+from gateway_comms.srv import *
+from gateway_comms.msg import ConnectionType,Rule
+
+#from concert_client.concert_client import ConcertClient
 """
     AppManager - Jihoon Lee(jihoonl@yujinrobot.com)
 
@@ -50,6 +53,7 @@ from concert_client.concert_client import ConcertClient
 
         App Management
             - Load installed apps from app_list directory. 
+            - launches app
 
     Todo:
         Configuration
@@ -63,12 +67,12 @@ from concert_client.concert_client import ConcertClient
         App Management
             - have publisher that send out installed app list, available app list, and some more info. maybe latched=true one.
             - 'apt-get' app from app store
-            - launches app
             - cache-ing the app lists
 
 """
 
-class AppManager(ConcertClient):
+#class AppManager(ConcertClient):
+class AppManager(object):
 
     param = {}
     apps = {}
@@ -80,14 +84,18 @@ class AppManager(ConcertClient):
     stop_app_srv_name = '~stop_app'
     log_pub_name = '~log'
 
+    services = {}
+    pubs = {}
+    gateway_srvs = {}
+
     def __init__(self):
 
         # load configuration from rosparam
         rospy.loginfo("Parsing Parameters")
         self.parseParams()
 
-        if self.param['is_alone'] == False:
-            super(AppManager,self).__init__(self.param['white_list'], self.param['black_list'],self.param['platform_info'])
+#        if self.param['is_alone'] == False:
+#            super(AppManager,self).__init__(self.param['white_list'], self.param['black_list'],self.param['platform_info'])
 
         # It sets up an app directory and load installed app list from directory
         rospy.loginfo("Loading app lists")
@@ -105,13 +113,52 @@ class AppManager(ConcertClient):
 
         roslaunch.pmon._init_signal_handlers()
 
+        # Logging mechanism. hooks std_out and publish as a topic
         self.logger = Logger(sys.stdout)
         sys.stdout = self.logger
         self.logger.addCallback(self.process_stdmsg)
 
+        # flips or advertise list_apps, start_app, stop_app to outdoor
+        self.setGatewaySrvs()
 
+        rospy.loginfo("Advertising appmanager apis")
+        self.makePublic()
+
+    def setGatewaySrvs(self):
+        self.gateway_srv = {}
+        self.gateway_srv['flip'] =  rospy.ServiceProxy('/gateway/flip',Remote)
+#        self.gateway_srv['flip_all'] = rospy.ServiceProxy('/gateway/flip_all',RemoteAll)
+        self.gateway_srv['advertise'] = rospy.ServiceProxy('/gateway/advertise',Advertise)
+#        self.gateway_srv['advertise_all'] = rospy.ServiceProxy('/gateway/advertise',AdvertiseAll)
+        self.gateway_srv['pull'] = rospy.ServiceProxy('/gateway/pull',Remote)
+
+    def makePublic(self):
+        # advertise list_apps,start_app, and stop_app
+        name = rospy.get_name()
+        req = AdvertiseRequest()
+        req.cancel = False
+        req.rules = []
+        req.rules.append(self.createRule(name+'/list_apps',ConnectionType.SERVICE))
+        req.rules.append(self.createRule(name+'/start_app',ConnectionType.SERVICE))
+        req.rules.append(self.createRule(name+'/stop_app',ConnectionType.SERVICE))
+
+        resp = self.gateway_srv['advertise'](req)
+        if resp.result == 0:
+            rospy.loginfo("Appmanager API advertisement success")
+        else:
+            rospy.logerr("Advertise : %s"%resp.error_message)
+            
+
+    def createRule(self,name,type):
+        r = Rule()
+        r.name = name 
+        r.type = type
+        r.node = ''
+        return r
+                
     def parseParams(self):
         param = {}
+        param['robot_name'] = rospy.get_param('~robot_name')
         param['app_from_source_directory'] = rospy.get_param('~app_from_source_directory',self.DEFAULT_APP_LIST_DIRECTORY)
         param['app_store_url'] = rospy.get_param('~app_store_url','')
         param['platform_info'] = rospy.get_param('~platform_info','')
@@ -172,19 +219,43 @@ class AppManager(ConcertClient):
         
         rospy.loginfo("Starting App : " + req.name)
         resp = StartAppResponse()
-        resp.started, resp.message = self.apps['from_source'][req.name].start()
+        resp.started, resp.message, pullin_topics, adv_topics = self.apps['from_source'][req.name].start(self.param['robot_name'])
+
+#        self.pullinTopics(pullin_topics,True)
+        self.advertiseTopics(adv_topics,True)
+
         return resp
+
 
     def processStopApp(self,req):
         rospy.loginfo("Stopping App : " + req.name)
         resp = StopAppResponse()
         
-        resp.stopped, resp.message = self.apps['from_source'][req.name].stop() 
+        resp.stopped, resp.message,pullin_topics,adv_topics = self.apps['from_source'][req.name].stop() 
+
+#        self.pullinTopics(pullinTopics,False)
+        self.advertiseTopics(adv_topics,False)
 
         return resp
 
     def process_stdmsg(self,message):
         self.pubs['log'].publish(message)
+
+#    def pullinTopics(self,topics,cancel_flag):
+
+    def advertiseTopics(self,topics,cancel_flag):
+        req = AdvertiseRequest()
+        req.cancel = cancel_flag
+        req.rules = []
+        for t in topics:
+            req.rules.append(self.createRule(t,ConnectionType.PUBLISHER))
+
+        resp = self.gateway_srv['advertise'](req)
+
+        if resp.result == 0:
+            rospy.loginfo("Appmanager API advertisement success")
+        else:
+            rospy.logerr("Advertise : %s"%resp.error_message)
 
 
     def spin(self):
