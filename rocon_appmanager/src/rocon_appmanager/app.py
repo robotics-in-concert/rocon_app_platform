@@ -38,6 +38,9 @@ import utils
 import rospy
 import roslaunch.parent
 import roslaunch.pmon
+import traceback
+import time
+import thread
 
 from .exceptions import AppException
 from roslib.packages import InvalidROSPkgException
@@ -54,27 +57,6 @@ from roslib.packages import InvalidROSPkgException
 
     Todo:
 """
-
-class Interface(object):
-    data = {}
-    
-    def __init__(self,data):
-        with open(data,'r') as f:
-            y = yaml.load(f.read())
-            y = y or {}
-            try:
-                self.data['subscribed_topics'] = y.get('subscribed_topics',{})
-                self.data['published_topics'] = y.get('published_topics',{})
-            except KeyError:
-                raise AppException("Invalid interface, missing keys")
-
-    def __repr__(self):
-        string = "\n"
-        for slot in self.data:
-            string += slot + " : " + str(self.data[slot]) + "\n"
-
-        return string
-
 
 class App(object):
     path = None 
@@ -106,7 +88,7 @@ class App(object):
             data['description'] = app_data.get('description','')
             data['platform'] = app_data['platform']
             data['launch'] = self.loadFromFile(app_data['launch'],'launch',app_name)
-            data['interface'] = Interface(self.loadFromFile(app_data['interface'],'interface',app_name))
+            data['interface'] = self.loadInterface(self.loadFromFile(app_data['interface'],'interface',app_name))
             if 'icon' not in app_data:
                 data['icon'] = None
             else:
@@ -129,6 +111,20 @@ class App(object):
             """
         except InvalidROSPkgException as e:
             raise AppException("App file [%s] feres to %s that is not installed: %s"%(app_name,log,str(e)))
+
+
+    def loadInterface(self,data):
+        d = {}
+        with open(data,'r') as f:
+            y = yaml.load(f.read())
+            y = y or {}
+            try:
+                d['subscribed_topics'] = y.get('subscribed_topics',{})
+                d['published_topics'] = y.get('published_topics',{})
+            except KeyError:
+                raise AppException("Invalid interface, missing keys")
+
+        return d
             
     def start(self,robot_name):
         data = self.data
@@ -154,11 +150,15 @@ class App(object):
             self.pullin_topics= [prefix + '/' + x for x in data['interface']['subscribed_topics']]
             self.advertise_topics = [prefix + '/' + x for x in data['interface']['published_topics']]
 
+            thread.start_new_thread(self.app_monitor,())
             data['status'] = 'Running'
-            return True, "Success", pullin_topics, advertise_topics
+            return True, "Success", self.pullin_topics, self.advertise_topics
 
         except Exception as e:
             print str(e)
+            traceback.print_tb()
+           
+            
             rospy.loginfo("Error While launching "+ data['launch'])
             data['status'] = "Error While launching "+ data['launch']
             return False, "Error while launching " + data['name'], [],[]
