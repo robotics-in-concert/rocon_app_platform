@@ -122,7 +122,6 @@ class AppManager(object):
         self.setGatewaySrvs()
 
         rospy.loginfo("Advertising appmanager apis")
-        self.makePublic()
 
     def setGatewaySrvs(self):
         self.gateway_srv = {}
@@ -132,21 +131,29 @@ class AppManager(object):
 #        self.gateway_srv['advertise_all'] = rospy.ServiceProxy('/gateway/advertise',AdvertiseAll)
         self.gateway_srv['pull'] = rospy.ServiceProxy('/gateway/pull',Remote)
 
-    def makePublic(self):
+    def makePublic(self,public_flag):
         # advertise list_apps,start_app, and stop_app
         name = rospy.get_name()
-        req = AdvertiseRequest()
-        req.cancel = False
-        req.rules = []
-        req.rules.append(self.createRule(name+'/list_apps',ConnectionType.SERVICE))
-        req.rules.append(self.createRule(name+'/start_app',ConnectionType.SERVICE))
-        req.rules.append(self.createRule(name+'/stop_app',ConnectionType.SERVICE))
+        req = RemoteRequest()
+        req.remote.gateway = self.param['remote_name']
+        req.cancel = not public_flag
 
-        resp = self.gateway_srv['advertise'](req)
-        if resp.result == 0:
-            rospy.loginfo("Appmanager API advertisement success")
-        else:
-            rospy.logerr("Advertise : %s"%resp.error_message)
+        self.flip(req,self.createRule(name+'/list_apps',ConnectionType.SERVICE))
+        self.flip(req,self.createRule(name+'/start_app',ConnectionType.SERVICE))
+        self.flip(req,self.createRule(name+'/stop_app',ConnectionType.SERVICE))
+        self.flip(req,self.createRule(name+'/log',ConnectionType.PUBLISHER))
+
+
+    def flip(self,req,rule):
+        req.remote.rule = rule
+        try:
+            resp = self.gateway_srv['flip'](req)
+            if resp.result == 0:
+                rospy.loginfo("Successt to flip : " + rule.name )
+            else:
+                rospy.logerr("Advertise : %s"%resp.error_message)
+        except Exception as e:
+            print str(e)
             
 
     def createRule(self,name,type):
@@ -165,6 +172,7 @@ class AppManager(object):
         param['white_list'] = rospy.get_param('~whitelist','')
         param['black_list'] = rospy.get_param('~black_list','')
         param['is_alone'] = rospy.get_param('~is_alone',False)
+        param['remote_name'] = rospy.get_param('~remote_name','gateway1')
 
         self.param = param
 
@@ -179,10 +187,16 @@ class AppManager(object):
         apps_str['from_source'] = self.load(directory,'.app')
         apps['from_source'] = {}
         for app_str in apps_str['from_source']:
-            apps['from_source'][app_str[0]] = App(app_str[0],app_str[1])
+            try:
+                apps['from_source'][app_str[0]] = App(app_str[0],app_str[1])
+            except Exception as e:
+                print str(e)
+#                del apps['from_source'][app_str[0]]
+
+
 
         # Getting apps in store
-        print str(apps['from_source'].keys())
+#print str(apps['from_source'].keys())
 
         self.apps = apps
         self.apps_str = apps_str
@@ -222,7 +236,8 @@ class AppManager(object):
         resp.started, resp.message, pullin_topics, adv_topics = self.apps['from_source'][req.name].start(self.param['robot_name'])
 
 #        self.pullinTopics(pullin_topics,True)
-        self.advertiseTopics(adv_topics,True)
+        self.flipTopics(pullin_topics,ConnectionType.SUBSCRIBER,True)
+        self.flipTopics(adv_topics,ConnectionType.PUBLISHER,True)
 
         return resp
 
@@ -234,7 +249,8 @@ class AppManager(object):
         resp.stopped, resp.message,pullin_topics,adv_topics = self.apps['from_source'][req.name].stop() 
 
 #        self.pullinTopics(pullinTopics,False)
-        self.advertiseTopics(adv_topics,False)
+        self.flipTopics(pullin_topics,ConnectionType.SUBSCRIBER,False)
+        self.flipTopics(adv_topics,ConnectionType.PUBLISHER,False)
 
         return resp
 
@@ -243,22 +259,23 @@ class AppManager(object):
 
 #    def pullinTopics(self,topics,cancel_flag):
 
-    def advertiseTopics(self,topics,cancel_flag):
-        req = AdvertiseRequest()
-        req.cancel = cancel_flag
-        req.rules = []
+    def flipTopics(self,topics,type,ok_flag):
+        req = RemoteRequest()
+        req.remote.gateway = self.param['remote_name']
+        req.cancel = not ok_flag
         for t in topics:
-            req.rules.append(self.createRule(t,ConnectionType.PUBLISHER))
+            req.remote.rule = self.createRule(t,type)
+            resp = self.gateway_srv['flip'](req)
 
-        resp = self.gateway_srv['advertise'](req)
-
-        if resp.result == 0:
-            rospy.loginfo("Appmanager API advertisement success")
-        else:
-            rospy.logerr("Advertise : %s"%resp.error_message)
+            if resp.result == 0:
+                rospy.loginfo("Succuess to Flip : " + str(t))
+            else:
+                rospy.logerr( "Fail to Flip     : %s"%resp.error_message)
 
 
     def spin(self):
+        self.makePublic(True)
         rospy.spin()
+        self.makePublic(False)
 
 

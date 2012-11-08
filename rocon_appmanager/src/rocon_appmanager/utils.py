@@ -33,7 +33,7 @@
 
 import roslib.names
 from roslib.packages import InvalidROSPkgException
-from .exceptions import AppException
+from .exceptions import AppException, NotFoundException
 
 def findResource(resource):
   """ 

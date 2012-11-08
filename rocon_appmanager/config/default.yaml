@@ -1,7 +1,7 @@
 # Standalone mode.
 is_alone: true
 
-robot_name: 'test_robot'
+robot_name: '/test_robot'
 app_from_source_directory: '/opt/jihoonl/turtlebot_apps'
 app_store_url: []
 platform_info: 'linux.ros.*'

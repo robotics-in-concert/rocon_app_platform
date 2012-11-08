@@ -137,6 +137,8 @@ class App(object):
             # Create roslaunch 
             self._launch = roslaunch.parent.ROSLaunchParent(rospy.get_param("/run_id"),[data['launch']],is_core=False,process_listeners=())
             self._launch._load_config()
+    
+            print data['interface']
 
             # Remap the topics
             for N in self._launch.config.nodes:
@@ -147,8 +149,13 @@ class App(object):
 
             self._launch.start()
 
-            self.pullin_topics= [prefix + '/' + x for x in data['interface']['subscribed_topics']]
-            self.advertise_topics = [prefix + '/' + x for x in data['interface']['published_topics']]
+            print str(self._launch.config.nodes)
+
+            self.pullin_topics= [prefix + '/' + x for x in data['interface']['subscribed_topics'].keys()]
+            self.advertise_topics = [prefix + '/' + x for x in data['interface']['published_topics'].keys()]
+
+            print str(self.pullin_topics)
+            print str(self.advertise_topics)
 
             thread.start_new_thread(self.app_monitor,())
             data['status'] = 'Running'
@@ -156,7 +163,7 @@ class App(object):
 
         except Exception as e:
             print str(e)
-            traceback.print_tb()
+            traceback.print_stack()
            
             
             rospy.loginfo("Error While launching "+ data['launch'])

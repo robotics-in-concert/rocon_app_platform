@@ -33,6 +33,12 @@
 
 class AppException(Exception):
   """
-    App Exceptin
+    App Exception
+  """
+  pass
+
+class NotFoundException(AppException):
+  """
+    Resoucrce Not Found Exception 
   """
   pass
