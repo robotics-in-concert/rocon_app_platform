@@ -274,6 +274,7 @@ class AppManager(object):
 
 
     def spin(self):
+        # TODO: Test if gateway is connected
         self.makePublic(True)
         rospy.spin()
         self.makePublic(False)
