@@ -9,3 +9,4 @@ platform_info: 'linux.ros.*'
 white_list: ["concert_master"]
 black_list: ["pirate_master"]
 
+remote_name: "pirate_gateway"

@@ -115,12 +115,22 @@ class App(object):
 
     def loadInterface(self,data):
         d = {}
+        keys = ['subscriber','publisher','service']
         with open(data,'r') as f:
             y = yaml.load(f.read())
             y = y or {}
             try:
-                d['subscribed_topics'] = y.get('subscribed_topics',{})
-                d['published_topics'] = y.get('published_topics',{})
+                for k in keys:
+                    raw_data = y.get(k,[])
+                
+                    # remote / in front of topics
+                    new_data = []
+                    for r in raw_data:
+                        if r[0] == '/':
+                            r = r[1:len(r)]
+                        new_data.append(r)
+                    d[k] = new_data
+                    
             except KeyError:
                 raise AppException("Invalid interface, missing keys")
 
@@ -142,33 +152,29 @@ class App(object):
 
             # Remap the topics
             for N in self._launch.config.nodes:
-              for t in data['interface']['published_topics'].keys():
+              for t in data['interface']['publisher']:
                 N.remap_args.append((t, prefix + '/' +t ))
-              for t in data['interface']['subscribed_topics'].keys():
+              for t in data['interface']['subscriber']:
+                N.remap_args.append((t, prefix + '/' +t ))
+              for t in data['interface']['service']:
                 N.remap_args.append((t, prefix + '/' +t ))
 
             self._launch.start()
 
-            print str(self._launch.config.nodes)
-
-            self.pullin_topics= [prefix + '/' + x for x in data['interface']['subscribed_topics'].keys()]
-            self.advertise_topics = [prefix + '/' + x for x in data['interface']['published_topics'].keys()]
-
-            print str(self.pullin_topics)
-            print str(self.advertise_topics)
+            self.subscribers= [prefix + '/' + x for x in data['interface']['subscriber']]
+            self.publishers = [prefix + '/' + x for x in data['interface']['publisher']]
+            self.services = [prefix + '/' + x for x in data['interface']['service']]
 
             thread.start_new_thread(self.app_monitor,())
             data['status'] = 'Running'
-            return True, "Success", self.pullin_topics, self.advertise_topics
+            return True, "Success", self.subscribers, self.publishers, self.services
 
         except Exception as e:
             print str(e)
             traceback.print_stack()
-           
-            
             rospy.loginfo("Error While launching "+ data['launch'])
             data['status'] = "Error While launching "+ data['launch']
-            return False, "Error while launching " + data['name'], [],[]
+            return False, "Error while launching " + data['name'], [],[],[]
 
 
     def stop(self):
@@ -186,9 +192,9 @@ class App(object):
             print str(e)
             rospy.loginfo("Error while stopping " + data['name'])
             data['status'] = 'Error'
-            return False, "Error while stopping " + data['name'], self.pullin_topics, self.advertise_topics
+            return False, "Error while stopping " + data['name'], self.subscribers, self.publishers,self.services
 
-        return True , "Success",self.pullin_topics,self.advertise_topics
+        return True , "Success",self.subscribers,self.publishers,self.services
             
 
     def app_monitor(self):

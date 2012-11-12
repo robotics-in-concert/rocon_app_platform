@@ -41,7 +41,7 @@ from appmanager_comms.srv import *
 from appmanager_comms.msg import *
 from std_msgs.msg import String
 from gateway_comms.srv import *
-from gateway_comms.msg import ConnectionType,Rule
+from gateway_comms.msg import ConnectionType,Rule,RemoteRule
 
 #from concert_client.concert_client import ConcertClient
 """
@@ -134,27 +134,20 @@ class AppManager(object):
     def makePublic(self,public_flag):
         # advertise list_apps,start_app, and stop_app
         name = rospy.get_name()
-        req = RemoteRequest()
-        req.remote.gateway = self.param['remote_name']
-        req.cancel = not public_flag
 
-        self.flip(req,self.createRule(name+'/list_apps',ConnectionType.SERVICE))
-        self.flip(req,self.createRule(name+'/start_app',ConnectionType.SERVICE))
-        self.flip(req,self.createRule(name+'/stop_app',ConnectionType.SERVICE))
-        self.flip(req,self.createRule(name+'/log',ConnectionType.PUBLISHER))
+        services = [name+'/list_apps',name+'/start_app',name+'/stop_app',name+'/log']
+        publishers = [name+'/log']
+
+        self.flips(services,ConnectionType.SERVICE,public_flag)
+        self.flips(publishers,ConnectionType.PUBLISHER,public_flag)
 
 
-    def flip(self,req,rule):
-        req.remote.rule = rule
-        try:
-            resp = self.gateway_srv['flip'](req)
-            if resp.result == 0:
-                rospy.loginfo("Successt to flip : " + rule.name )
-            else:
-                rospy.logerr("Advertise : %s"%resp.error_message)
-        except Exception as e:
-            print str(e)
-            
+    def createRemoteRule(self,gateway,rule):
+        r = RemoteRule()
+        r.gateway = gateway
+        r.rule = rule
+
+        return r
 
     def createRule(self,name,type):
         r = Rule()
@@ -172,7 +165,7 @@ class AppManager(object):
         param['white_list'] = rospy.get_param('~whitelist','')
         param['black_list'] = rospy.get_param('~black_list','')
         param['is_alone'] = rospy.get_param('~is_alone',False)
-        param['remote_name'] = rospy.get_param('~remote_name','gateway1')
+        param['remote_name'] = rospy.get_param('~remote_name','pirate_gateway1')
 
         self.param = param
 
@@ -233,11 +226,12 @@ class AppManager(object):
         
         rospy.loginfo("Starting App : " + req.name)
         resp = StartAppResponse()
-        resp.started, resp.message, pullin_topics, adv_topics = self.apps['from_source'][req.name].start(self.param['robot_name'])
+        resp.started, resp.message, subscribers, publishers,services = self.apps['from_source'][req.name].start(self.param['robot_name'])
 
 #        self.pullinTopics(pullin_topics,True)
-        self.flipTopics(pullin_topics,ConnectionType.SUBSCRIBER,True)
-        self.flipTopics(adv_topics,ConnectionType.PUBLISHER,True)
+        self.flips(subscribers,ConnectionType.SUBSCRIBER,True)
+        self.flips(publishers,ConnectionType.PUBLISHER,True)
+        self.flips(services,ConnectionType.SERVICE,True)
 
         return resp
 
@@ -246,11 +240,11 @@ class AppManager(object):
         rospy.loginfo("Stopping App : " + req.name)
         resp = StopAppResponse()
         
-        resp.stopped, resp.message,pullin_topics,adv_topics = self.apps['from_source'][req.name].stop() 
+        resp.stopped, resp.message,subscribers,publishers,services = self.apps['from_source'][req.name].stop() 
 
-#        self.pullinTopics(pullinTopics,False)
-        self.flipTopics(pullin_topics,ConnectionType.SUBSCRIBER,False)
-        self.flipTopics(adv_topics,ConnectionType.PUBLISHER,False)
+        self.flips(subscribers,ConnectionType.SUBSCRIBER,False)
+        self.flips(publishers,ConnectionType.PUBLISHER,False)
+        self.flips(services,ConnectionType.SERVICE,False)
 
         return resp
 
@@ -259,18 +253,24 @@ class AppManager(object):
 
 #    def pullinTopics(self,topics,cancel_flag):
 
-    def flipTopics(self,topics,type,ok_flag):
-        req = RemoteRequest()
-        req.remote.gateway = self.param['remote_name']
-        req.cancel = not ok_flag
-        for t in topics:
-            req.remote.rule = self.createRule(t,type)
-            resp = self.gateway_srv['flip'](req)
+    def flips(self,topics,type,ok_flag):
 
-            if resp.result == 0:
-                rospy.loginfo("Succuess to Flip : " + str(t))
-            else:
-                rospy.logerr( "Fail to Flip     : %s"%resp.error_message)
+        if len(topics) == 0:
+            return
+        req = RemoteRequest()
+        req.cancel = not ok_flag
+
+        req.remotes = []
+
+        for t in topics:
+            req.remotes.append(self.createRemoteRule(self.param['remote_name'],self.createRule(t,type)))
+
+        resp = self.gateway_srv['flip'](req)
+
+        if resp.result == 0:
+            rospy.loginfo("Succuess to Flip")
+        else:
+            rospy.logerr( "Fail to Flip     : %s"%resp.error_message)
 
 
     def spin(self):
