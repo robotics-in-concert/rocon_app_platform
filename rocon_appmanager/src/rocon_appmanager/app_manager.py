@@ -37,11 +37,11 @@ import sys
 import roslaunch.pmon
 from .app import App
 from .logger import Logger
-from appmanager_comms.srv import *
-from appmanager_comms.msg import *
+from appmanager_msgs.srv import *
+from appmanager_msgs.msg import *
 from std_msgs.msg import String
-from gateway_comms.srv import *
-from gateway_comms.msg import ConnectionType,Rule,RemoteRule
+from gateway_msgs.srv import *
+from gateway_msgs.msg import ConnectionType,Rule,RemoteRule
 
 #from concert_client.concert_client import ConcertClient
 """

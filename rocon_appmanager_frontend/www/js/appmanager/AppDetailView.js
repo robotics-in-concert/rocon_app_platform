@@ -16,10 +16,10 @@ function(declare,lang,widgetbase,domStyle,Button,Loader,Tooltip)
     var AppDetailView = declare("appmanager.AppDetailView",[widgetbase],
         {
             start_app_srv_name : '/start_app',
-            start_app_srv_type : '/appmanager_comms/StartApp',
+            start_app_srv_type : '/appmanager_msgs/StartApp',
 
             stop_app_srv_name : '/stop_app',
-            stop_app_srv_type : '/appmanager_comms/StopApp',
+            stop_app_srv_type : '/appmanager_msgs/StopApp',
 
             currentData : null,
             

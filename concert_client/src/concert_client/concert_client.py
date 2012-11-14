@@ -35,7 +35,7 @@ import roslib;roslib.load_manifest('concert_client')
 
 import rospy
 import threading
-from gateway_comms.srv import *
+from gateway_msgs.srv import *
 from rocon_gateway_helper import *
 from std_msgs.msg import String
 

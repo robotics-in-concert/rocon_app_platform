@@ -10,9 +10,9 @@
   <url>http://ros.org/wiki/rocon_appmanager</url>
   <depend package="rospy"/>
   <depend package="roslib"/>
-  <depend package="appmanager_comms"/>
+  <depend package="appmanager_msgs"/>
   <depend package="concert_client"/>
-  <depend package="gateway_comms"/>
+  <depend package="gateway_msgs"/>
 
 </package>
 

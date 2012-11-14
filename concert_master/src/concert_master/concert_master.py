@@ -33,7 +33,7 @@
 
 import roslib; roslib.load_manifest('concert_master')
 import rospy
-from gateway_comms.srv import *
+from gateway_msgs.srv import *
 
 class ConcertMaster(object):
   publishers = {}
