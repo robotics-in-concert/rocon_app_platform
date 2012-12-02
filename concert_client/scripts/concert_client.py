@@ -33,12 +33,12 @@
 
 import roslib; roslib.load_manifest('concert_client')
 import rospy
-from concert_client.concert_client import *
+from concert_client.concertclient import *
 
 if __name__ == '__main__' :
     
     rospy.init_node('concert_client')
-    client = ConcertClient([],[],"linux.ros")
+    client = ConcertClient()
     rospy.loginfo('Initialized')
     client.spin()
     rospy.loginfo('Done')

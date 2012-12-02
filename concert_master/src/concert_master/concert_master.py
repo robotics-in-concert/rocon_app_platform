@@ -1,69 +1,91 @@
-#!/usr/bin/env python       
-# Software License Agreement (BSD License)
+#!/usr/bin/env python
+#       
+# License: BSD
+#   https://raw.github.com/robotics-in-concert/rocon_app_manager/concert_master/LICENSE 
 #
-# Copyright (c) 2012, Yujin Robot, Daniel Stonier, Jihoon Lee
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-#  * Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-#  * Redistributions in binary form must reproduce the above
-#    copyright notice, this list of conditions and the following
-#    disclaimer in the documentation and/or other materials provided
-#    with the distribution.
-#  * Neither the name of Yujin Robot nor the names of its
-#    contributors may be used to endorse or promote products derived
-#    from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
 
 import roslib; roslib.load_manifest('concert_master')
 import rospy
-from gateway_msgs.srv import *
+import sys, traceback
+
+from gateway_msgs.srv import GatewayInfo
+from rocon_gateway_hubclient.hub_client import HubClient
 
 class ConcertMaster(object):
-  publishers = {}
-  subscribers = {}
+    concertmaster_key = "concertmasterlist"
+    is_connected = False
+    hub_client = None   
 
-  gateway_srv = None
-  gateway_srv_name = '/gateway/request'
-
-  gatewayinfo_srv_name = '/gateway/info'
+    gateway_info = '/gateway/gateway_info'
+    gateway = None
   
-  concertmaster_key = "rocon:concertmasterlist"
-  
-  def __init__(self):
-    self.gateway_srv = rospy.ServiceProxy(self.gateway_srv_name,PublicHandler)
-    self.gateway_srv.wait_for_service()
-    self.gateway_info_srv = rospy.ServiceProxy(self.gatewayinfo_srv_name,GatewayInfo)
-    self.cm_name = "concertmaster2"
+    def __init__(self):
+        self.is_connected = False
+        self.name = rospy.get_name()
+        self.param = self.setupRosParameters()
 
-  def spin(self):
-    resp = self.gateway_info_srv()
-    command = "post"
-    self.fullname = self.cm_name + "," + resp.gateway_name
-    msg = ["addmember",self.concertmaster_key,self.fullname]
-    print "Advertising concertmaster = " + str(msg)
-    resp = self.gateway_srv(command,msg)
-    print resp
+        is_zeroconf = False
+        self.hub_client = HubClient(self.param['hub_whitelist'],self.param['hub_blacklist'],is_zeroconf,'rocon',self.name,False,None)
 
-    rospy.spin()
+        self.service= {}
+        self.service['gateway_info'] = rospy.ServiceProxy(self.gateway_info,GatewayInfo)
 
-    msg = ["removemember",self.concertmaster_key,self.fullname]
-    print "Stop advertising concertmaster = " + str(msg)
-    resp = self.gateway_srv(command,msg)
-    print resp
+
+    def spin(self):
+        self.log("Attempt to connect to Hub...")
+        self.connectToHub()
+        self.log("Connected to Hub [%s]"%self.hub_uri)
+        self.log("Registering Concert Master...")
+        self.registerConcertMaster()
+        self.log("Concert Master Registered [%s]"%self.name)
+        rospy.spin()
+        self.log("Shutting Down")
+        self.shutdown()
+        self.log("Done")
+
+    def connectToHub(self):
+        while not rospy.is_shutdown() and not self.is_connected:
+            self.log("Getting Hub info from gateway...")
+
+            gateway_info = self.service['gateway_info']()
+            if gateway_info.connected == True:
+                hub_uri = gateway_info.hub_uri
+                if self.hub_client.connect(hub_uri):
+                    self.is_connected = True
+                    self.name = gateway_info.name
+                    self.hub_uri = hub_uri
+            else:
+                self.log("No hub is available. Try later")
+            rospy.sleep(1.0)
+
+    def registerConcertMaster(self):
+        try:
+            self.hub_client.registerKey(self.concertmaster_key,self.name)
+        except Exception as e:
+            self.logerr(str(e))
+            traceback.print_exc(file=sys.stdout)
+            
+
+    def shutdown(self):
+        self.unregisterConcertMaster()
+
+    def unregisterConcertMaster(self):
+        self.hub_client.unregisterKey(self.concertmaster_key,self.name)
+
+
+    def setupRosParameters(self):
+        param = {}
+        param['hub_uri'] = rospy.get_param('~hub_uri','')
+        param['hub_whitelist'] = rospy.get_param('~hub_whitelist','')
+        param['hub_blacklist'] = rospy.get_param('~hub_blacklist','')
+
+        return param
+
+    def _shutdown(self):
+        rospy.loginfo("Shutting down")
+
+    def log(self,msg):
+        rospy.loginfo("Concert Master : " + msg)
+    def logerr(self,msg):
+        rospy.logerr("Concert Master : " + msg)
+

@@ -1,0 +1,10 @@
+<launch>
+  <node ns="zeroconf" pkg="zeroconf_avahi" type="zeroconf" name="zeroconf"/>
+  <node pkg="rocon_gateway" type="gateway.py" name="gateway" output="screen">
+    <rosparam command="load" file="$(find concert_client)/param/client_gateway.yaml"/>
+    <rosparam command="load" file="$(find rocon_gateway)/param/default_blacklist.yaml"/>
+  </node>
+  <node pkg="concert_client" type="concert_client.py" name="concert_client" output="screen">
+  </node>
+  
+</launch>

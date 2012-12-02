@@ -9,8 +9,8 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/concert_master</url>
   <depend package="rospy"/>
-  <depend package="gateway_msgs"/>
-
+  <depend package="rocon_gateway"/>
+  <depend package="rocon_gateway_hubclient"/>
 </package>
 
 

@@ -41,5 +41,3 @@ if __name__== '__main__':
   cm = ConcertMaster()
   rospy.loginfo("Initilized")
   cm.spin()
-  rospy.loginfo("Done")
-
