@@ -11,6 +11,7 @@ from .util import *
 from rocon_gateway_hubclient.hub_client import HubClient
 from .concertmaster_discovery import ConcertMasterDiscovery
 from concert_msgs.srv import Invitation,Status
+from appmanager_msgs.srv import *
 
 
 class ConcertClient(object):
@@ -40,11 +41,15 @@ class ConcertClient(object):
         self.gateway_srv= {}
         self.gateway_srv['gateway_info'] = rospy.ServiceProxy('/gateway/gateway_info',GatewayInfo)
         self.gateway_srv['flip'] = rospy.ServiceProxy('/gateway/flip',Remote)
+        self.gateway_srv['gateway_info'].wait_for_service()
+        self.gateway_srv['flip'].wait_for_service()
 
-        self.service = {}
-        self.service['invitation'] = rospy.Service(self.name+'/'+self.invitation_srv,Invitation,self.processInvitation)
-        self.service['status'] = rospy.Service(self.name+'/'+self.status_srv,Status,self.processStatus)
-        self.master_services = [self.name+ '/'+self.invitation_srv , self.name + '/' + self.status_srv]
+        self.appmanager_srv = {}
+        self.appmanager_srv['init'] = rospy.ServiceProxy('/appmanager/init',Init)
+        self.appmanager_srv['apiflip_request'] = rospy.ServiceProxy('/appmanager/apiflip_request',FlipRequest)
+        self.appmanager_srv['invitation'] = rospy.ServiceProxy('/appmanager/invitation',Invitation)
+        self.log("Wait for appmanager")
+        self.appmanager_srv['init'].wait_for_service()
 
     def spin(self):
         self.log("Attempt to connect to Hub...")
@@ -65,17 +70,32 @@ class ConcertClient(object):
             if gateway_info.connected == True:
                 hub_uri = gateway_info.hub_uri
                 if self.hub_client.connect(hub_uri):
-                    self.is_connected = True
-                    self.name = gateway_info.name
-                    self.hub_uri = hub_uri
+                    self.init(gateway_info.name,hub_uri)
             else:
                 self.log("No hub is available. Try later")
             rospy.sleep(1.0)
+
+    def init(self,name,uri):
+        self.is_connected = True
+        self.name = name
+        self.hub_uri = uri
+
+        self.service = {}
+        self.service['invitation'] = rospy.Service(self.name+'/'+self.invitation_srv,Invitation,self.processInvitation)
+        self.service['status'] = rospy.Service(self.name+'/'+self.status_srv,Status,self.processStatus)
+        self.master_services = ['/'+self.name+ '/'+self.invitation_srv , '/'+self.name + '/' + self.status_srv]
+
+        app_init_req = InitRequest(name)
+        resp = self.appmanager_srv['init'](app_init_req)
+        self.log("Appmanager Initialization : " + str(resp))
+
 
     def setupRosParameters(self):
         param = {}
         param['hub_whitelist'] = ''
         param['hub_blacklist'] = ''
+        param['cm_whitelist']= []
+        param['cm_blacklist']= []
 
         return param
 
@@ -95,6 +115,11 @@ class ConcertClient(object):
 
     def joinMaster(self,master):
         self.flips(master,self.master_services,ConnectionType.SERVICE,True)
+        
+        req = FlipRequestRequest(master,True)
+        resp = self.appmanager_srv['apiflip_request'](req)
+        if resp.result == False:
+            self.logerr("Failed to Flip Appmanager APIs")
 
 
     def leaveMasters(self):
@@ -102,26 +127,36 @@ class ConcertClient(object):
 
         try:
             for master in self.concertmasterlist:
-                self.flips(master,self.master_services,ConnectionType.SERVICE,False)
+                self.leavMaster(master)
         except Exception as e:
             self.log("Gateway is down already")
+
+    def leavMaster(self,master):
+        self.flips(master,self.master_services,ConnectionType.SERVICE,False)
+        req = FlipRequestRequest(master,False)
+        resp = self.appmanager_srv['apiflip_request'](req)
+        if resp.result == False:
+            self.logerr("Failed to Flip Appmanager APIs")
+
+
 
 
     def processInvitation(self,req):
         cm_name = req.name
 
         # Check if concert master is in white list
-        if cm_name in self.whitelist: 
-            return self.acceptInvitation(msg)
-        elif len(self.whitelist) == 0 and cm_name not in self.blacklist:
-            return self.acceptInvitation(msg)
+        if cm_name in self.param['cm_whitelist']: 
+            return self.acceptInvitation(req)
+        elif len(self.param['cm_whitelist']) == 0 and cm_name not in self.param['cm_blacklist']:
+            return self.acceptInvitation(req)
         else :
             return InvitationResponse(False) 
 
-    def acceptInvitation(self,msg):
-        self.log("Accepting invitation from " + msg.name)
+    def acceptInvitation(self,req):
+        self.log("Accepting invitation from " + req.name)
+        resp = self.appmanager_srv['invitation'](req)
         
-        return InvitationResponse(True) 
+        return resp
 
     def processStatus(self,req):
         resp = StatusResponse()

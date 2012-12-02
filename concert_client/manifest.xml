@@ -12,6 +12,7 @@
   <depend package="rocon_gateway_hubclient"/>
   <depend package="concert_msgs"/>
   <depend package="gateway_msgs"/>
+  <depend package="appmanager_msgs"/>
 
 </package>
 
