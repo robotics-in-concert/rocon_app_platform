@@ -173,6 +173,7 @@ class AppManager(object):
     def processInvitation(self,req):
         self.remotename = req.name
         service = self.service_names[2:]
+        self.log(str(service) + '\tflag : ' + str(req.ok_flag))
 
         try:
             self.flips(self.remotename,service,ConnectionType.SERVICE,req.ok_flag)
@@ -274,9 +275,10 @@ class AppManager(object):
         resp.started, resp.message, subscribers, publishers,services = self.apps['from_source'][req.name].start(self.param['robot_name'])
 
 #        self.pullinTopics(pullin_topics,True)
-        self.flips(self.remotename,subscribers,ConnectionType.SUBSCRIBER,True)
-        self.flips(self.remotename,publishers,ConnectionType.PUBLISHER,True)
-        self.flips(self.remotename,services,ConnectionType.SERVICE,True)
+        if self.remotename: 
+            self.flips(self.remotename,subscribers,ConnectionType.SUBSCRIBER,True)
+            self.flips(self.remotename,publishers,ConnectionType.PUBLISHER,True)
+            self.flips(self.remotename,services,ConnectionType.SERVICE,True)
 
         return resp
 
@@ -287,9 +289,10 @@ class AppManager(object):
         
         resp.stopped, resp.message,subscribers,publishers,services = self.apps['from_source'][req.name].stop() 
 
-        self.flips(self.remotename,subscribers,ConnectionType.SUBSCRIBER,False)
-        self.flips(self.remotename,publishers,ConnectionType.PUBLISHER,False)
-        self.flips(self.remotename,services,ConnectionType.SERVICE,False)
+        if self.remotename: 
+            self.flips(self.remotename,subscribers,ConnectionType.SUBSCRIBER,False)
+            self.flips(self.remotename,publishers,ConnectionType.PUBLISHER,False)
+            self.flips(self.remotename,services,ConnectionType.SERVICE,False)
 
         return resp
 
@@ -307,7 +310,7 @@ class AppManager(object):
         resp = self.gateway_srv['flip'](req)
 
         if resp.result == 0:
-            self.log("Succuess to Flip")
+            self.log("Succuess to Flip : " + str(topics))
         else:
             self.logerr( "Fail to Flip     : %s"%resp.error_message)
 
