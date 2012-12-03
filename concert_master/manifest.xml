@@ -10,7 +10,7 @@
   <url>http://ros.org/wiki/concert_master</url>
   <depend package="rospy"/>
   <depend package="rocon_gateway"/>
-  <depend package="rocon_gateway_hubclient"/>
+  <depend package="rocon_hub_client"/>
 </package>
 
 

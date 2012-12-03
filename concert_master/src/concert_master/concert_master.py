@@ -4,12 +4,15 @@
 #   https://raw.github.com/robotics-in-concert/rocon_app_manager/concert_master/LICENSE 
 #
 
-import roslib; roslib.load_manifest('concert_master')
+import roslib
+roslib.load_manifest('concert_master')
 import rospy
-import sys, traceback
+import sys
+import traceback
 
 from gateway_msgs.srv import GatewayInfo
-from rocon_gateway_hubclient.hub_client import HubClient
+from rocon_hub_client.hub_client import HubClient
+
 
 class ConcertMaster(object):
     concertmaster_key = "concertmasterlist"

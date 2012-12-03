@@ -8,7 +8,7 @@ import rospy
 import sys, traceback
 from .util import *
 
-from rocon_gateway_hubclient.hub_client import HubClient
+from rocon_hub_client.hub_client import HubClient
 from .concertmaster_discovery import ConcertMasterDiscovery
 from concert_msgs.srv import Invitation,Status,StatusResponse
 from appmanager_msgs.srv import *

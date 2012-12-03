@@ -9,7 +9,7 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/concert_client</url>
   <depend package="rospy"/>
-  <depend package="rocon_gateway_hubclient"/>
+  <depend package="rocon_hub_client"/>
   <depend package="concert_msgs"/>
   <depend package="gateway_msgs"/>
   <depend package="appmanager_msgs"/>
