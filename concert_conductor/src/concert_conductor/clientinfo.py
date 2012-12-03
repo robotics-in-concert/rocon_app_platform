@@ -3,7 +3,8 @@
 # License: BSD
 #   https://raw.github.com/robotics-in-concert/rocon_app_manager/concert_conductor/LICENSE 
 #
-import roslib; roslib.load_manifest('concert_conductor')
+import roslib
+roslib.load_manifest('concert_conductor')
 import rospy
 import rosservice
 from appmanager_msgs.srv import *
@@ -11,9 +12,10 @@ from concert_msgs.srv import *
 from concert_msgs.msg import *
 from std_msgs.msg import String
 
+
 class ClientInfo(object):
 
-    def __init__(self,clientname,param):
+    def __init__(self, clientname,param):
 
         self.data = ConcertClient()
         self.rawdata = {}
