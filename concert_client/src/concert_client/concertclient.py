@@ -26,7 +26,7 @@ class ConcertClient(object):
 
     concertmasterlist = []
 
-    invitation_srv = 'inivitation'
+    invitation_srv = 'invitation'
     status_srv = 'status'
 
     def __init__(self):
