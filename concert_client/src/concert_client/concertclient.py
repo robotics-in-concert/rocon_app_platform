@@ -10,7 +10,7 @@ from .util import *
 
 from rocon_gateway_hubclient.hub_client import HubClient
 from .concertmaster_discovery import ConcertMasterDiscovery
-from concert_msgs.srv import Invitation,Status
+from concert_msgs.srv import Invitation,Status,StatusResponse
 from appmanager_msgs.srv import *
 
 

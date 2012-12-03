@@ -9,6 +9,9 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/concert_conductor</url>
   <depend package="rospy"/>
+  <depend package="appmanager_msgs"/>
+  <depend package="concert_msgs"/>
+  <depend package="std_msgs"/>
 
 </package>
 
