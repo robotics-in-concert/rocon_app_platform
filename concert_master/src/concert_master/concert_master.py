@@ -32,6 +32,7 @@ class ConcertMaster(object):
 
         self.service= {}
         self.service['gateway_info'] = rospy.ServiceProxy(self.gateway_info,GatewayInfo)
+        self.service['gateway_info'].wait_for_service()
 
 
     def spin(self):
