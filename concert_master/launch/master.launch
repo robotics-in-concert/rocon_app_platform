@@ -8,5 +8,6 @@
     <rosparam command="load" file="$(find concert_master)/param/master_gateway.yaml"/>
     <rosparam command="load" file="$(find rocon_gateway)/param/default_blacklist.yaml"/>
   </node>
+  <node pkg="concert_conductor" type="conductor.py" name="concertconductor" output="screen"/>
   
 </launch>

@@ -1,4 +1,4 @@
-rocon_appmanager
-================
+rocon app platform
+=================
 
-Robotics in concert app framework
+Key components for ros app manager

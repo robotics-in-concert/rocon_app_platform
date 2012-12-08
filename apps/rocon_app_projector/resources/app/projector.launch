@@ -1,3 +1,0 @@
-<launch>
-  <node pkg="rocon_app_projector" type="rocon_projector" name="projector" output="screen" />
-</launch>

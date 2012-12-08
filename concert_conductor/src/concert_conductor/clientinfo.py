@@ -35,8 +35,11 @@ class ClientInfo(object):
         self.read_info()
 
     def read_info(self):
-        for key, service in self.service_info.items():
-            self.rawdata[key] = service()
+        try:
+            for key, service in self.service_info.items():
+                self.rawdata[key] = service()
+        except Exception as e:
+            raise Exception("Error in read_info")
 
         self.data = ConcertClient()
         self.data.name = self.name

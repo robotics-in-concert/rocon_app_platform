@@ -141,7 +141,7 @@ class AppManager(object):
 
     def setAPIs(self,namespace):
         rospy.loginfo("Advertising Services");
-        service_names = [ '/' + namespace + '/' + self.listapp_srv_name, '/'+namespace+'/'+self.platform_info_srv_name, '/' + namespace + '/' + self.start_app_srv_name, '/' + namespace + '/' + self.stop_app_srv_name]
+        service_names = [ namespace + '/' + self.listapp_srv_name, '/'+namespace+'/'+self.platform_info_srv_name, '/' + namespace + '/' + self.start_app_srv_name, '/' + namespace + '/' + self.stop_app_srv_name]
         self.service_names = service_names
         self.services['list_apps'] = rospy.Service(service_names[0],GetAppList,self.processGetAppList)
         self.services['platform_info'] = rospy.Service(service_names[1],PlatformInfoSrv,self.processPlatformInfo)

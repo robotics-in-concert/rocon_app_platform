@@ -1,3 +1,0 @@
-<launch>
-  <node pkg="rocon_app_example" type="example.py" name="example" output="screen" />
-</launch>
