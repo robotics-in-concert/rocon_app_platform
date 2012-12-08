@@ -1,11 +1,12 @@
 <launch>
   <node ns="zeroconf" pkg="zeroconf_avahi" type="zeroconf" name="zeroconf"/>
-  <node pkg="rocon_gateway" type="gateway.py" name="gateway" output="screen">
+  <node pkg="rocon_gateway" type="gateway.py" name="gateway">
     <rosparam command="load" file="$(find concert_master)/param/master_gateway.yaml"/>
     <rosparam command="load" file="$(find rocon_gateway)/param/default_blacklist.yaml"/>
   </node>
   <node pkg="concert_master" type="concert_master.py" name="concert_master" output="screen">
     <rosparam command="load" file="$(find concert_master)/param/master_gateway.yaml"/>
+    <rosparam command="load" file="$(find concert_master)/param/config.yaml"/>
     <rosparam command="load" file="$(find rocon_gateway)/param/default_blacklist.yaml"/>
   </node>
   <node pkg="concert_conductor" type="conductor.py" name="concertconductor" output="screen"/>

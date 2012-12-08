@@ -11,6 +11,7 @@
   <depend package="rospy"/>
   <depend package="rocon_gateway"/>
   <depend package="rocon_hub_client"/>
+  <depend package="concert_msgs"/>
 </package>
 
 

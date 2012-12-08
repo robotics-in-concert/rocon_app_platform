@@ -16,16 +16,22 @@ from .clientinfo import ClientInfo
 class ConcertConductor(object):
 
     clients = {}
+    invited_clients = {}
+    mastername = None
 
     def __init__(self):
         self.srv = {}
         self.srv['clientlist'] = rospy.Service('~clientlist',ClientList,self.processClientList)
         self.srv['invite'] = rospy.Service('~invite',Invite,self.processInvite)
+        self.srv['set_auto_invite'] = rospy.Service('~set_auto_invite',SetAutoInvite,self.processAutoInvite)
 
         self.parse_params()
 
     def parse_params(self):
         param = {}
+        param['config'] = {}
+        param['config']['auto_invite'] = rospy.get_param('~auto_invite',False)
+
         param['invitation'] = (rospy.get_param('~invitation','invitation'), Invitation)
         param['info'] = {}
         param['info']['list_apps'] = (rospy.get_param('~list_apps','list_apps'),GetAppList)
@@ -42,7 +48,7 @@ class ConcertConductor(object):
     def get_clients(self):
         suffix = self.param['invitation'][0]
         services = rosservice.get_service_list()
-        clients = [ s[:-(len(suffix)+1)] for s in services if s.endswith(suffix)]
+        clients = [s[:-(len(suffix)+1)] for s in services if s.endswith(suffix)]
 
         return clients
 
@@ -59,17 +65,31 @@ class ConcertConductor(object):
 
     def processInvite(self,req):
         mastername = req.mastername
+
+        resp = self.invite(mastername,req.clientnames,req.ok_flag)
+
+        return InviteResponse("Success to invite["+str(resp)+"] : " + str(req.clientnames))
+
+    def processAutoInvite(self,req):
+        self.log("Auto Invitation : " + str(req.is_auto))
+        self.mastername = req.mastername
+        self.param['config']['auto_invite'] = req.is_auto 
+        return SetAutoInviteResponse(True)
+
+    def invite(self,mastername,clientnames,ok_flag):
         try:
-            for name in req.clientnames:
+            for name in clientnames:
                 if not name.startswith('/'):
                     name = '/'+ name
-                self.clients[name].invite(mastername,req.ok_flag)
+                resp = self.clients[name].invite(mastername,ok_flag)
+                self.log("Success to invite["+str(ok_flag)+"] : " + str(name))
+                self.invited_clients[name] = ok_flag
         except Exception as e:
             self.logerr(str(e))
+            return False
 
-        self.log("Success to invite["+str(req.ok_flag)+"] : " + str(req.clientnames))
-        return InviteResponse("Success to invite["+str(req.ok_flag)+"] : " + str(req.clientnames))
-                   
+        return True
+                                                                                    
 
     def spin(self):
         while not rospy.is_shutdown():
@@ -87,6 +107,10 @@ class ConcertConductor(object):
                 self.log("Client Join : " + new_client) 
                 cinfo = ClientInfo(new_client,self.param)
                 self.clients[new_client] = cinfo
+
+            if self.param['config']['auto_invite']:
+                client_list = [ client for client in self.clients if (client not in self.invited_clients) or (client in self.invited_clients and self.invited_clients[client] == False)]
+                self.invite(self.mastername,client_list,True)
 
             rospy.sleep(1.0)
     

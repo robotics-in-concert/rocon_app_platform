@@ -10,6 +10,7 @@ import rospy
 import sys
 import traceback
 
+from concert_msgs.srv import *
 from gateway_msgs.srv import GatewayInfo
 from rocon_hub_client.hub_client import HubClient
 
@@ -21,18 +22,24 @@ class ConcertMaster(object):
 
     gateway_info = '/gateway/gateway_info'
     gateway = None
+
+    set_auto_invite = '/concertconductor/set_auto_invite'
   
     def __init__(self):
         self.is_connected = False
+        is_zeroconf = False
+
         self.name = rospy.get_name()
         self.param = self.setupRosParameters()
 
-        is_zeroconf = False
         self.hub_client = HubClient(self.param['hub_whitelist'],self.param['hub_blacklist'],is_zeroconf,'rocon',self.name,False,None)
 
         self.service= {}
         self.service['gateway_info'] = rospy.ServiceProxy(self.gateway_info,GatewayInfo)
         self.service['gateway_info'].wait_for_service()
+
+        self.service['set_auto_invite'] = rospy.ServiceProxy(self.set_auto_invite,SetAutoInvite)
+        self.service['set_auto_invite'].wait_for_service()
 
 
     def spin(self):
@@ -42,6 +49,10 @@ class ConcertMaster(object):
         self.log("Registering Concert Master...")
         self.registerConcertMaster()
         self.log("Concert Master Registered [%s]"%self.name)
+        
+        if self.param['auto_invite']:
+            self.setAutoInvite()
+
         rospy.spin()
         self.log("Shutting Down")
         self.shutdown()
@@ -61,6 +72,14 @@ class ConcertMaster(object):
             else:
                 self.log("No hub is available. Try later")
             rospy.sleep(1.0)
+
+    def setAutoInvite(self):
+        try:
+            req = SetAutoInviteRequest(self.name,self.param['auto_invite'])
+            self.service['set_auto_invite'](req)
+        except Exception as e:
+            self.logerr("Failed to call [set_auto_invite] : " + str(e))
+            
 
     def registerConcertMaster(self):
         try:
@@ -82,6 +101,7 @@ class ConcertMaster(object):
         param['hub_uri'] = rospy.get_param('~hub_uri','')
         param['hub_whitelist'] = rospy.get_param('~hub_whitelist','')
         param['hub_blacklist'] = rospy.get_param('~hub_blacklist','')
+        param['auto_invite'] = rospy.get_param('~auto_invite',False)
 
         return param
 
