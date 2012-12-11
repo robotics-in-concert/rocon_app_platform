@@ -23,6 +23,8 @@ class ClientInfo(object):
         self.param = param
 
         self.platform_info = None
+        self.service_info = {}
+        self.service_exec = {}
 
         #### Setup Invitation Service
         self.invitation = rospy.ServiceProxy(str(self.name + '/' + param['invitation'][0]),param['invitation'][1]) 
@@ -62,15 +64,14 @@ class ClientInfo(object):
         else:
             raise Exception(str("Invitation Failed : " + self.name))
             
-        
-
     def set_channel(self):
         param = self.param
         # Services
+        self.service_exec = {}
         for k in param['execution']['srv'].keys():
             key = param['execution']['srv'][k][0]
             type = param['execution']['srv'][k][1]
-            self.service_info[k] = rospy.ServiceProxy(str(self.name + '/'+key),type)
+            self.service_exec[k] = rospy.ServiceProxy(str(self.name + '/'+key),type)
 
 
 

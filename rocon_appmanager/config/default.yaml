@@ -2,7 +2,7 @@
 is_alone: true
 
 robot_name: '/test_robot'
-app_from_source_directory: '/opt/jihoonl/turtlebot_apps'
+app_from_source_directory: '/home/jihoonl/ros/groovy/turtlebot/turtlebot_apps/turtlebot_core_apps'
 app_store_url: []
 platform_info: 'linux.ros.*'
 

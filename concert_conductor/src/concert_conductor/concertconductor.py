@@ -21,7 +21,7 @@ class ConcertConductor(object):
 
     def __init__(self):
         self.srv = {}
-        self.srv['clientlist'] = rospy.Service('~clientlist',ClientList,self.processClientList)
+        self.srv['clientlist'] = rospy.Service('~list_clients',ClientList,self.processClientList)
         self.srv['invite'] = rospy.Service('~invite',Invite,self.processInvite)
         self.srv['set_auto_invite'] = rospy.Service('~set_auto_invite',SetAutoInvite,self.processAutoInvite)
 
