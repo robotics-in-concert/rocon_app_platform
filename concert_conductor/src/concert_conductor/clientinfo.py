@@ -34,11 +34,13 @@ class ClientInfo(object):
             key = param['info'][k][0]
             type = param['info'][k][1]
             self.service_info[k] = rospy.ServiceProxy(str(self.name + '/'+key),type)
+            self.service_info[k].wait_for_service()
         self.read_info()
 
     def read_info(self):
         try:
             for key, service in self.service_info.items():
+                print str(key)
                 self.rawdata[key] = service()
         except Exception as e:
             raise Exception("Error in read_info")
