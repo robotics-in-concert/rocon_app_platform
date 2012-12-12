@@ -142,7 +142,7 @@ class App(object):
 
         # Starts app
         try:
-            prefix = robot_name + '/'+data['name']
+            prefix = robot_name
 
             # Create roslaunch 
             self._launch = roslaunch.parent.ROSLaunchParent(rospy.get_param("/run_id"),[data['launch']],is_core=False,process_listeners=())
