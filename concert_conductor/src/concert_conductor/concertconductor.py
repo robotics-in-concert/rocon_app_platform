@@ -95,6 +95,7 @@ class ConcertConductor(object):
         while not rospy.is_shutdown():
             # Get all services and collect 
             clients = self.get_clients()
+#            self.log(str(clients))
 
             # remove gone client
             self.maintain_clientlist(clients)
@@ -104,9 +105,12 @@ class ConcertConductor(object):
             
             # Create new clients info instance
             for new_client in new_clients:
-                self.log("Client Join : " + new_client) 
-                cinfo = ClientInfo(new_client,self.param)
-                self.clients[new_client] = cinfo
+                try:
+                    self.log("Client Join : " + new_client) 
+                    cinfo = ClientInfo(new_client,self.param)
+                    self.clients[new_client] = cinfo
+                except Exception as e:
+                    self.log("Failed to establish client["+str(new_client)+"] : " + str(e))
 
             if self.param['config']['auto_invite']:
                 client_list = [ client for client in self.clients if (client not in self.invited_clients) or (client in self.invited_clients and self.invited_clients[client] == False)]
