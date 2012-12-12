@@ -109,6 +109,9 @@ class ConcertConductor(object):
                     self.log("Client Join : " + new_client) 
                     cinfo = ClientInfo(new_client,self.param)
                     self.clients[new_client] = cinfo
+
+                    if new_client in self.invited_clients:
+                        self.invite(self.mastername,[new_client],True)
                 except Exception as e:
                     self.log("Failed to establish client["+str(new_client)+"] : " + str(e))
 
