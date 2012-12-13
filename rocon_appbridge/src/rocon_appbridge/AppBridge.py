@@ -17,7 +17,7 @@ class AppBridge(object):
         self.actionclient['move_base'] = actionlib.SimpleActionClient('move_base',MoveBaseAction)
         
         self.log("Wait for move base server")
-#        self.actionclient['move_base'].wait_for_server()
+        self.actionclient['move_base'].wait_for_server()
 
         self.location = {}
         self.location['kitchen'] = rospy.get_param('~kitchen',[0, 0])
