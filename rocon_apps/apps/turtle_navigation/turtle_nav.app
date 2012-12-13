@@ -3,4 +3,4 @@ description :
   Turtlebot navigation
 platform: turtlebot
 launch: rocon_apps/turtle_nav.launch
-interface: rocon_apps/turtles_nav.interface
+interface: rocon_apps/turtle_nav.interface
