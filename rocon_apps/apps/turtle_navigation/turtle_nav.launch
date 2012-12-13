@@ -1,0 +1,3 @@
+<launch>
+    <node pkg="rocon_appbridge" type="appbridge.py" name="appbridge"/>
+</launch>
