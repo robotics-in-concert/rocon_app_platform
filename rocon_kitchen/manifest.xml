@@ -1,0 +1,16 @@
+<package>
+  <description brief="rocon_kitchen">
+
+     rocon_kitchen
+
+  </description>
+  <author>Jihoon</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/rocon_kitchen</url>
+  <depend package="rospy"/>
+  <depend package="demo_msgs"/>
+
+</package>
+
+

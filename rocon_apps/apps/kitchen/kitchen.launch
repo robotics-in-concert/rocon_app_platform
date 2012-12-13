@@ -1,0 +1,3 @@
+<launch>
+    <node pkg="rocon_kitchen" type="kitchen.py" name="kitchen"/>
+</launch>

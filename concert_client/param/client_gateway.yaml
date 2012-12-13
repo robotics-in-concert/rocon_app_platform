@@ -15,7 +15,7 @@
 # hub_blacklist: []
 
 ## Gateway name - this is a human readable convenience only
-name: 'concertclient'
+name: 'whoola'
 
 ## Watch loop period - how long the watcher should sleep
 ## inbetween checking if system state needs synchronisation
