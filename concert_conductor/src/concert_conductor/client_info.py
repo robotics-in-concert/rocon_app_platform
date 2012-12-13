@@ -1,23 +1,29 @@
 #!/usr/bin/env python
-#       
-# License: BSD
-#   https://raw.github.com/robotics-in-concert/rocon_app_manager/concert_conductor/LICENSE 
 #
+# License: BSD
+#   https://raw.github.com/robotics-in-concert/rocon_app_manager/concert_conductor/LICENSE
+#
+
+##############################################################################
+# Imports
+##############################################################################
+
 import roslib
 roslib.load_manifest('concert_conductor')
 import rospy
-import rosservice
-from appmanager_msgs.srv import *
-from concert_msgs.srv import *
-from concert_msgs.msg import *
-from std_msgs.msg import String
+import concert_msgs.msg as concert_msgs
+import concert_msgs.srv as concert_srvs
+
+##############################################################################
+# ClientInfo Class
+##############################################################################
 
 
 class ClientInfo(object):
 
-    def __init__(self, clientname,param):
+    def __init__(self, clientname, param):
 
-        self.data = ConcertClient()
+        self.data = concert_msgs.ConcertClient()
         self.rawdata = {}
         self.name = clientname
         self.param = param
@@ -27,13 +33,13 @@ class ClientInfo(object):
         self.service_exec = {}
 
         #### Setup Invitation Service
-        self.invitation = rospy.ServiceProxy(str(self.name + '/' + param['invitation'][0]),param['invitation'][1]) 
-        
+        self.invitation = rospy.ServiceProxy(str(self.name + '/' + param['invitation'][0]), param['invitation'][1])
+
         self.service_info = {}
         for k in param['info'].keys():
             key = param['info'][k][0]
             type = param['info'][k][1]
-            self.service_info[k] = rospy.ServiceProxy(str(self.name + '/'+key),type)
+            self.service_info[k] = rospy.ServiceProxy(str(self.name + '/' + key), type)
             print "Waiting for : " + str(k)
             try:
                 self.service_info[k].wait_for_service()
@@ -45,10 +51,10 @@ class ClientInfo(object):
         try:
             for key, service in self.service_info.items():
                 self.rawdata[key] = service()
-        except Exception as e:
+        except Exception as unused_e:
             raise Exception("Error in read_info")
 
-        self.data = ConcertClient()
+        self.data = concert_msgs.ConcertClient()
         self.data.name = self.name
         self.data.platform_info = str(self.rawdata['platform_info'].platform)
         self.data.status = self.rawdata['status'].status
@@ -58,9 +64,8 @@ class ClientInfo(object):
         self.read_info()
         return self.data
 
-
-    def invite(self,name,ok_flag):
-        req = InvitationRequest(name,ok_flag)
+    def invite(self, name, ok_flag):
+        req = concert_srvs.InvitationRequest(name, ok_flag)
 
         resp = self.invitation(req)
 
@@ -68,7 +73,7 @@ class ClientInfo(object):
             self.set_channel()
         else:
             raise Exception(str("Invitation Failed : " + self.name))
-            
+
     def set_channel(self):
         param = self.param
         # Services
@@ -76,7 +81,4 @@ class ClientInfo(object):
         for k in param['execution']['srv'].keys():
             key = param['execution']['srv'][k][0]
             type = param['execution']['srv'][k][1]
-            self.service_exec[k] = rospy.ServiceProxy(str(self.name + '/'+key),type)
-
-
-
+            self.service_exec[k] = rospy.ServiceProxy(str(self.name + '/' + key), type)

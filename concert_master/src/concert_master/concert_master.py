@@ -37,8 +37,6 @@ class ConcertMaster(object):
         try:
             self.service['gateway_info'] = rospy.ServiceProxy("~gateway_info", GatewayInfo)
             self.service['gateway_info'].wait_for_service()
-            self.service['set_auto_invite'] = rospy.ServiceProxy('~set_auto_invite', SetAutoInvite)
-            self.service['set_auto_invite'].wait_for_service()
         except rospy.exceptions.ROSInterruptException:
             rospy.logwarn("Concert Master : ros shut down before services could be found.")
 
@@ -47,9 +45,6 @@ class ConcertMaster(object):
         rospy.loginfo("Concert Master : connected to hub [%s]" % self.hub_uri)
         self._register_concert_master()
         rospy.loginfo("Concert Master : registered on the hub [%s]" % self.name)
-
-        if self.param['auto_invite']:
-            self._set_auto_invite()
 
         rospy.spin()
         self._shutdown()
@@ -67,20 +62,11 @@ class ConcertMaster(object):
                 rospy.loginfo("Concert Master : no hub yet available, spinning...")
             rospy.sleep(1.0)
 
-    def _set_auto_invite(self):
-        try:
-            req = SetAutoInviteRequest(self.name, self.param['auto_invite'])
-            self.service['set_auto_invite'](req)
-        except Exception as e:
-            rospy.logerr("Concert Master : failed to call [set_auto_invite] : " + str(e))
-
     def _setup_ros_parameters(self):
         param = {}
         param['hub_uri'] = rospy.get_param('~hub_uri', '')
         param['hub_whitelist'] = rospy.get_param('~hub_whitelist', '')
         param['hub_blacklist'] = rospy.get_param('~hub_blacklist', '')
-        param['auto_invite'] = rospy.get_param('~auto_invite', False)
-
         return param
 
     def _register_concert_master(self):

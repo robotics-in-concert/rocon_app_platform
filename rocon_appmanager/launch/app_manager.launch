@@ -1,5 +1,5 @@
 <launch>
   <node pkg="rocon_appmanager" type="app_manager.py" name="appmanager" output="screen">
-    <rosparam command="load" file="$(find rocon_appmanager)/config/default.yaml" />
+    <rosparam command="load" file="$(find rocon_appmanager)/param/default.yaml" />
   </node>
 </launch>

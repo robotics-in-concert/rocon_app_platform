@@ -1,9 +1,11 @@
 #!/usr/bin/env python
-#       
-# License: BSD
-#   https://raw.github.com/robotics-in-concert/rocon_app_manager/concert_client/LICENSE 
 #
-import roslib; roslib.load_manifest('concert_client')
+# License: BSD
+#   https://raw.github.com/robotics-in-concert/rocon_app_manager/concert_client/LICENSE
+#
+
+import roslib
+roslib.load_manifest('concert_client')
 import rospy
 import sys, traceback
 from .util import *
@@ -34,9 +36,14 @@ class ConcertClient(object):
         self.name = rospy.get_name()
         self.param = self.setupRosParameters()
 
-        is_zeroconf = False
-        self.hub_client = HubClient(self.param['hub_whitelist'],self.param['hub_blacklist'],is_zeroconf,'rocon',self.name,False,None)
-        self.masterdiscovery = ConcertMasterDiscovery(self.hub_client,self.concertmaster_key,self.processNewMaster,self.log,self.logerr)
+        self.hub_client = HubClient(whitelist=self.param['hub_whitelist'],
+                                    blacklist=self.param['hub_blacklist'],
+                                    is_zeroconf=False,
+                                    namespace='rocon',
+                                    name=self.name,
+                                    callbacks=None)
+
+        self.masterdiscovery = ConcertMasterDiscovery(self.hub_client, self.concertmaster_key, self.processNewMaster, self.log, self.logerr)
 
         self.gateway_srv= {}
         self.gateway_srv['gateway_info'] = rospy.ServiceProxy('/gateway/gateway_info',GatewayInfo)

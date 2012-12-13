@@ -1,13 +1,15 @@
 <launch>
+  <arg name="concert_client_name" default="concert_client"/>
   <node ns="zeroconf" pkg="zeroconf_avahi" type="zeroconf" name="zeroconf"/>
   <node pkg="rocon_gateway" type="gateway.py" name="gateway" output="screen">
-    <rosparam command="load" file="$(find concert_client)/param/client_gateway.yaml"/>
+    <rosparam command="load" file="$(find rocon_gateway)/param/default.yaml"/>
     <rosparam command="load" file="$(find rocon_gateway)/param/default_blacklist.yaml"/>
+    <param name="name" value="$(arg concert_client_name)"/>
   </node>
   <node pkg="concert_client" type="concert_client.py" name="concert_client" output="screen">
   </node>
 
   <node pkg="rocon_appmanager" type="app_manager.py" name="appmanager" output="screen">
-    <rosparam command="load" file="$(find rocon_appmanager)/config/default.yaml" />
+    <rosparam command="load" file="$(find rocon_appmanager)/param/default.yaml" />
   </node>
 </launch>

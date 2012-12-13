@@ -1,0 +1,6 @@
+<launch>
+  <arg name="concert_client_name" value="pirate"/>
+  <include file="$(find concert_client)/launch/client.launch">
+    <arg name="concert_client_name" value="$(arg concert_client_name)"/>
+  </include>
+</launch>

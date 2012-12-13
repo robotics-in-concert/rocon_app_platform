@@ -1,5 +1,5 @@
 <launch>
-  <arg name="concert_name" default="concert"/>
+  <arg name="concert_name" default="concert_master"/>
   <node pkg="rocon_hub" type="hub.py" name="hub">
     <rosparam command="load" file="$(find rocon_hub)/param/default.yaml" />
     <param name="name" value="$(arg concert_name)"/>
@@ -12,9 +12,9 @@
     <param name="firewall" value="false"/>
   </node>
   <node pkg="concert_master" type="concert_master.py" name="concert_master" output="screen">
-    <rosparam command="load" file="$(find concert_master)/param/config.yaml"/>
     <remap from="concert_master/gateway_info" to="gateway/gateway_info"/>
-    <remap from="concert_master/set_auto_invite" to="conductor/set_auto_invite"/>
   </node>
-  <node pkg="concert_conductor" type="conductor.py" name="conductor" output="screen"/>
+  <node pkg="concert_conductor" type="conductor.py" name="conductor" output="screen">
+    <rosparam command="load" file="$(find concert_conductor)/param/default.yaml"/>
+  </node>
 </launch>
