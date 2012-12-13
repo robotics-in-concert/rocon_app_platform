@@ -15,7 +15,16 @@ class Kitchen(object):
         self.sub['command'] = rospy.Subscriber('~command',Command,self.processCommand)
 
     def spin(self):
-        rospy.spin()
+
+        pub = rospy.Publisher('/command',Command)
+        while not rospy.is_shutdown():
+            c = Command()
+            c.command ="Goto"
+            c.param = "kitchen"
+            rospy.sleep(4)
+
+
+
 
     def processCommand(self,msg):
         self.log('Got Command : ' + str(msg))
