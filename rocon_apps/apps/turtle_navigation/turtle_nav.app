@@ -1,5 +1,4 @@
 display: Turtlebot Nav
 description : 
-  Turtlebot navigate around
+  Turtlebot navigation
 platform: turtlebot
-
