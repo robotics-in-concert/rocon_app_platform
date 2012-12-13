@@ -1,4 +1,9 @@
 <launch>
+  <arg name="concert_name" default="Concert"/>
+  <node pkg="rocon_hub" type="hub.py" name="hub">
+    <rosparam command="load" file="$(find rocon_hub)/param/default.yaml" />
+    <param name="name" value="$(arg concert_name)"/>
+  </node>
   <node ns="zeroconf" pkg="zeroconf_avahi" type="zeroconf" name="zeroconf"/>
   <node pkg="rocon_gateway" type="gateway.py" name="gateway">
     <rosparam command="load" file="$(find concert_master)/param/master_gateway.yaml"/>

@@ -31,13 +31,14 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import roslib; roslib.load_manifest('concert_master')
+import roslib
+roslib.load_manifest('concert_master')
 import rospy
 from concert_master.concert_master import ConcertMaster
 
-if __name__== '__main__':
-  rospy.init_node('concert_master')
+if __name__ == '__main__':
+    rospy.init_node('concert_master')
 
-  cm = ConcertMaster()
-  rospy.loginfo("Initilized")
-  cm.spin()
+    cm = ConcertMaster()
+    rospy.loginfo("Initialised")
+    cm.spin()

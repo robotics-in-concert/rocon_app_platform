@@ -1,0 +1,6 @@
+<launch>
+  <arg name="concert_name" value="Pirate Concert"/>
+  <include file="$(find concert_master)/launch/master.launch">
+    <arg name="concert_name" value="$(arg concert_name)"/>
+  </include>
+</launch>
