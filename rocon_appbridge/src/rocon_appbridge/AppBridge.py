@@ -1,5 +1,6 @@
 import rospy
 import actionlib
+from geometry_msgs import Twist
 from std_msgs.msg import String
 from move_base_msgs.msg import *
 from demo_msgs.msg import *
@@ -9,9 +10,11 @@ class AppBridge(object):
     def __init__(self):
         self.sub ={}
         self.sub['command'] = rospy.Subscriber('command',Command,self.processCommand)
+        self.sub['order'] = rospy.Subscriber('order',Command,self.processOrder)
 
         self.pub = {}
         self.pub['status'] = rospy.Publisher('status',String)
+        self.pub['move_turtle'] = rospy.Publisher('/cmd_vel',Twist)
 
         self.actionclient = {}
         self.actionclient['move_base'] = actionlib.SimpleActionClient('move_base',MoveBaseAction)
@@ -26,6 +29,13 @@ class AppBridge(object):
     def spin(self):
         self.log("Ready")
         rospy.spin()
+
+    def processOrder(self,msg):
+        t = Twist()
+        t.angular.z = 1.0
+
+        self.log("Received : " + str(msg))
+        self.pub['move_turtle'].publish(t)
 
     def processCommand(self,msg):
         self.log("Received : " + str(msg))
