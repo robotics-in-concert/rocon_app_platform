@@ -1,10 +1,13 @@
 # Standalone mode.
 is_alone: true
 
-robot_name: '/test_robot'
+robot_name: 'chopin'
+robot_type: 'turtlebot'
+
+# This is bad.
 app_from_source_directory: '/home/jihoonl/ros/groovy/turtlebot/turtlebot_apps/turtlebot_core_apps'
+
 app_store_url: []
-platform_info: 'linux.ros.*'
 
 white_list: ["concert_master"]
 black_list: ["pirate_master"]

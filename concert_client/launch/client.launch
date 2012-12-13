@@ -9,7 +9,5 @@
   <node pkg="concert_client" type="concert_client.py" name="concert_client" output="screen">
   </node>
 
-  <node pkg="rocon_appmanager" type="app_manager.py" name="appmanager" output="screen">
-    <rosparam command="load" file="$(find rocon_appmanager)/param/default.yaml" />
-  </node>
+  <include file="$(find rocon_appmanager)/launch/app_manager.launch"/>
 </launch>

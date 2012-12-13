@@ -7,13 +7,14 @@
 import roslib
 roslib.load_manifest('concert_client')
 import rospy
-import sys, traceback
+import sys
+import traceback
 from .util import *
 
 from rocon_hub_client.hub_client import HubClient
 from .concertmaster_discovery import ConcertMasterDiscovery
-from concert_msgs.srv import Invitation,Status,StatusResponse
-from appmanager_msgs.srv import *
+from concert_msgs.srv import Invitation, Status, StatusResponse
+import appmanager_msgs.srv as appmanager_srvs
 
 
 class ConcertClient(object):
@@ -45,16 +46,16 @@ class ConcertClient(object):
 
         self.masterdiscovery = ConcertMasterDiscovery(self.hub_client, self.concertmaster_key, self.processNewMaster, self.log, self.logerr)
 
-        self.gateway_srv= {}
-        self.gateway_srv['gateway_info'] = rospy.ServiceProxy('/gateway/gateway_info',GatewayInfo)
-        self.gateway_srv['flip'] = rospy.ServiceProxy('/gateway/flip',Remote)
+        self.gateway_srv = {}
+        self.gateway_srv['gateway_info'] = rospy.ServiceProxy('/gateway/gateway_info', GatewayInfo)
+        self.gateway_srv['flip'] = rospy.ServiceProxy('/gateway/flip', Remote)
         self.gateway_srv['gateway_info'].wait_for_service()
         self.gateway_srv['flip'].wait_for_service()
 
         self.appmanager_srv = {}
-        self.appmanager_srv['init'] = rospy.ServiceProxy('/appmanager/init',Init)
-        self.appmanager_srv['apiflip_request'] = rospy.ServiceProxy('/appmanager/apiflip_request',FlipRequest)
-        self.appmanager_srv['invitation'] = rospy.ServiceProxy('/appmanager/invitation',Invitation)
+        self.appmanager_srv['init'] = rospy.ServiceProxy('/appmanager/init', appmanager_srvs.Init)
+        self.appmanager_srv['apiflip_request'] = rospy.ServiceProxy('/appmanager/apiflip_request', appmanager_srvs.FlipRequest)
+        self.appmanager_srv['invitation'] = rospy.ServiceProxy('/appmanager/invitation', Invitation)
         self.log("Wait for appmanager")
         self.appmanager_srv['init'].wait_for_service()
 
@@ -92,63 +93,58 @@ class ConcertClient(object):
         self.service['status'] = rospy.Service(self.name+'/'+self.status_srv,Status,self.processStatus)
         self.master_services = ['/'+self.name+ '/'+self.invitation_srv , '/'+self.name + '/' + self.status_srv]
 
-        app_init_req = InitRequest(name)
+        app_init_req = appmanager_srvs.InitRequest(name)
         resp = self.appmanager_srv['init'](app_init_req)
         self.log("Appmanager Initialization : " + str(resp))
-
 
     def setupRosParameters(self):
         param = {}
         param['hub_whitelist'] = ''
         param['hub_blacklist'] = ''
-        param['cm_whitelist']= []
-        param['cm_blacklist']= []
+        param['cm_whitelist'] = []
+        param['cm_blacklist'] = []
 
         return param
 
     def startMasterDiscovery(self):
         self.masterdiscovery.start()
 
-    def processNewMaster(self,discovered_masterlist):
+    def processNewMaster(self, discovered_masterlist):
         # find newly discovered masters
         new_masters = [m for m in discovered_masterlist if m not in self.concertmasterlist]
         self.concertmasterlist += new_masters
-        
+
         for master in new_masters:
             self.joinMaster(master)
 
         # cleaning gone masters
         self.concertmasterlist = [m for m in self.concertmasterlist and discovered_masterlist]
 
-    def joinMaster(self,master):
-        self.flips(master,self.master_services,ConnectionType.SERVICE,True)
-        
-        req = FlipRequestRequest(master,True)
+    def joinMaster(self, master):
+        self.flips(master, self.master_services, ConnectionType.SERVICE, True)
+
+        req = appmanager_srvs.FlipRequestRequest(master, True)
         resp = self.appmanager_srv['apiflip_request'](req)
         if resp.result == False:
             self.logerr("Failed to Flip Appmanager APIs")
 
-
     def leaveMasters(self):
-        self.masterdiscovery.setStop()
+        self.masterdiscovery.set_stop()
 
         try:
             for master in self.concertmasterlist:
-                self.leavMaster(master)
-        except Exception as e:
+                self._leave_master(master)
+        except Exception as unused_e:
             self.log("Gateway is down already")
 
-    def leavMaster(self,master):
-        self.flips(master,self.master_services,ConnectionType.SERVICE,False)
-        req = FlipRequestRequest(master,False)
+    def _leave_master(self, master):
+        self.flips(master, self.master_services, ConnectionType.SERVICE, False)
+        req = appmanager_srvs.FlipRequestRequest(master, False)
         resp = self.appmanager_srv['apiflip_request'](req)
         if resp.result == False:
             self.logerr("Failed to Flip Appmanager APIs")
 
-
-
-
-    def processInvitation(self,req):
+    def processInvitation(self, req):
         cm_name = req.name
 
         # Check if concert master is in white list
@@ -162,10 +158,10 @@ class ConcertClient(object):
     def acceptInvitation(self,req):
         self.log("Accepting invitation from " + req.name)
         resp = self.appmanager_srv['invitation'](req)
-        
+
         return resp
 
-    def processStatus(self,req):
+    def processStatus(self, req):
         resp = StatusResponse()
         resp.status = "Vacant" if not self.is_invited else "Busy"
         return resp

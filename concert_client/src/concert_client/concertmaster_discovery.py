@@ -33,7 +33,5 @@ class ConcertMasterDiscovery(threading.Thread):
     def getMasterList(self):
         return self.hub_client.getValues(self.concertmasterlist_key)
 
-
-    def setStop(self):
+    def set_stop(self):
         self._stop = True
-

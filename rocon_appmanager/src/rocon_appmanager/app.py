@@ -1,52 +1,23 @@
-#!/usr/bin/env python             
-# Software License Agreement (BSD License)
+#!/usr/bin/env python
 #
-# Copyright (c) 2012, Yujin Robot, Daniel Stonier, Jihoon Lee
-# All rights reserved.
+# License: BSD
+#   https://raw.github.com/robotics-in-concert/rocon_app_platform/master/rocon_appmanager/LICENSE
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-#    * Redistributions of source code must retain the above copyright
-#        notice, this list of conditions and the following disclaimer.
-#    * Redistributions in binary form must reproduce the above
-#        copyright notice, this list of conditions and the following
-#        disclaimer in the documentation and/or other materials provided
-#        with the distribution.
-#    * Neither the name of Yujin Robot nor the names of its
-#        contributors may be used to endorse or promote products derived
-#        from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
+##############################################################################
+# Imports
+##############################################################################
 
 import os
-import errno
 import yaml
 import utils
 import rospy
 import roslaunch.parent
-import roslaunch.pmon
 import traceback
 import time
 import thread
 
 from .exceptions import AppException
 from roslib.packages import InvalidROSPkgException
-
-
-
 
 """
     App - Jihoon Lee(jihoonl@yujinrobot.com)
@@ -58,13 +29,14 @@ from roslib.packages import InvalidROSPkgException
     Todo:
 """
 
+
 class App(object):
-    path = None 
+    path = None
     data = {}
 
-    def __init__(self,app_name,path):
+    def __init__(self, app_name, path):
         self.path = path
-        self.load(path,app_name)
+        self.load(path, app_name)
 
     def __repr__(self):
         string = ""
@@ -72,57 +44,56 @@ class App(object):
             string += d + " : " + str(self.data[d]) + "\n"
         return string
 
-    def load(self,path,app_name):
-        print "Loading App from " + str(path)
+    def load(self, path, app_name):
+        rospy.loginfo("App Manager : loading app '%s'" % app_name)  # str(path)
 
-        with open(path,'r') as f:
+        with open(path, 'r') as f:
             data = {}
-            app_data = yaml.load(f.read()) 
+            app_data = yaml.load(f.read())
 
-            for reqd in ['launch','interface','platform']:
+            for reqd in ['launch', 'interface', 'platform']:
                 if not reqd in app_data:
-                    raise AppException("Invalid appfile format [" + path + "], missing required key ["+reqd+"]")
+                    raise AppException("Invalid appfile format [" + path + "], missing required key [" + reqd + "]")
 
             data['name'] = app_name
-            data['display'] =app_data.get('display',app_name)
-            data['description'] = app_data.get('description','')
+            data['display'] = app_data.get('display', app_name)
+            data['description'] = app_data.get('description', '')
             data['platform'] = app_data['platform']
-            data['launch'] = self.loadFromFile(app_data['launch'],'launch',app_name)
-            data['interface'] = self.loadInterface(self.loadFromFile(app_data['interface'],'interface',app_name))
+            data['launch'] = self.loadFromFile(app_data['launch'], 'launch', app_name)
+            data['interface'] = self.loadInterface(self.loadFromFile(app_data['interface'], 'interface', app_name))
             if 'icon' not in app_data:
                 data['icon'] = None
             else:
-                data['icon'] = self.loadFromFile(app_data['icon'],'icon',app_name)
+                data['icon'] = self.loadFromFile(app_data['icon'], 'icon', app_name)
             data['status'] = 'Ready'
 
         self.data = data
-            
-    def loadFromFile(self,path,log,app_name="Unknown"):
+
+    def loadFromFile(self, path, log, app_name="Unknown"):
         try:
             data = utils.findResource(path)
             if not os.path.exists(data):
-                raise AppException("Invalid appfile [%s]: %s file does not exist."%(app_name,log))
+                raise AppException("Invalid appfile [%s]: %s file does not exist." % (app_name, log))
             return data
         except ValueError as e:
-            raise AppException("Invalid appfile [%s]: bad %s entry: %s"%(app_name,log,e))
+            raise AppException("Invalid appfile [%s]: bad %s entry: %s" % (app_name, log, e))
             """
-        except NotFoundException: 
+        except NotFoundException:
             raise AppException("App file [%s] feres to %s that is not installed"%(app_name,log))
             """
         except InvalidROSPkgException as e:
-            raise AppException("App file [%s] feres to %s that is not installed: %s"%(app_name,log,str(e)))
+            raise AppException("App file [%s] feres to %s that is not installed: %s" % (app_name, log, str(e)))
 
-
-    def loadInterface(self,data):
+    def loadInterface(self, data):
         d = {}
-        keys = ['subscriber','publisher','service']
-        with open(data,'r') as f:
+        keys = ['subscriber', 'publisher', 'service']
+        with open(data, 'r') as f:
             y = yaml.load(f.read())
             y = y or {}
             try:
                 for k in keys:
-                    raw_data = y.get(k,[])
-                
+                    raw_data = y.get(k, [])
+
                     # remote / in front of topics
                     new_data = []
                     for r in raw_data:
@@ -130,52 +101,54 @@ class App(object):
                             r = r[1:len(r)]
                         new_data.append(r)
                     d[k] = new_data
-                    
+
             except KeyError:
                 raise AppException("Invalid interface, missing keys")
 
         return d
-            
-    def start(self,robot_name):
+
+    def start(self, robot_name):
         data = self.data
-        rospy.loginfo("Launching: %s"%(data['name']))
+        rospy.loginfo("Launching: %s" % (data['name']))
 
         # Starts app
         try:
             prefix = robot_name
 
-            # Create roslaunch 
-            self._launch = roslaunch.parent.ROSLaunchParent(rospy.get_param("/run_id"),[data['launch']],is_core=False,process_listeners=())
+            # Create roslaunch
+            self._launch = roslaunch.parent.ROSLaunchParent(rospy.get_param("/run_id"),
+                                                            [data['launch']],
+                                                            is_core=False,
+                                                            process_listeners=())
             self._launch._load_config()
-    
+
             print data['interface']
 
             # Remap the topics
             for N in self._launch.config.nodes:
-              for t in data['interface']['publisher']:
-                N.remap_args.append((t, prefix + '/' +t ))
-              for t in data['interface']['subscriber']:
-                N.remap_args.append((t, prefix + '/' +t ))
-              for t in data['interface']['service']:
-                N.remap_args.append((t, prefix + '/' +t ))
+                for t in data['interface']['publisher']:
+                    N.remap_args.append((t, prefix + '/' + t))
+                for t in data['interface']['subscriber']:
+                    N.remap_args.append((t, prefix + '/' + t))
+                for t in data['interface']['service']:
+                    N.remap_args.append((t, prefix + '/' + t))
 
             self._launch.start()
 
-            self.subscribers= [prefix + '/' + x for x in data['interface']['subscriber']]
+            self.subscribers = [prefix + '/' + x for x in data['interface']['subscriber']]
             self.publishers = [prefix + '/' + x for x in data['interface']['publisher']]
             self.services = [prefix + '/' + x for x in data['interface']['service']]
 
-            thread.start_new_thread(self.app_monitor,())
+            thread.start_new_thread(self.app_monitor, ())
             data['status'] = 'Running'
             return True, "Success", self.subscribers, self.publishers, self.services
 
         except Exception as e:
             print str(e)
             traceback.print_stack()
-            rospy.loginfo("Error While launching "+ data['launch'])
-            data['status'] = "Error While launching "+ data['launch']
-            return False, "Error while launching " + data['name'], [],[],[]
-
+            rospy.loginfo("Error While launching " + data['launch'])
+            data['status'] = "Error While launching " + data['launch']
+            return False, "Error while launching " + data['name'], [], [], []
 
     def stop(self):
         data = self.data
@@ -192,10 +165,9 @@ class App(object):
             print str(e)
             rospy.loginfo("Error while stopping " + data['name'])
             data['status'] = 'Error'
-            return False, "Error while stopping " + data['name'], self.subscribers, self.publishers,self.services
+            return False, "Error while stopping " + data['name'], self.subscribers, self.publishers, self.services
 
-        return True , "Success",self.subscribers,self.publishers,self.services
-            
+        return True, "Success", self.subscribers, self.publishers, self.services
 
     def app_monitor(self):
         while self._launch:

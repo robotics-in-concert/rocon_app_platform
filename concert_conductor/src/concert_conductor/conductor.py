@@ -43,7 +43,7 @@ class Conductor(object):
         param['invitation'] = (rospy.get_param('~invitation', 'invitation'), concert_srvs.Invitation)
         param['info'] = {}
         param['info']['list_apps'] = (rospy.get_param('~list_apps', 'list_apps'), appmanager_srvs.GetAppList)
-        param['info']['platform_info'] = (rospy.get_param('~platform_info', 'platform_info'), appmanager_srvs.PlatformInfoSrv)
+        param['info']['platform_info'] = (rospy.get_param('~platform_info', 'platform_info'), concert_srvs.GetPlatformInfo)
         param['info']['status'] = (rospy.get_param('~status', 'status'), concert_srvs.Status)
 
         param['execution'] = {}
