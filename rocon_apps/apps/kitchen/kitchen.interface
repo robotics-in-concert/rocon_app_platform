@@ -1,3 +1,3 @@
-publisher: ['/kitchen/status']
+publisher: ['/kitchen/status', '/command']
 subscriber: ['/kitchen/command', '/kitchen/order']
 service: []
