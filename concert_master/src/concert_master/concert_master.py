@@ -20,47 +20,42 @@ class ConcertMaster(object):
     is_connected = False
     hub_client = None
 
-    gateway_info = '/gateway/gateway_info'
-    gateway = None
-
-    set_auto_invite = '/concertconductor/set_auto_invite'
-
     def __init__(self):
         self.is_connected = False
-        is_zeroconf = False
 
         self.name = rospy.get_name()
-        self.param = self.setupRosParameters()
+        self.param = self._setup_ros_parameters()
 
-        self.hub_client = HubClient(self.param['hub_whitelist'], self.param['hub_blacklist'], is_zeroconf, 'rocon', self.name, False, None)
+        self.hub_client = HubClient(whitelist=self.param['hub_whitelist'],
+                                    blacklist=self.param['hub_blacklist'],
+                                    is_zeroconf=False,
+                                    namespace='rocon',
+                                    name=self.name,
+                                    callbacks=None)
 
         self.service = {}
-        self.service['gateway_info'] = rospy.ServiceProxy(self.gateway_info, GatewayInfo)
-        self.service['gateway_info'].wait_for_service()
-
-        self.service['set_auto_invite'] = rospy.ServiceProxy(self.set_auto_invite, SetAutoInvite)
-        self.service['set_auto_invite'].wait_for_service()
+        try:
+            self.service['gateway_info'] = rospy.ServiceProxy("~gateway_info", GatewayInfo)
+            self.service['gateway_info'].wait_for_service()
+            self.service['set_auto_invite'] = rospy.ServiceProxy('~set_auto_invite', SetAutoInvite)
+            self.service['set_auto_invite'].wait_for_service()
+        except rospy.exceptions.ROSInterruptException:
+            rospy.logwarn("Concert Master : ros shut down before services could be found.")
 
     def spin(self):
-        self.log("Attempt to connect to Hub...")
-        self.connectToHub()
-        self.log("Connected to Hub [%s]" % self.hub_uri)
-        self.log("Registering Concert Master...")
-        self.registerConcertMaster()
-        self.log("Concert Master Registered [%s]" % self.name)
+        self._connect_to_hub()
+        rospy.loginfo("Concert Master : connected to hub [%s]" % self.hub_uri)
+        self._register_concert_master()
+        rospy.loginfo("Concert Master : registered on the hub [%s]" % self.name)
 
         if self.param['auto_invite']:
-            self.setAutoInvite()
+            self._set_auto_invite()
 
         rospy.spin()
-        self.log("Shutting Down")
-        self.shutdown()
-        self.log("Done")
+        self._shutdown()
 
-    def connectToHub(self):
+    def _connect_to_hub(self):
         while not rospy.is_shutdown() and not self.is_connected:
-            self.log("Getting Hub info from gateway...")
-
             gateway_info = self.service['gateway_info']()
             if gateway_info.connected == True:
                 hub_uri = gateway_info.hub_uri
@@ -69,30 +64,17 @@ class ConcertMaster(object):
                     self.name = gateway_info.name
                     self.hub_uri = hub_uri
             else:
-                self.log("No hub is available. Try later")
+                rospy.loginfo("Concert Master : no hub yet available, spinning...")
             rospy.sleep(1.0)
 
-    def setAutoInvite(self):
+    def _set_auto_invite(self):
         try:
             req = SetAutoInviteRequest(self.name, self.param['auto_invite'])
             self.service['set_auto_invite'](req)
         except Exception as e:
-            self.logerr("Failed to call [set_auto_invite] : " + str(e))
+            rospy.logerr("Concert Master : failed to call [set_auto_invite] : " + str(e))
 
-    def registerConcertMaster(self):
-        try:
-            self.hub_client.registerKey(self.concertmaster_key, self.name)
-        except Exception as e:
-            self.logerr(str(e))
-            traceback.print_exc(file=sys.stdout)
-
-    def shutdown(self):
-        self.unregisterConcertMaster()
-
-    def unregisterConcertMaster(self):
-        self.hub_client.unregisterKey(self.concertmaster_key, self.name)
-
-    def setupRosParameters(self):
+    def _setup_ros_parameters(self):
         param = {}
         param['hub_uri'] = rospy.get_param('~hub_uri', '')
         param['hub_whitelist'] = rospy.get_param('~hub_whitelist', '')
@@ -101,11 +83,21 @@ class ConcertMaster(object):
 
         return param
 
+    def _register_concert_master(self):
+        try:
+            self.hub_client.registerKey(self.concertmaster_key, self.name)
+        except Exception as e:
+            rospy.logerr("Concert Master : %s" % str(e))
+            traceback.print_exc(file=sys.stdout)
+
+    def _unregister_concert_master(self):
+        try:
+            self.hub_client.unregisterKey(self.concertmaster_key, self.name)
+        except HubClient.ConnectionError:
+            # usually just shut down before we did...die quietly
+            #rospy.logwarn("Concert Master : lost connection to the hub (probably shut down before we did)")
+            pass
+
     def _shutdown(self):
-        rospy.loginfo("Shutting down")
-
-    def log(self, msg):
-        rospy.loginfo("Concert Master : " + msg)
-
-    def logerr(self, msg):
-        rospy.logerr("Concert Master : " + msg)
+        self._unregister_concert_master()
+        rospy.loginfo("Concert Master : shutting down")
