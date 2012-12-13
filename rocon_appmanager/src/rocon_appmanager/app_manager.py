@@ -98,16 +98,15 @@ class AppManager(object):
     def __init__(self):
 
         # load configuration from rosparam
-        rospy.loginfo("Parsing Parameters")
+        rospy.loginfo("App Manager : parsing parameters")
         self.parseParams()
 
 #        if self.param['is_alone'] == False:
 #            super(AppManager,self).__init__(self.param['white_list'], self.param['black_list'],self.param['platform_info'])
 
         # It sets up an app directory and load installed app list from directory
-        rospy.loginfo("Loading app lists")
+        rospy.loginfo("App Manager : loading app lists")
         self.getInstalledApplist()
-        rospy.loginfo("Done")
 
         roslaunch.pmon._init_signal_handlers()
 

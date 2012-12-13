@@ -179,7 +179,8 @@ class ConcertClient(object):
         else:
             self.logerr("Failed to flip : " + str(topics) + " : " + str(resp.error_message))
 
-    def log(self,msg):
+    def log(self, msg):
         rospy.loginfo("Concert Client : " + msg)
-    def logerr(self,msg):
+
+    def logerr(self, msg):
         rospy.logerr ("Concert Client : " + msg)
