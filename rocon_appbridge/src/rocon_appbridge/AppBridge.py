@@ -1,7 +1,7 @@
 import rospy
 import actionlib
 from std_msgs.msg import String
-from move_base_msgs.msg import MoveBaseAction
+from move_base_msgs.msg import *
 from demo_msgs.msg import *
 
 
@@ -24,20 +24,23 @@ class AppBridge(object):
         self.location['loc1'] = rospy.get_param('~loc1',[0,0])
 
     def spin(self):
+        self.log("Ready")
         rospy.spin()
 
     def processCommand(self,msg):
+        self.log("Received : " + str(msg))
         command = msg.command
         param = msg.param
 
         if command == "Goto":
             location = self.location[msg.param]
-            self.sendGoal(location)
+            self.send_goal(location)
         else:
             m = "Command Error : " + msg.command
             self.log(m)
 
-    def send_goal(self,log):
+    def send_goal(self,loc):
+        self.log("Sending robot to : " + str(loc))
         goal = MoveBaseGoal()
         goal.target_pose.header.frame_id = '/map'
         goal.target_pose.header.stamp = rospy.Time.now()
