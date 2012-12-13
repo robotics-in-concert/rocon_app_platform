@@ -2,7 +2,7 @@
 import roslib; roslib.load_manifest('rocon_kitchen')
 
 import rospy
-from rocon_appbridge import *
+from rocon_kitchen.Kitchen import *
 
 if __name__ == '__main__':
 
