@@ -1,6 +1,6 @@
 import rospy
 import actionlib
-from geometry_msgs import Twist
+from geometry_msgs.msg import Twist
 from std_msgs.msg import String
 from move_base_msgs.msg import *
 from demo_msgs.msg import *
@@ -14,7 +14,7 @@ class AppBridge(object):
 
         self.pub = {}
         self.pub['status'] = rospy.Publisher('status',String)
-        self.pub['move_turtle'] = rospy.Publisher('/cmd_vel',Twist)
+        self.pub['move_turtle'] = rospy.Publisher('/mobile_base/commands/velocity',Twist)
 
         self.actionclient = {}
         self.actionclient['move_base'] = actionlib.SimpleActionClient('move_base',MoveBaseAction)
@@ -42,12 +42,19 @@ class AppBridge(object):
         command = msg.command
         param = msg.param
 
+        t = Twist()
+        t.angular.z = 1.0
+
+        self.log("Received : " + str(msg))
+        self.pub['move_turtle'].publish(t)
+        """
         if command == "Goto":
             location = self.location[msg.param]
             self.send_goal(location)
         else:
             m = "Command Error : " + msg.command
             self.log(m)
+        """
 
     def send_goal(self,loc):
         self.log("Sending robot to : " + str(loc))

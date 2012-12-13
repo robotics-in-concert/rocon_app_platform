@@ -11,6 +11,7 @@
   <depend package="rospy"/>
   <depend package="demo_msgs"/>
   <depend package="move_base_msgs"/>
+  <depend package="geometry_msgs"/>
 
 </package>
 
