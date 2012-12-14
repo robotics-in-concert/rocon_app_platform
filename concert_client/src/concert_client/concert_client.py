@@ -90,6 +90,12 @@ class ConcertClient(object):
             rospy.sleep(1.0)
 
     def init(self, name, uri):
+        '''
+        @param name : the unique gateway name
+        @type string
+        @param uri : the hub uri
+        @type string
+        '''
         self.is_connected = True
         self.name = name
         self.hub_uri = uri
@@ -100,8 +106,8 @@ class ConcertClient(object):
         self.master_services = ['/' + self.name + '/' + self.invitation_srv, '/' + self.name + '/' + self.status_srv]
 
         app_init_req = appmanager_srvs.InitRequest(name)
-        resp = self.appmanager_srv['init'](app_init_req)
-        rospy.loginfo("Appmanager Initialization : " + str(resp))
+        rospy.loginfo("Concert Client : initialising the app manager [%s]" % name)
+        unused_resp = self.appmanager_srv['init'](app_init_req)
 
     def setupRosParameters(self):
         param = {}
@@ -132,7 +138,7 @@ class ConcertClient(object):
         req = appmanager_srvs.FlipRequestRequest(master, True)
         resp = self.appmanager_srv['apiflip_request'](req)
         if resp.result == False:
-            self.logerr("Failed to Flip Appmanager APIs")
+            rospy.logerr("Concert Client : failed to flip appmanager APIs")
 
     def leaveMasters(self):
         self.masterdiscovery.set_stop()

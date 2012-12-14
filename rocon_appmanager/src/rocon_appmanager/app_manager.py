@@ -104,9 +104,9 @@ class AppManager(object):
 
     def setGatewaySrvs(self):
         self.gateway_srv = {}
-        self.gateway_srv['flip'] = rospy.ServiceProxy('/gateway/flip', gateway_srvs.Remote)
-        self.gateway_srv['advertise'] = rospy.ServiceProxy('/gateway/advertise', gateway_srvs.Advertise)
-        self.gateway_srv['pull'] = rospy.ServiceProxy('/gateway/pull', gateway_srvs.Remote)
+        self.gateway_srv['flip'] = rospy.ServiceProxy('~flip', gateway_srvs.Remote)
+        self.gateway_srv['advertise'] = rospy.ServiceProxy('~advertise', gateway_srvs.Advertise)
+        self.gateway_srv['pull'] = rospy.ServiceProxy('~pull', gateway_srvs.Remote)
 
     def setPlatformInfo(self):
         self.platform_info = concert_msgs.PlatformInfo()
@@ -290,9 +290,9 @@ class AppManager(object):
         resp = self.gateway_srv['flip'](req)
 
         if resp.result == 0:
-            self.log("Success to Flip : " + str(topics))
+            self.log("App Manager : successfully flipped [%s]" % str(topics))
         else:
-            self.logerr("Fail to Flip     : %s" % resp.error_message)
+            self.logerr("App Manager : failed to flip [%s]" % resp.error_message)
 
     def process_stdmsg(self, message):
         self.pubs['log'].publish(message)
