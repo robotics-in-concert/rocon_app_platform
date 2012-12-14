@@ -168,7 +168,7 @@ class ConcertClient(object):
             return concert_srvs.InvitationResponse(False)
 
     def acceptInvitation(self, req):
-        rospy.loginfo("Concert Client : accepting invitation from " + req.name)
+        rospy.loginfo("Concert Client : accepting invitation from %s" % req.name)
         resp = self.appmanager_srv['invitation'](req)
 
         return resp
@@ -190,6 +190,6 @@ class ConcertClient(object):
         resp = self.gateway_srv['flip'](req)
 
         if resp.result == 0:
-            rospy.loginfo("Concert Client : successfully flipped handles to the concert [%s]" % str(topics))
+            rospy.loginfo("Concert Client : successfully flipped to the concert %s" % str(topics))
         else:
             rospy.logerr("Concert Client : failed to flip [%s][%s]" % (str(topics), str(resp.error_message)))
