@@ -10,14 +10,18 @@
 import roslib
 roslib.load_manifest('concert_client')
 import rospy
-import sys
-import traceback
-from .util import *
 
 from rocon_hub_client.hub_client import HubClient
 from .concertmaster_discovery import ConcertMasterDiscovery
-from concert_msgs.srv import Invitation, Status, StatusResponse
+import concert_msgs.srv as concert_srvs
 import appmanager_msgs.srv as appmanager_srvs
+import gateway_msgs.msg as gateway_msgs
+import gateway_msgs.srv as gateway_srvs
+from .util import createRule, createRemoteRule
+
+##############################################################################
+# Concert Client
+##############################################################################
 
 
 class ConcertClient(object):
@@ -47,58 +51,57 @@ class ConcertClient(object):
                                     name=self.name,
                                     callbacks=None)
 
-        self.masterdiscovery = ConcertMasterDiscovery(self.hub_client, self.concertmaster_key, self.processNewMaster, self.log, self.logerr)
+        self.masterdiscovery = ConcertMasterDiscovery(self.hub_client, self.concertmaster_key, self.processNewMaster)
 
         self.gateway_srv = {}
-        self.gateway_srv['gateway_info'] = rospy.ServiceProxy('/gateway/gateway_info', GatewayInfo)
-        self.gateway_srv['flip'] = rospy.ServiceProxy('/gateway/flip', Remote)
-        self.gateway_srv['gateway_info'].wait_for_service()
-        self.gateway_srv['flip'].wait_for_service()
+        self.gateway_srv['gateway_info'] = rospy.ServiceProxy('~gateway_info', gateway_srvs.GatewayInfo)
+        self.gateway_srv['flip'] = rospy.ServiceProxy('~flip', gateway_srvs.Remote)
+        try:
+            self.gateway_srv['gateway_info'].wait_for_service()
+            self.gateway_srv['flip'].wait_for_service()
+        except rospy.exceptions.ROSInterruptException:
+            rospy.logerr("Concert Client : interrupted while waiting for gateway services to appear.")
+            return
 
         self.appmanager_srv = {}
-        self.appmanager_srv['init'] = rospy.ServiceProxy('/appmanager/init', appmanager_srvs.Init)
-        self.appmanager_srv['apiflip_request'] = rospy.ServiceProxy('/appmanager/apiflip_request', appmanager_srvs.FlipRequest)
-        self.appmanager_srv['invitation'] = rospy.ServiceProxy('/appmanager/invitation', Invitation)
-        self.log("Wait for appmanager")
+        self.appmanager_srv['init'] = rospy.ServiceProxy('~init', appmanager_srvs.Init)
+        self.appmanager_srv['apiflip_request'] = rospy.ServiceProxy('~apiflip_request', appmanager_srvs.FlipRequest)
+        self.appmanager_srv['invitation'] = rospy.ServiceProxy('~relay_invitation', concert_srvs.Invitation)
         self.appmanager_srv['init'].wait_for_service()
 
     def spin(self):
-        self.log("Attempt to connect to Hub...")
         self.connectToHub()
-        self.log("Connected to Hub [%s]"%self.hub_uri)
-        self.log("Starting Master discovery thread...")
+        rospy.loginfo("Concert Client: connected to Hub [%s]" % self.hub_uri)
+        rospy.loginfo("Concert Client; scanning for concerts...")
         self.startMasterDiscovery()
         rospy.spin()
-        self.log("Stopping master discovery thread...")
         self.leaveMasters()
-        self.log("Done")
 
     def connectToHub(self):
         while not rospy.is_shutdown() and not self.is_connected:
-            self.log("Getting Hub info from gateway...")
-
+            rospy.loginfo("Getting Hub info from gateway...")
             gateway_info = self.gateway_srv['gateway_info']()
             if gateway_info.connected == True:
                 hub_uri = gateway_info.hub_uri
                 if self.hub_client.connect(hub_uri):
-                    self.init(gateway_info.name,hub_uri)
+                    self.init(gateway_info.name, hub_uri)
             else:
-                self.log("No hub is available. Try later")
+                rospy.loginfo("No hub is available. Try later")
             rospy.sleep(1.0)
 
-    def init(self,name,uri):
+    def init(self, name, uri):
         self.is_connected = True
         self.name = name
         self.hub_uri = uri
 
         self.service = {}
-        self.service['invitation'] = rospy.Service(self.name+'/'+self.invitation_srv,Invitation,self.processInvitation)
-        self.service['status'] = rospy.Service(self.name+'/'+self.status_srv,Status,self.processStatus)
-        self.master_services = ['/'+self.name+ '/'+self.invitation_srv , '/'+self.name + '/' + self.status_srv]
+        self.service['invitation'] = rospy.Service(self.name + '/' + self.invitation_srv, concert_srvs.Invitation, self.processInvitation)
+        self.service['status'] = rospy.Service(self.name + '/' + self.status_srv, concert_srvs.Status, self.processStatus)
+        self.master_services = ['/' + self.name + '/' + self.invitation_srv, '/' + self.name + '/' + self.status_srv]
 
         app_init_req = appmanager_srvs.InitRequest(name)
         resp = self.appmanager_srv['init'](app_init_req)
-        self.log("Appmanager Initialization : " + str(resp))
+        rospy.loginfo("Appmanager Initialization : " + str(resp))
 
     def setupRosParameters(self):
         param = {}
@@ -124,7 +127,7 @@ class ConcertClient(object):
         self.concertmasterlist = [m for m in self.concertmasterlist and discovered_masterlist]
 
     def joinMaster(self, master):
-        self.flips(master, self.master_services, ConnectionType.SERVICE, True)
+        self.flips(master, self.master_services, gateway_msgs.ConnectionType.SERVICE, True)
 
         req = appmanager_srvs.FlipRequestRequest(master, True)
         resp = self.appmanager_srv['apiflip_request'](req)
@@ -138,10 +141,10 @@ class ConcertClient(object):
             for master in self.concertmasterlist:
                 self._leave_master(master)
         except Exception as unused_e:
-            self.log("Gateway is down already")
+            rospy.logdebug("Concert Client: gateway already down, no shutdown work required.")
 
     def _leave_master(self, master):
-        self.flips(master, self.master_services, ConnectionType.SERVICE, False)
+        self.flips(master, self.master_services, gateway_msgs.ConnectionType.SERVICE, False)
         req = appmanager_srvs.FlipRequestRequest(master, False)
         resp = self.appmanager_srv['apiflip_request'](req)
         if resp.result == False:
@@ -151,42 +154,36 @@ class ConcertClient(object):
         cm_name = req.name
 
         # Check if concert master is in white list
-        if cm_name in self.param['cm_whitelist']: 
+        if cm_name in self.param['cm_whitelist']:
             return self.acceptInvitation(req)
         elif len(self.param['cm_whitelist']) == 0 and cm_name not in self.param['cm_blacklist']:
             return self.acceptInvitation(req)
-        else :
-            return InvitationResponse(False) 
+        else:
+            return concert_srvs.InvitationResponse(False)
 
-    def acceptInvitation(self,req):
-        self.log("Accepting invitation from " + req.name)
+    def acceptInvitation(self, req):
+        rospy.loginfo("Concert Client : accepting invitation from " + req.name)
         resp = self.appmanager_srv['invitation'](req)
 
         return resp
 
     def processStatus(self, req):
-        resp = StatusResponse()
+        resp = concert_srvs.StatusResponse()
         resp.status = "Vacant" if not self.is_invited else "Busy"
         return resp
 
-    def flips(self,remote_name,topics,type,ok_flag):
+    def flips(self, remote_name, topics, type, ok_flag):
         if len(topics) == 0:
             return
-        req = RemoteRequest()
+        req = gateway_srvs.RemoteRequest()
         req.cancel = not ok_flag
         req.remotes = []
         for t in topics:
-            req.remotes.append(createRemoteRule(remote_name,createRule(t,type)))
+            req.remotes.append(createRemoteRule(remote_name, createRule(t, type)))
 
-        resp = self.gateway_srv['flip'](req) 
+        resp = self.gateway_srv['flip'](req)
 
         if resp.result == 0:
-            self.log("Success to Flip : " + str(topics))
+            rospy.loginfo("Concert Client : successfully flipped handles to the concert [%s]" % str(topics))
         else:
-            self.logerr("Failed to flip : " + str(topics) + " : " + str(resp.error_message))
-
-    def log(self, msg):
-        rospy.loginfo("Concert Client : " + msg)
-
-    def logerr(self, msg):
-        rospy.logerr ("Concert Client : " + msg)
+            rospy.logerr("Concert Client : failed to flip [%s][%s]" % (str(topics), str(resp.error_message)))

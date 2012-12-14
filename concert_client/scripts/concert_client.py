@@ -10,7 +10,7 @@
 import roslib
 roslib.load_manifest('concert_client')
 import rospy
-from concert_client.concertclient import *
+import concert_client
 
 ##############################################################################
 # Main
@@ -19,6 +19,5 @@ from concert_client.concertclient import *
 if __name__ == '__main__':
 
     rospy.init_node('concert_client')
-    client = ConcertClient()
-    rospy.loginfo('Concert Client : initialised')
+    client = concert_client.ConcertClient()
     client.spin()
