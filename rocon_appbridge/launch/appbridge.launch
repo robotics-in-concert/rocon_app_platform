@@ -1,5 +1,0 @@
-<launch>
-    <node pkg="rocon_appbridge" name="appbridge" type="appbridge.py">
-        <rosparam command="load" file="$(find rocon_appbridge)/param/location.yaml"/>
-    </node>
-</launch>
