@@ -291,9 +291,9 @@ class AppManager(object):
         resp = self.gateway_srv['flip'](req)
 
         if resp.result == 0:
-            self.log("App Manager : successfully flipped [%s]" % str(topics))
+            rospy.loginfo("App Manager : successfully flipped %s" % str(topics))
         else:
-            self.logerr("App Manager : failed to flip [%s]" % resp.error_message)
+            rospy.logerr("App Manager : failed to flip [%s]" % resp.error_message)
 
     def process_stdmsg(self, message):
         self.pubs['log'].publish(message)
