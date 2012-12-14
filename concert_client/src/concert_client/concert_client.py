@@ -175,7 +175,7 @@ class ConcertClient(object):
 
     def processStatus(self, req):
         resp = concert_srvs.StatusResponse()
-        resp.status = "Vacant" if not self.is_invited else "Busy"
+        resp.status = "free-agent" if not self.is_invited else "busy"
         return resp
 
     def flips(self, remote_name, topics, type, ok_flag):
