@@ -1,6 +1,8 @@
 <launch>
+  <arg name="robot_name" default="johnny5"/>
   <node pkg="rocon_appmanager" type="app_manager.py" name="appmanager" output="screen">
     <rosparam command="load" file="$(find rocon_appmanager)/param/default.yaml" />
     <param name="app_from_source_directory" value="$(find rocon_apps)"/>
+    <param name="robot_name" value="$(arg robot_name)"/>
   </node>
 </launch>

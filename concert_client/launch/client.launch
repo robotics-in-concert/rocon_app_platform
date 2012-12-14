@@ -9,5 +9,7 @@
   <node pkg="concert_client" type="concert_client.py" name="concert_client" output="screen">
   </node>
 
-  <include file="$(find rocon_appmanager)/launch/app_manager.launch"/>
+  <include file="$(find rocon_appmanager)/launch/app_manager.launch">
+    <arg name="robot_name" value="$(arg concert_client_name)"/>
+  </include>
 </launch>

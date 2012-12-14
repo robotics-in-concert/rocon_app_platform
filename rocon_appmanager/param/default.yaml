@@ -1,11 +1,12 @@
 # Standalone mode.
 is_alone: true
 
-robot_name: 'chopin'
+robot_name: 'dude'
+# This goes to making up part of the platform_info triple.
 robot_type: 'turtlebot'
 
-# This is bad.
-app_from_source_directory: '/home/jihoonl/ros/groovy/turtlebot/turtlebot_apps/turtlebot_core_apps'
+# This is very non-portable, if doing from source directories, use $(find..) in the launchers instead
+# app_from_source_directory: '/home/jihoonl/ros/groovy/turtlebot/turtlebot_apps/turtlebot_core_apps'
 
 app_store_url: []
 
