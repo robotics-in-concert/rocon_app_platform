@@ -10,6 +10,7 @@ robot_type: 'turtlebot'
 
 app_store_url: []
 
+# These are currently unused
 white_list: ["concert_master"]
 black_list: ["pirate_master"]
 
