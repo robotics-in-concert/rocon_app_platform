@@ -147,6 +147,7 @@ class AppManager(object):
     def processFlipRequest(self, req):
         try:
             remotename = req.remotename
+            self.remotename = remotename
             service = self.service_names[0:2]
             self.flips(remotename, service, gateway_msgs.ConnectionType.SERVICE, req.ok_flag)
         except Exception as unused_e:
@@ -156,9 +157,11 @@ class AppManager(object):
         return appmanager_srvs.FlipRequestResponse(True)
 
     def processInvitation(self, req):
-        self.remotename = req.name
+        self.log(str(req))
+#self.remotename = req.name
         service = self.service_names[2:]
         self.log(str(service) + '\tflag : ' + str(req.ok_flag))
+        self.log("remote name : " + str(self.remotename))
 
         try:
             self.flips(self.remotename, service, gateway_msgs.ConnectionType.SERVICE, req.ok_flag)
@@ -257,6 +260,7 @@ class AppManager(object):
         resp.started, resp.message, subscribers, publishers, services = self.apps['from_source'][req.name].start(self.param['robot_name'])
 
 #        self.pullinTopics(pullin_topics,True)
+        self.log(self.remotename)
         if self.remotename:
             self.flips(self.remotename, subscribers, gateway_msgs.ConnectionType.SUBSCRIBER, True)
             self.flips(self.remotename, publishers, gateway_msgs.ConnectionType.PUBLISHER, True)
