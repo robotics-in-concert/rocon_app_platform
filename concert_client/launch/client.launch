@@ -7,7 +7,14 @@
     <param name="name" value="$(arg concert_client_name)"/>
   </node>
   <node pkg="concert_client" type="concert_client.py" name="concert_client" output="screen">
+    <remap from="concert_client/gateway_info" to="gateway/gateway_info"/>
+    <remap from="concert_client/flip" to="gateway/flip"/>
+    <remap from="concert_client/init" to="appmanager/init"/>
+    <remap from="concert_client/relay_invitation" to="appmanager/invitation"/>
+    <remap from="concert_client/apiflip_request" to="appmanager/apiflip_request"/>
   </node>
 
-  <include file="$(find rocon_appmanager)/launch/app_manager.launch"/>
+  <include file="$(find rocon_appmanager)/launch/app_manager.launch">
+    <arg name="robot_name" value="$(arg concert_client_name)"/>
+  </include>
 </launch>

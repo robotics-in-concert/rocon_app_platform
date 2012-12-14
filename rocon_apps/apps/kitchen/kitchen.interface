@@ -1,3 +1,0 @@
-publisher: ['/kitchen/status', '/command']
-subscriber: ['/kitchen/command', '/kitchen/order']
-service: []
