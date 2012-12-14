@@ -81,7 +81,7 @@ class AppManager(object):
 
         # load configuration from rosparam
         rospy.loginfo("App Manager : parsing parameters")
-        self.parseParams()
+        self._setup_ros_parameters()
 
 #        if self.param['is_alone'] == False:
 #            super(AppManager,self).__init__(self.param['white_list'], self.param['black_list'],self.param['platform_info'])
@@ -126,6 +126,7 @@ class AppManager(object):
 
     def setAPIs(self, namespace):
         rospy.loginfo("App Manager : advertising services")
+        self.platform_info.name = namespace
         service_names = [namespace + '/' + self.listapp_srv_name, '/' + namespace + '/' + self.platform_info_srv_name, '/' + namespace + '/' + self.start_app_srv_name, '/' + namespace + '/' + self.stop_app_srv_name]
         self.service_names = service_names
         self.services['list_apps'] = rospy.Service(service_names[0], appmanager_srvs.GetAppList, self.processGetAppList)
@@ -184,7 +185,7 @@ class AppManager(object):
         r.node = ''
         return r
 
-    def parseParams(self):
+    def _setup_ros_parameters(self):
         param = {}
         param['robot_type'] = rospy.get_param('~robot_type')
         param['robot_name'] = rospy.get_param('~robot_name')
