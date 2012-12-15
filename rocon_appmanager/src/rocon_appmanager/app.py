@@ -160,7 +160,7 @@ class App(object):
                 finally:
                     self._launch = None
                     data['status'] = 'Ready'
-                rospy.loginfo("Stopped App : " + data['name'])
+                rospy.loginfo("App Manager : stopped app [%s]" % data['name'])
         except Exception as e:
             print str(e)
             rospy.loginfo("Error while stopping " + data['name'])
