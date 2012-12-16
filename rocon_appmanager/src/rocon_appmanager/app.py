@@ -60,7 +60,7 @@ class App(object):
             data['description'] = app_data.get('description', '')
             data['platform'] = app_data['platform']
             data['launch'] = self.loadFromFile(app_data['launch'], 'launch', app_name)
-            data['interface'] = self.loadInterface(self.loadFromFile(app_data['interface'], 'interface', app_name))
+            data['interface'] = self._load_interface(self.loadFromFile(app_data['interface'], 'interface', app_name))
             if 'icon' not in app_data:
                 data['icon'] = None
             else:
@@ -84,9 +84,9 @@ class App(object):
         except InvalidROSPkgException as e:
             raise AppException("App file [%s] feres to %s that is not installed: %s" % (app_name, log, str(e)))
 
-    def loadInterface(self, data):
+    def _load_interface(self, data):
         d = {}
-        keys = ['subscriber', 'publisher', 'service']
+        keys = ['subscribers', 'publishers', 'services']
         with open(data, 'r') as f:
             y = yaml.load(f.read())
             y = y or {}
@@ -122,22 +122,22 @@ class App(object):
                                                             process_listeners=())
             self._launch._load_config()
 
-            print data['interface']
+            #print data['interface']
 
-            # Remap the topics
+            # Prefix with robot name by default (later pass in remap argument)
             for N in self._launch.config.nodes:
-                for t in data['interface']['publisher']:
+                for t in data['interface']['publishers']:
                     N.remap_args.append((t, prefix + '/' + t))
-                for t in data['interface']['subscriber']:
+                for t in data['interface']['subscribers']:
                     N.remap_args.append((t, prefix + '/' + t))
-                for t in data['interface']['service']:
+                for t in data['interface']['services']:
                     N.remap_args.append((t, prefix + '/' + t))
 
             self._launch.start()
 
-            self.subscribers = [prefix + '/' + x for x in data['interface']['subscriber']]
-            self.publishers = [prefix + '/' + x for x in data['interface']['publisher']]
-            self.services = [prefix + '/' + x for x in data['interface']['service']]
+            self.subscribers = [prefix + '/' + x for x in data['interface']['subscribers']]
+            self.publishers = [prefix + '/' + x for x in data['interface']['publishers']]
+            self.services = [prefix + '/' + x for x in data['interface']['services']]
 
             thread.start_new_thread(self.app_monitor, ())
             data['status'] = 'Running'

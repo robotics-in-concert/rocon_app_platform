@@ -88,7 +88,6 @@ class AppManager(object):
 #            super(AppManager,self).__init__(self.param['white_list'], self.param['black_list'],self.param['platform_info'])
 
         # It sets up an app directory and load installed app list from directory
-        rospy.loginfo("App Manager : loading app lists")
         self._get_installed_app_list()
 
         roslaunch.pmon._init_signal_handlers()
@@ -217,7 +216,7 @@ class AppManager(object):
         return r
 
     def _setup_ros_parameters(self):
-        rospy.loginfo("App Manager : parsing parameters")
+        rospy.logdebug("App Manager : parsing parameters")
         param = {}
         param['robot_type'] = rospy.get_param('~robot_type')
         param['robot_name'] = rospy.get_param('~robot_name')
