@@ -166,7 +166,7 @@ class AppManager(object):
             a.name = app.data['name']
             a.display = app.data['display']
             a.description = app.data['description']
-            a.display = app.data['platform']
+            a.platform = app.data['platform']
             a.status = app.data['status']
             apps_description.apps.append(a)
 
