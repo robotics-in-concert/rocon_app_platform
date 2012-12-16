@@ -77,6 +77,10 @@ class AppManager(object):
     pubs = {}
     gateway_srvs = {}
 
+    ##########################################################################
+    # Initialisation
+    ##########################################################################
+
     def __init__(self):
 
         # load configuration from rosparam
@@ -92,30 +96,34 @@ class AppManager(object):
 
         roslaunch.pmon._init_signal_handlers()
 
-        self.setGatewaySrvs()
-        self.setAppManagerAPI()
-        self.setPlatformInfo()
+        self._set_gateway_services()
+        self._set_app_manager_api()
+        self._set_platform_info()
 
-    def setAppManagerAPI(self):
+    def _set_app_manager_api(self):
         self.services = {}
-        self.services['init'] = rospy.Service(self.init_srv_name, appmanager_srvs.Init, self.processInit)
-        self.services['apiflip_request'] = rospy.Service(self. flip_request_srv_name, appmanager_srvs.FlipRequest, self.processFlipRequest)
-        self.services['invitation'] = rospy.Service(self.invitation_srv_name, concert_srvs.Invitation, self.processInvitation)
+        self.services['init'] = rospy.Service(self.init_srv_name, appmanager_srvs.Init, self._process_init)
+        self.services['apiflip_request'] = rospy.Service(self. flip_request_srv_name, appmanager_srvs.FlipRequest, self._process_flip_request)
+        self.services['invitation'] = rospy.Service(self.invitation_srv_name, concert_srvs.Invitation, self._process_invitation)
 
-    def setGatewaySrvs(self):
+    def _set_gateway_services(self):
         self.gateway_srv = {}
         self.gateway_srv['flip'] = rospy.ServiceProxy('~flip', gateway_srvs.Remote)
         self.gateway_srv['advertise'] = rospy.ServiceProxy('~advertise', gateway_srvs.Advertise)
         self.gateway_srv['pull'] = rospy.ServiceProxy('~pull', gateway_srvs.Remote)
 
-    def setPlatformInfo(self):
+    def _set_platform_info(self):
         self.platform_info = concert_msgs.PlatformInfo()
         self.platform_info.platform = concert_msgs.PlatformInfo.PLATFORM_LINUX
         self.platform_info.system = concert_msgs.PlatformInfo.SYSTEM_ROS
         self.platform_info.robot = self.param['robot_type']  # TODO Validate this against concert_msgs.ROBOT_XXX
         self.platform_info.name = self.param['robot_name']
 
-    def processInit(self, req):
+    ##########################################################################
+    # Ros Callbacks
+    ##########################################################################
+
+    def _process_init(self, req):
         self.name = req.name
         try:
             self.setAPIs(self.name)
@@ -124,27 +132,7 @@ class AppManager(object):
             return appmanager_srvs.InitResponse(False)
         return appmanager_srvs.InitResponse(True)
 
-    def setAPIs(self, namespace):
-        rospy.loginfo("App Manager : advertising services")
-        self.platform_info.name = namespace
-        service_names = [namespace + '/' + self.listapp_srv_name, '/' + namespace + '/' + self.platform_info_srv_name, '/' + namespace + '/' + self.start_app_srv_name, '/' + namespace + '/' + self.stop_app_srv_name]
-        self.service_names = service_names
-        self.services['list_apps'] = rospy.Service(service_names[0], appmanager_srvs.GetAppList, self.processGetAppList)
-        self.services['platform_info'] = rospy.Service(service_names[1], concert_srvs.GetPlatformInfo, self.processPlatformInfo)
-        self.services['start_app'] = rospy.Service(service_names[2], appmanager_srvs.StartApp, self.processStartApp)
-        self.services['stop_app'] = rospy.Service(service_names[3], appmanager_srvs.StopApp, self.processStopApp)
-
-        self.pubs = {}
-        pub_names = ['/' + namespace + '/' + self.log_pub_name]
-        self.pub_names = pub_names
-        self.pubs['log'] = rospy.Publisher(self.pub_names[0], String)
-
-        # Logging mechanism. hooks std_out and publish as a topic
-        self.logger = Logger(sys.stdout)
-        sys.stdout = self.logger
-        self.logger.addCallback(self.process_stdmsg)
-
-    def processFlipRequest(self, req):
+    def _process_flip_request(self, req):
         try:
             remotename = req.remotename
             self.remotename = remotename
@@ -156,7 +144,7 @@ class AppManager(object):
 
         return appmanager_srvs.FlipRequestResponse(True)
 
-    def processInvitation(self, req):
+    def _process_invitation(self, req):
         self.log(str(req))
 #self.remotename = req.name
         service = self.service_names[2:]
@@ -171,8 +159,52 @@ class AppManager(object):
             return concert_srvs.InvitationResponse(False)
         return concert_srvs.InvitationResponse(True)
 
-    def processPlatformInfo(self, req):
+    def _process_platform_info(self, req):
         return concert_srvs.GetPlatformInfoResponse(self.platform_info)
+
+    def _process_get_app_list(self, req):
+        apps_description = appmanager_srvs.GetAppListResponse()
+
+        for app_name in self.apps['from_source']:
+            app = self.apps['from_source'][app_name]
+            a = appmanager_msgs.AppDescription()
+            a.name = app.data['name']
+            a.display = app.data['display']
+            a.description = app.data['description']
+            a.display = app.data['platform']
+            a.status = app.data['status']
+            apps_description.apps.append(a)
+
+        return apps_description
+
+    def _process_start_app(self, req):
+        rospy.loginfo("Starting App : " + req.name)
+        resp = appmanager_srvs.StartAppResponse()
+        resp.started, resp.message, subscribers, publishers, services = self.apps['from_source'][req.name].start(self.param['robot_name'])
+
+#        self.pullinTopics(pullin_topics,True)
+        self.log(self.remotename)
+        if self.remotename:
+            self.flips(self.remotename, subscribers, gateway_msgs.ConnectionType.SUBSCRIBER, True)
+            self.flips(self.remotename, publishers, gateway_msgs.ConnectionType.PUBLISHER, True)
+            self.flips(self.remotename, services, gateway_msgs.ConnectionType.SERVICE, True)
+        return resp
+
+    def _process_stop_app(self, req):
+        rospy.loginfo("App Manager : stopping app : " + req.name)
+        resp = appmanager_srvs.StopAppResponse()
+
+        resp.stopped, resp.message, subscribers, publishers, services = self.apps['from_source'][req.name].stop()
+
+        if self.remotename:
+            self.flips(self.remotename, subscribers, gateway_msgs.ConnectionType.SUBSCRIBER, False)
+            self.flips(self.remotename, publishers, gateway_msgs.ConnectionType.PUBLISHER, False)
+            self.flips(self.remotename, services, gateway_msgs.ConnectionType.SERVICE, False)
+        return resp
+
+    ##########################################################################
+    # Utilities
+    ##########################################################################
 
     def createRemoteRule(self, gateway, rule):
         r = gateway_msgs.RemoteRule()
@@ -238,48 +270,25 @@ class AppManager(object):
 
         return applist
 
-    def processGetAppList(self, req):
-        apps_description = appmanager_srvs.GetAppListResponse()
+    def setAPIs(self, namespace):
+        rospy.loginfo("App Manager : advertising services")
+        self.platform_info.name = namespace
+        service_names = [namespace + '/' + self.listapp_srv_name, '/' + namespace + '/' + self.platform_info_srv_name, '/' + namespace + '/' + self.start_app_srv_name, '/' + namespace + '/' + self.stop_app_srv_name]
+        self.service_names = service_names
+        self.services['list_apps'] = rospy.Service(service_names[0], appmanager_srvs.GetAppList, self._process_get_app_list)
+        self.services['platform_info'] = rospy.Service(service_names[1], concert_srvs.GetPlatformInfo, self._process_platform_info)
+        self.services['start_app'] = rospy.Service(service_names[2], appmanager_srvs.StartApp, self._process_start_app)
+        self.services['stop_app'] = rospy.Service(service_names[3], appmanager_srvs.StopApp, self._process_stop_app)
 
-        for app_name in self.apps['from_source']:
-            app = self.apps['from_source'][app_name]
-            a = appmanager_msgs.AppDescription()
-            a.name = app.data['name']
-            a.display = app.data['display']
-            a.description = app.data['description']
-            a.display = app.data['platform']
-            a.status = app.data['status']
-            apps_description.apps.append(a)
+        self.pubs = {}
+        pub_names = ['/' + namespace + '/' + self.log_pub_name]
+        self.pub_names = pub_names
+        self.pubs['log'] = rospy.Publisher(self.pub_names[0], String)
 
-        return apps_description
-
-    def processStartApp(self, req):
-
-        rospy.loginfo("Starting App : " + req.name)
-        resp = appmanager_srvs.StartAppResponse()
-        resp.started, resp.message, subscribers, publishers, services = self.apps['from_source'][req.name].start(self.param['robot_name'])
-
-#        self.pullinTopics(pullin_topics,True)
-        self.log(self.remotename)
-        if self.remotename:
-            self.flips(self.remotename, subscribers, gateway_msgs.ConnectionType.SUBSCRIBER, True)
-            self.flips(self.remotename, publishers, gateway_msgs.ConnectionType.PUBLISHER, True)
-            self.flips(self.remotename, services, gateway_msgs.ConnectionType.SERVICE, True)
-
-        return resp
-
-    def processStopApp(self, req):
-        rospy.loginfo("App Manager : stopping app : " + req.name)
-        resp = appmanager_srvs.StopAppResponse()
-
-        resp.stopped, resp.message, subscribers, publishers, services = self.apps['from_source'][req.name].stop()
-
-        if self.remotename:
-            self.flips(self.remotename, subscribers, gateway_msgs.ConnectionType.SUBSCRIBER, False)
-            self.flips(self.remotename, publishers, gateway_msgs.ConnectionType.PUBLISHER, False)
-            self.flips(self.remotename, services, gateway_msgs.ConnectionType.SERVICE, False)
-
-        return resp
+        # Logging mechanism. hooks std_out and publish as a topic
+        self.logger = Logger(sys.stdout)
+        sys.stdout = self.logger
+        self.logger.addCallback(self.process_stdmsg)
 
     def flips(self, remotename, topics, type, ok_flag):
         if len(topics) == 0:
