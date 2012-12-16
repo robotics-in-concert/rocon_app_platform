@@ -7,7 +7,6 @@
 # Imports
 ##############################################################################
 
-
 import rospy
 import os
 import sys
@@ -83,8 +82,6 @@ class AppManager(object):
 
     def __init__(self):
 
-        # load configuration from rosparam
-        rospy.loginfo("App Manager : parsing parameters")
         self._setup_ros_parameters()
 
 #        if self.param['is_alone'] == False:
@@ -220,6 +217,7 @@ class AppManager(object):
         return r
 
     def _setup_ros_parameters(self):
+        rospy.loginfo("App Manager : parsing parameters")
         param = {}
         param['robot_type'] = rospy.get_param('~robot_type')
         param['robot_name'] = rospy.get_param('~robot_name')
