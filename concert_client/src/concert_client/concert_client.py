@@ -27,8 +27,6 @@ from .util import createRule, createRemoteRule
 class ConcertClient(object):
     concertmaster_key = "concertmasterlist"
 
-    is_connected = False
-    is_invited = False
     hub_client = None
 
     gateway = None
@@ -40,7 +38,10 @@ class ConcertClient(object):
     status_srv = 'status'
 
     def __init__(self):
-        self.is_connected = False
+        ####################
+        # Variables
+        ####################
+        self._is_connected_to_hub = False
         self.name = rospy.get_name()
         self.param = self.setupRosParameters()
 
@@ -52,7 +53,12 @@ class ConcertClient(object):
                                     callbacks=None)
 
         self.masterdiscovery = ConcertMasterDiscovery(self.hub_client, self.concertmaster_key, self.processNewMaster)
+        self._is_connected_to_concert = False
+        self._is_connected_to_hub = False
 
+        ####################
+        # Ros Api Handles
+        ####################
         self.gateway_srv = {}
         self.gateway_srv['gateway_info'] = rospy.ServiceProxy('~gateway_info', gateway_srvs.GatewayInfo)
         self.gateway_srv['flip'] = rospy.ServiceProxy('~flip', gateway_srvs.Remote)
@@ -78,7 +84,7 @@ class ConcertClient(object):
         self.leaveMasters()
 
     def connectToHub(self):
-        while not rospy.is_shutdown() and not self.is_connected:
+        while not rospy.is_shutdown() and not self._is_connected_to_hub:
             rospy.loginfo("Getting Hub info from gateway...")
             gateway_info = self.gateway_srv['gateway_info']()
             if gateway_info.connected == True:
@@ -96,7 +102,7 @@ class ConcertClient(object):
         @param uri : the hub uri
         @type string
         '''
-        self.is_connected = True
+        self._is_connected_to_hub = True
         self.name = name
         self.hub_uri = uri
 
@@ -170,12 +176,12 @@ class ConcertClient(object):
     def acceptInvitation(self, req):
         rospy.loginfo("Concert Client : accepting invitation from %s" % req.name)
         resp = self.appmanager_srv['invitation'](req)
-
+        self._is_connected_to_concert = resp.success
         return resp
 
     def processStatus(self, req):
         resp = concert_srvs.StatusResponse()
-        resp.status = "free-agent" if not self.is_invited else "busy"
+        resp.status = "free-agent" if not self._is_connected_to_concert else "busy"
         return resp
 
     def flips(self, remote_name, topics, type, ok_flag):
