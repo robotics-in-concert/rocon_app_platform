@@ -146,10 +146,9 @@ class AppManager(object):
 
     def _process_invitation(self, req):
         self.log(str(req))
-#self.remotename = req.name
+        #self.remotename = req.name
         service = self.service_names[2:]
-        self.log(str(service) + '\tflag : ' + str(req.ok_flag))
-        self.log("remote name : " + str(self.remotename))
+        self.log("accepted invitation to remote concert [%s]" % str(self.remotename))
 
         try:
             self.flips(self.remotename, service, gateway_msgs.ConnectionType.SERVICE, req.ok_flag)
