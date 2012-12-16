@@ -13,6 +13,7 @@ import rospy
 
 from rocon_hub_client.hub_client import HubClient
 from .concertmaster_discovery import ConcertMasterDiscovery
+import concert_msgs.msg as concert_msgs
 import concert_msgs.srv as concert_srvs
 import appmanager_msgs.srv as appmanager_srvs
 import gateway_msgs.msg as gateway_msgs
@@ -107,8 +108,8 @@ class ConcertClient(object):
         self.hub_uri = uri
 
         self.service = {}
-        self.service['invitation'] = rospy.Service(self.name + '/' + self.invitation_srv, concert_srvs.Invitation, self.processInvitation)
-        self.service['status'] = rospy.Service(self.name + '/' + self.status_srv, concert_srvs.Status, self.processStatus)
+        self.service['invitation'] = rospy.Service(self.name + '/' + self.invitation_srv, concert_srvs.Invitation, self._process_invitation)
+        self.service['status'] = rospy.Service(self.name + '/' + self.status_srv, concert_srvs.Status, self._process_status)
         self.master_services = ['/' + self.name + '/' + self.invitation_srv, '/' + self.name + '/' + self.status_srv]
 
         app_init_req = appmanager_srvs.InitRequest(name)
@@ -162,7 +163,7 @@ class ConcertClient(object):
         if resp.result == False:
             self.logerr("Failed to Flip Appmanager APIs")
 
-    def processInvitation(self, req):
+    def _process_invitation(self, req):
         cm_name = req.name
 
         # Check if concert master is in white list
@@ -179,9 +180,12 @@ class ConcertClient(object):
         self._is_connected_to_concert = resp.success
         return resp
 
-    def processStatus(self, req):
+    def _process_status(self, req):
         resp = concert_srvs.StatusResponse()
         resp.status = "free-agent" if not self._is_connected_to_concert else "busy"
+        resp.client_status = concert_msgs.Constants.CONCERT_CLIENT_STATUS_AVAILABLE \
+                        if not self._is_connected_to_concert else concert_msgs.Constants.CONCERT_CLIENT_STATUS_CONCERT
+        resp.app_status = concert_msgs.Constants.APP_STATUS_STOPPED  # This is just a stub for now https://github.com/robotics-in-concert/rocon_app_platform/issues/20
         return resp
 
     def flips(self, remote_name, topics, type, ok_flag):

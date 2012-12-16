@@ -110,9 +110,9 @@ class AppManager(object):
 
     def _set_platform_info(self):
         self.platform_info = concert_msgs.PlatformInfo()
-        self.platform_info.platform = concert_msgs.PlatformInfo.PLATFORM_LINUX
-        self.platform_info.system = concert_msgs.PlatformInfo.SYSTEM_ROS
-        self.platform_info.robot = self.param['robot_type']  # TODO Validate this against concert_msgs.ROBOT_XXX
+        self.platform_info.platform = concert_msgs.Constants.PLATFORM_LINUX
+        self.platform_info.system = concert_msgs.Constants.SYSTEM_ROS
+        self.platform_info.robot = self.param['robot_type']  # TODO Validate this against concert_msgs.Constants ROBOT_XXX
         self.platform_info.name = self.param['robot_name']
 
     ##########################################################################
