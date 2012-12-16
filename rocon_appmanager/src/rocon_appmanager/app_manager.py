@@ -177,7 +177,7 @@ class AppManager(object):
         return apps_description
 
     def _process_start_app(self, req):
-        rospy.loginfo("Starting App : " + req.name)
+        rospy.loginfo("App Manager : starting app : " + req.name)
         resp = appmanager_srvs.StartAppResponse()
         resp.started, resp.message, subscribers, publishers, services = self.apps['from_source'][req.name].start(self.param['robot_name'])
 
