@@ -15,6 +15,7 @@ import roslaunch.pmon
 from .app import App
 from .logger import Logger
 from std_msgs.msg import String
+from .utils import platform_compatible
 import appmanager_msgs.msg as appmanager_msgs
 import appmanager_msgs.srv as appmanager_srvs
 import concert_msgs.msg as concert_msgs
@@ -84,17 +85,13 @@ class AppManager(object):
 
         self._setup_ros_parameters()
 
-#        if self.param['is_alone'] == False:
-#            super(AppManager,self).__init__(self.param['white_list'], self.param['black_list'],self.param['platform_info'])
-
-        # It sets up an app directory and load installed app list from directory
-        self._get_installed_app_list()
-
         roslaunch.pmon._init_signal_handlers()
 
         self._set_gateway_services()
         self._set_app_manager_api()
         self._set_platform_info()
+
+        self._get_installed_app_list()  # It sets up an app directory and load installed app list from directory
 
     def _set_app_manager_api(self):
         self.services = {}
@@ -242,7 +239,9 @@ class AppManager(object):
         apps['from_source'] = {}
         for app_str in apps_str['from_source']:
             try:
-                apps['from_source'][app_str[0]] = App(app_str[0], app_str[1])
+                app = App(app_str[0], app_str[1])
+                if platform_compatible(self.platform_info.platform + '.' + self.platform_info.system + '.' + self.platform_info.robot, app.data['platform']):
+                    apps['from_source'][app_str[0]] = app
             except Exception as e:
                 print str(e)
 #                del apps['from_source'][app_str[0]]

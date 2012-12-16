@@ -16,8 +16,12 @@ import traceback
 import time
 import thread
 
-from .exceptions import AppException
+from .exceptions import AppException, IncompatibleAppException
 from roslib.packages import InvalidROSPkgException
+
+##############################################################################
+# Overview
+##############################################################################
 
 """
     App - Jihoon Lee(jihoonl@yujinrobot.com)
@@ -29,6 +33,10 @@ from roslib.packages import InvalidROSPkgException
     Todo:
 """
 
+##############################################################################
+# Class
+##############################################################################
+
 
 class App(object):
     path = None
@@ -36,7 +44,7 @@ class App(object):
 
     def __init__(self, app_name, path):
         self.path = path
-        self.load(path, app_name)
+        self._load(path, app_name)
 
     def __repr__(self):
         string = ""
@@ -44,7 +52,7 @@ class App(object):
             string += d + " : " + str(self.data[d]) + "\n"
         return string
 
-    def load(self, path, app_name):
+    def _load(self, path, app_name):
         rospy.loginfo("App Manager : loading app '%s'" % app_name)  # str(path)
 
         with open(path, 'r') as f:
