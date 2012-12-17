@@ -77,6 +77,10 @@ class AppManager(object):
     pubs = {}
     gateway_srvs = {}
 
+    APP_STOPPED = "stopped"
+    APP_RUNNING = "running"
+    APP_BROKEN = "broken"
+
     ##########################################################################
     # Initialisation
     ##########################################################################
@@ -84,6 +88,7 @@ class AppManager(object):
     def __init__(self):
 
         self._setup_ros_parameters()
+        self._app_status = self.APP_STOPPED
 
         roslaunch.pmon._init_signal_handlers()
 
@@ -170,8 +175,14 @@ class AppManager(object):
         return apps_description
 
     def _process_start_app(self, req):
-        rospy.loginfo("App Manager : starting app : " + req.name)
         resp = appmanager_srvs.StartAppResponse()
+        if self._app_status == self.APP_RUNNING:
+            resp.started = False
+            resp.message = "an app is already running"
+            return resp
+
+        rospy.loginfo("App Manager : starting app : " + req.name)
+
         resp.started, resp.message, subscribers, publishers, services = \
                 self.apps['from_source'][req.name].start(self.param['robot_name'], req.remappings)
 
@@ -184,9 +195,13 @@ class AppManager(object):
             self.flips(self.remotename, subscribers, gateway_msgs.ConnectionType.SUBSCRIBER, True)
             self.flips(self.remotename, publishers, gateway_msgs.ConnectionType.PUBLISHER, True)
             self.flips(self.remotename, services, gateway_msgs.ConnectionType.SERVICE, True)
+        if resp.started:
+            self._app_status = self.APP_RUNNING
         return resp
 
     def _process_stop_app(self, req):
+        if self._app_status == self.APP_STOPPED:
+            return
         rospy.loginfo("App Manager : stopping app : " + req.name)
         resp = appmanager_srvs.StopAppResponse()
 
@@ -196,6 +211,8 @@ class AppManager(object):
             self.flips(self.remotename, subscribers, gateway_msgs.ConnectionType.SUBSCRIBER, False)
             self.flips(self.remotename, publishers, gateway_msgs.ConnectionType.PUBLISHER, False)
             self.flips(self.remotename, services, gateway_msgs.ConnectionType.SERVICE, False)
+        if resp.stopped:
+            self._app_status = self.APP_STOPPED
         return resp
 
     ##########################################################################
