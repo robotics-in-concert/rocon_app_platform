@@ -5,6 +5,7 @@
 #
 
 import rospy
+import redis
 import threading
 # It polls redis server to discover currently connected concertmaster
 # and notifies concert client
@@ -25,10 +26,14 @@ class ConcertMasterDiscovery(threading.Thread):
         rospy.loginfo("Concert Client : concert discovery has started")
 
         while not rospy.is_shutdown() and not self._stop:
-            discovered_masterlist = self.getMasterList()
-            self.processNewMaster(discovered_masterlist)
-            rospy.sleep(3)
-
+            try:
+                discovered_masterlist = self.getMasterList()
+                self.processNewMaster(discovered_masterlist)
+                rospy.sleep(3)
+            except redis.ConnectionError as e:
+                # This just drops out - we probably need failure recovery somewhere
+                rospy.logwarn("Concert Client : lost connection to the hub [%s]" % str(e))
+                break
         rospy.loginfo("Concert Client : concert discovery has stopped")
 
     def getMasterList(self):

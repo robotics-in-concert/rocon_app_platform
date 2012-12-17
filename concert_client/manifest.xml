@@ -13,6 +13,7 @@
   <depend package="concert_msgs"/>
   <depend package="gateway_msgs"/>
   <depend package="appmanager_msgs"/>
+  <depend package="redis"/>
 
 </package>
 

@@ -44,7 +44,7 @@ class ConcertClient(object):
         ####################
         self._is_connected_to_hub = False
         self.name = rospy.get_name()
-        self.param = self.setupRosParameters()
+        self.param = self._setup_ros_parameters()
 
         self.hub_client = HubClient(whitelist=self.param['hub_whitelist'],
                                     blacklist=self.param['hub_blacklist'],
@@ -80,7 +80,7 @@ class ConcertClient(object):
         self.connectToHub()
         rospy.loginfo("Concert Client: connected to Hub [%s]" % self.hub_uri)
         rospy.loginfo("Concert Client; scanning for concerts...")
-        self.startMasterDiscovery()
+        self.masterdiscovery.start()
         rospy.spin()
         self.leaveMasters()
 
@@ -116,7 +116,7 @@ class ConcertClient(object):
         rospy.loginfo("Concert Client : initialising the app manager [%s]" % name)
         unused_resp = self.appmanager_srv['init'](app_init_req)
 
-    def setupRosParameters(self):
+    def _setup_ros_parameters(self):
         param = {}
         param['hub_whitelist'] = ''
         param['hub_blacklist'] = ''
@@ -124,9 +124,6 @@ class ConcertClient(object):
         param['cm_blacklist'] = []
 
         return param
-
-    def startMasterDiscovery(self):
-        self.masterdiscovery.start()
 
     def processNewMaster(self, discovered_masterlist):
         # find newly discovered masters
@@ -149,7 +146,6 @@ class ConcertClient(object):
 
     def leaveMasters(self):
         self.masterdiscovery.set_stop()
-
         try:
             for master in self.concertmasterlist:
                 self._leave_master(master)
