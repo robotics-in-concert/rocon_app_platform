@@ -1,5 +1,7 @@
 subscribers:
-  - command_velocity
+  - turtle_one/command_velocity
+  - turtle_two/command_velocity
 publishers:
-  - pose
+  - turtle_one/pose
+  - turtle_two/pose
 services: []
