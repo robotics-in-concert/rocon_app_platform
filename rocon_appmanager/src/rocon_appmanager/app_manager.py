@@ -88,10 +88,10 @@ class AppManager(object):
         roslaunch.pmon._init_signal_handlers()
 
         self._set_gateway_services()
-        self._set_app_manager_api()
         self._set_platform_info()
 
         self._get_installed_app_list()  # It sets up an app directory and load installed app list from directory
+        self._set_app_manager_api()  # Must be after get app list, so it doesn't try to access nonexistant apps['from_source']
 
     def _set_app_manager_api(self):
         self.services = {}
