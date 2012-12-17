@@ -5,7 +5,7 @@
     <remap from="/turtles/guimul/command_velocity" to="/guimul/command_velocity"/>
     <remap from="/turtles/kobuki/pose" to="/kobuki/pose"/>
     <remap from="/turtles/kobuki/command_velocity" to="/kobuki/command_velocity"/>
-  </node>
    -->
+  </node>
   <node pkg="turtle_concert" type="init_turtles.py" name="init_turtles"/>
 </launch>
