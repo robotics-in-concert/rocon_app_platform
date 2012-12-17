@@ -72,9 +72,9 @@ class ConcertClient(object):
 
         self.appmanager_srv = {}
         self.appmanager_srv['init'] = rospy.ServiceProxy('~init', appmanager_srvs.Init)
+        self.appmanager_srv['init'].wait_for_service()
         self.appmanager_srv['apiflip_request'] = rospy.ServiceProxy('~apiflip_request', appmanager_srvs.FlipRequest)
         self.appmanager_srv['invitation'] = rospy.ServiceProxy('~relay_invitation', concert_srvs.Invitation)
-        self.appmanager_srv['init'].wait_for_service()
 
     def spin(self):
         self.connectToHub()
