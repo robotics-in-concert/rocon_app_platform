@@ -172,9 +172,13 @@ class AppManager(object):
     def _process_start_app(self, req):
         rospy.loginfo("App Manager : starting app : " + req.name)
         resp = appmanager_srvs.StartAppResponse()
-        resp.started, resp.message, subscribers, publishers, services = self.apps['from_source'][req.name].start(self.param['robot_name'])
+        resp.started, resp.message, subscribers, publishers, services = \
+                self.apps['from_source'][req.name].start(self.param['robot_name'], req.remappings)
 
-#        self.pullinTopics(pullin_topics,True)
+        # self.pullinTopics(pullin_topics,True)
+        print subscribers
+        print publishers
+
         self.log(self.remotename)
         if self.remotename:
             self.flips(self.remotename, subscribers, gateway_msgs.ConnectionType.SUBSCRIBER, True)

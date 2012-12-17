@@ -45,6 +45,9 @@ class App(object):
     def __init__(self, app_name, path):
         self.path = path
         self._load(path, app_name)
+        self._connections = {}
+        for connection_type in ['publishers', 'subscribers', 'services']:
+            self._connections[connection_type] = []
 
     def __repr__(self):
         string = ""
@@ -115,7 +118,7 @@ class App(object):
 
         return d
 
-    def start(self, robot_name):
+    def start(self, robot_name, remappings=[]):
         data = self.data
         rospy.loginfo("Launching: %s" % (data['name']))
 
@@ -131,25 +134,26 @@ class App(object):
             self._launch._load_config()
 
             #print data['interface']
+            self._connections = {}
 
             # Prefix with robot name by default (later pass in remap argument)
-            for N in self._launch.config.nodes:
-                for t in data['interface']['publishers']:
-                    N.remap_args.append((t, prefix + '/' + t))
-                for t in data['interface']['subscribers']:
-                    N.remap_args.append((t, prefix + '/' + t))
-                for t in data['interface']['services']:
-                    N.remap_args.append((t, prefix + '/' + t))
-
+            remap_from_list = [remapping.remap_from for remapping in remappings]
+            remap_to_list = [remapping.remap_to for remapping in remappings]
+            for connection_type in ['publishers', 'subscribers', 'services']:
+                self._connections[connection_type] = []
+                for t in data['interface'][connection_type]:
+                    remapped_name = prefix + '/' + t
+                    indices = [i for i, x in enumerate(remap_from_list) if x == t]
+                    if indices:
+                        remapped_name = remap_to_list[indices[0]]
+                    self._connections[connection_type].append(remapped_name)
+                    for N in self._launch.config.nodes:
+                        N.remap_args.append((t, remapped_name))
             self._launch.start()
-
-            self.subscribers = [prefix + '/' + x for x in data['interface']['subscribers']]
-            self.publishers = [prefix + '/' + x for x in data['interface']['publishers']]
-            self.services = [prefix + '/' + x for x in data['interface']['services']]
 
             thread.start_new_thread(self.app_monitor, ())
             data['status'] = 'Running'
-            return True, "Success", self.subscribers, self.publishers, self.services
+            return True, "Success", self._connections['subscribers'], self._connections['publishers'], self._connections['services']
 
         except Exception as e:
             print str(e)
@@ -175,7 +179,7 @@ class App(object):
             data['status'] = 'Error'
             return False, "Error while stopping " + data['name'], self.subscribers, self.publishers, self.services
 
-        return True, "Success", self.subscribers, self.publishers, self.services
+        return True, "Success", self._connections['subscribers'], self._connections['publishers'], self._connections['services']
 
     def app_monitor(self):
         while self._launch:
