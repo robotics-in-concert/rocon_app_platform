@@ -177,7 +177,7 @@ class App(object):
             print str(e)
             rospy.loginfo("Error while stopping " + data['name'])
             data['status'] = 'Error'
-            return False, "Error while stopping " + data['name'], self.subscribers, self.publishers, self.services
+            return False, "Error while stopping " + data['name'], self._connections['subscribers'], self._connections['publishers'], self._connections['services']
 
         return True, "Success", self._connections['subscribers'], self._connections['publishers'], self._connections['services']
 
