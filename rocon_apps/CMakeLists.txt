@@ -27,4 +27,4 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 # Project
 ##############################################################################
 
-add_subdirectory(navigation)
+#add_subdirectory(navigation)
