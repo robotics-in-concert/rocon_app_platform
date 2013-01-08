@@ -5,8 +5,8 @@ robot_name: 'dude'
 # This goes to making up part of the platform_info triple.
 robot_type: 'turtlebot'
 
-# This is very non-portable, if doing from source directories, use $(find..) in the launchers instead
-# app_from_source_directory: '/home/jihoonl/ros/groovy/turtlebot/turtlebot_apps/turtlebot_core_apps'
+# Semi colon separated string. This is very non-portable, use launchers where you can use $(find..) instead
+# app_lists: '/home/jihoonl/ros/groovy/turtlebot/turtlebot_apps/turtlebot_core_apps/turtlebot.apps'
 
 app_store_url: []
 

@@ -24,7 +24,6 @@
 
   <node pkg="rocon_appmanager" type="app_manager.py" name="appmanager" output="screen">
     <rosparam command="load" file="$(find rocon_appmanager)/param/default.yaml" />
-    <!-- <param name="app_from_source_directory" value="$(arg app_dirs)"/> --> 
     <!--  I would like to use args in rosparam tags : https://github.com/ros/ros_comm/pull/50/commits for alt. param list cfg -->
     <!--  <rosparam param="app_lists">[ $(find rocon_apps)/apps.list ]</rosparam> -->
     <param name="app_lists" value="$(arg app_lists)" />

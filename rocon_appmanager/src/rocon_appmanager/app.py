@@ -32,11 +32,12 @@ class App(object):
     path = None
     data = {}
 
-    def __init__(self):
+    def __init__(self, resource_name):
         self.filename = ""
         self._connections = {}
         for connection_type in ['publishers', 'subscribers', 'services']:
             self._connections[connection_type] = []
+        self._load_from_resource_name(resource_name)
 
     def __repr__(self):
         string = ""
@@ -44,7 +45,7 @@ class App(object):
             string += d + " : " + str(self.data[d]) + "\n"
         return string
 
-    def load_from_resource_name(self, name):
+    def _load_from_resource_name(self, name):
         '''
           Loads from a ros resource name consisting of a package/app pair.
 
@@ -56,9 +57,9 @@ class App(object):
         if not name:
             raise InvalidAppException("app name was invalid [%s]" % name)
         self.filename = utils.find_resource(name + '.app')
-        return self.load_from_app_file(self.filename, name)
+        self._load_from_app_file(self.filename, name)
 
-    def load_from_app_file(self, path, app_name):
+    def _load_from_app_file(self, path, app_name):
         '''
           Open and read directly from the app definition file (.app file).
 

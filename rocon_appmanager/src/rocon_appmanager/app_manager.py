@@ -239,7 +239,6 @@ class AppManager(object):
         param = {}
         param['robot_type'] = rospy.get_param('~robot_type')
         param['robot_name'] = rospy.get_param('~robot_name')
-        param['app_from_source_directory'] = rospy.get_param('~app_from_source_directory', self.DEFAULT_APP_LIST_DIRECTORY)
         param['app_store_url'] = rospy.get_param('~app_store_url', '')
         param['platform_info'] = rospy.get_param('~platform_info', '')
         param['white_list'] = rospy.get_param('~whitelist', '')
@@ -258,23 +257,12 @@ class AppManager(object):
         apps['from_source'] = {}
         # Getting apps from installed list
         for filename in self.param['app_lists']:
+            # should do some exception checking here, also utilise AppListFile properly.
             app_list_file = AppListFile(filename)
             # ach, put in jihoon's format
             for app in app_list_file.available_apps:
                 if platform_compatible(platform_tuple(self.platform_info.platform, self.platform_info.system, self.platform_info.robot), app.data['platform']):
                     apps['from_source'][app.data['name']] = app
-        # Getting apps from source
-        directory = self.param['app_from_source_directory']
-        if directory:
-            for (app_name, app_file) in self._load(directory, '.app'):
-                try:
-                    app = App()
-                    app.load_from_app_file(app_name, app_file)
-                    if platform_compatible(platform_tuple(self.platform_info.platform, self.platform_info.system, self.platform_info.robot), app.data['platform']):
-                        apps['from_source'][app_name] = app
-                except Exception as e:
-                    print str(e)
-    #                del apps['from_source'][app_str[0]]
         self.apps = apps
 
     def _load(self, directory, typ):

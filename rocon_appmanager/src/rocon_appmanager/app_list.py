@@ -57,8 +57,7 @@ class AppListFile(object):
             if not 'apps' in apps_yaml:
                 rospy.logerr("App Manager : apps file [%s] is missing required key [%s]" % (self.filename, 'apps'))
             for app_resource_name in apps_yaml['apps']:
-                app = App()
-                app.load_from_resource_name(app_resource_name)
+                app = App(app_resource_name)
                 available_apps.append(app)
         self.available_apps = available_apps
 

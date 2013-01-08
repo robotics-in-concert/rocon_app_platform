@@ -1,5 +1,0 @@
-subscribers:
-  - pose
-publishers:
-  - command_velocity
-services: []

@@ -1,7 +1,5 @@
 apps:
  - rocon_apps/chirp
- - rocon_apps/turtle_stroll
- - rocon_apps/turtle_stroll_sim
  
 # Currently not updated.
 # - rocon_apps/turtlesim_control

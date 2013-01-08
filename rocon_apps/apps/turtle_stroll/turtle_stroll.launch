@@ -1,3 +1,0 @@
-<launch>
-  <node pkg="turtle_stroll" type="turtle_stroll" name="turtle_stroll" output="screen" />
-</launch>

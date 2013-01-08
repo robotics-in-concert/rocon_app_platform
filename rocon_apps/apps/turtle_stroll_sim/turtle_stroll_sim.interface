@@ -1,7 +1,0 @@
-subscribers:
-  - turtle_one/command_velocity
-  - turtle_two/command_velocity
-publishers:
-  - turtle_one/pose
-  - turtle_two/pose
-services: []
