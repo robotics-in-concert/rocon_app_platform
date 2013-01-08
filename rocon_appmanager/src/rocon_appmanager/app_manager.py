@@ -13,9 +13,10 @@ import sys
 import traceback
 import roslaunch.pmon
 from .app import App
+from .app_list import AppListFile
 from .logger import Logger
 from std_msgs.msg import String
-from .utils import platform_compatible
+from .utils import platform_compatible, platform_tuple
 import appmanager_msgs.msg as appmanager_msgs
 import appmanager_msgs.srv as appmanager_srvs
 import concert_msgs.msg as concert_msgs
@@ -58,7 +59,7 @@ import gateway_msgs.srv as gateway_srvs
 
 class AppManager(object):
 
-    DEFAULT_APP_LIST_DIRECTORY = '/opt/ros/groovy/stacks/'
+    DEFAULT_APP_LIST_DIRECTORY = None # '/opt/ros/groovy/stacks/'
 
     init_srv_name = '~init'
     flip_request_srv_name = '~apiflip_request'
@@ -244,10 +245,9 @@ class AppManager(object):
         param['white_list'] = rospy.get_param('~whitelist', '')
         param['black_list'] = rospy.get_param('~black_list', '')
         param['is_alone'] = rospy.get_param('~is_alone', False)
-        param['app_lists'] = rospy.get_param('~app_lists', [])
-        for app_list in param['app_lists']:
-            print("App list: %s" % app_list)
-
+        param['app_lists'] = rospy.get_param('~app_lists', '').split(';')
+        # If we have list parameters - https://github.com/ros/ros_comm/pull/50/commits
+        # param['app_lists'] = rospy.get_param('~app_lists', [])
         self.param = param
 
     def _get_installed_app_list(self):
@@ -255,25 +255,27 @@ class AppManager(object):
          Sets up an app directory and load installed app from given directory
         '''
         apps = {}
-        apps_str = {}
-
+        apps['from_source'] = {}
+        # Getting apps from installed list
+        for filename in self.param['app_lists']:
+            app_list_file = AppListFile(filename)
+            # ach, put in jihoon's format
+            for app in app_list_file.available_apps:
+                if platform_compatible(platform_tuple(self.platform_info.platform, self.platform_info.system, self.platform_info.robot), app.data['platform']):
+                    apps['from_source'][app.data['name']] = app
         # Getting apps from source
         directory = self.param['app_from_source_directory']
-        apps_str['from_source'] = self._load(directory, '.app')
-        apps['from_source'] = {}
-        for app_str in apps_str['from_source']:
-            try:
-                app = App(app_str[0], app_str[1])
-                if platform_compatible(self.platform_info.platform + '.' + self.platform_info.system + '.' + self.platform_info.robot, app.data['platform']):
-                    apps['from_source'][app_str[0]] = app
-            except Exception as e:
-                print str(e)
-#                del apps['from_source'][app_str[0]]
-
-        # Getting apps in store
-#print str(apps['from_source'].keys())
+        if directory:
+            for (app_name, app_file) in self._load(directory, '.app'):
+                try:
+                    app = App()
+                    app.load_from_app_file(app_name, app_file)
+                    if platform_compatible(platform_tuple(self.platform_info.platform, self.platform_info.system, self.platform_info.robot), app.data['platform']):
+                        apps['from_source'][app_name] = app
+                except Exception as e:
+                    print str(e)
+    #                del apps['from_source'][app_str[0]]
         self.apps = apps
-        self.apps_str = apps_str
 
     def _load(self, directory, typ):
         '''

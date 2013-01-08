@@ -39,3 +39,9 @@ class InvalidPlatformTupleException(Exception):
       using strings from concert_msgs.Constants
     """
     pass
+
+
+class InvalidAppException(Exception):
+    '''
+      Raised if the app definition is invalid.
+    '''

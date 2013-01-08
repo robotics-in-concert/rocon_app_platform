@@ -8,6 +8,7 @@
 ##############################################################################
 
 import rospy
+import roslib
 import roslib.names
 import concert_msgs.msg as concert_msgs
 from .exceptions import NotFoundException, InvalidPlatformTupleException
@@ -57,6 +58,36 @@ def findResource(resource):
     else:
         print matches
         raise ValueError("Multiple resources named [%s]" % (resource))
+
+
+def find_resource(resource):
+    '''
+      Ros style resource finder.
+
+      @param resource is a ros resource (package/name)
+      @type str
+      @return full path to the resource
+      @type str
+      @raise NotFoundException: if resource does not exist.
+    '''
+    p, a = roslib.names.package_resource_name(resource)
+    if not p:
+        raise NotFoundException("resource is missing package name [%s]" % (resource))
+    matches = roslib.packages.find_resource(p, a)
+    if len(matches) == 1:
+        return matches[0]
+    elif not matches:
+        raise NotFoundException("no resource [%s]" % (resource))
+    else:
+        #print matches
+        raise NotFoundException("multiple resources found [%s]" % (resource))
+
+
+def platform_tuple(platform, system, robot):
+    '''
+      Return the platform tuple string identified by the three strings.
+    '''
+    return (platform + '.' + system + '.' + robot)
 
 
 def platform_compatible(first_platform_tuple, second_platform_tuple):

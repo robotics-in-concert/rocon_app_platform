@@ -9,29 +9,15 @@
 
 import os
 import yaml
-import utils
+from roslib.packages import InvalidROSPkgException
 import rospy
 import roslaunch.parent
 import traceback
 import time
 import thread
 
-from .exceptions import AppException, IncompatibleAppException
-from roslib.packages import InvalidROSPkgException
-
-##############################################################################
-# Overview
-##############################################################################
-
-"""
-    App - Jihoon Lee(jihoonl@yujinrobot.com)
-
-    Got many inspiration and imported from willow_app_manager implementation
-
-    Feature :
-
-    Todo:
-"""
+import utils
+from .exceptions import AppException, InvalidAppException
 
 ##############################################################################
 # Class
@@ -39,12 +25,15 @@ from roslib.packages import InvalidROSPkgException
 
 
 class App(object):
+    '''
+        Got many inspiration and imported from willow_app_manager
+        implementation (Jihoon)
+    '''
     path = None
     data = {}
 
-    def __init__(self, app_name, path):
-        self.path = path
-        self._load(path, app_name)
+    def __init__(self):
+        self.filename = ""
         self._connections = {}
         for connection_type in ['publishers', 'subscribers', 'services']:
             self._connections[connection_type] = []
@@ -55,8 +44,29 @@ class App(object):
             string += d + " : " + str(self.data[d]) + "\n"
         return string
 
-    def _load(self, path, app_name):
+    def load_from_resource_name(self, name):
+        '''
+          Loads from a ros resource name consisting of a package/app pair.
+
+          @param name : unique identifier for the app, e.g. rocon_apps/chirp.
+          @type str
+
+          @raise InvalidAppException if the app definition was for some reason invalid.
+        '''
+        if not name:
+            raise InvalidAppException("app name was invalid [%s]" % name)
+        self.filename = utils.find_resource(name + '.app')
+        return self.load_from_app_file(self.filename, name)
+
+    def load_from_app_file(self, path, app_name):
+        '''
+          Open and read directly from the app definition file (.app file).
+
+          @param path : full path to the .app file
+          @param app_name : unique name for the app (comes from the .app filename)
+        '''
         rospy.loginfo("App Manager : loading app '%s'" % app_name)  # str(path)
+        self.filename = path
 
         with open(path, 'r') as f:
             data = {}

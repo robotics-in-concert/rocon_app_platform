@@ -7,5 +7,4 @@
 # Imports
 ##############################################################################
 
-from .app_list import get_default_applist_directory
 from .app_manager import AppManager

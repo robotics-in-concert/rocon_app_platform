@@ -19,21 +19,58 @@
 # Imports
 ##############################################################################
 
-##############################################################################
-# Functions
-##############################################################################
-
-
-def get_default_applist_directory():
-    """
-    Default directory where applist configuration is stored.
-    """
-    return "/etc/robot/apps"
-
+import os
+import rospy
+import yaml
+from .app import App
 
 ##############################################################################
 # Class
 ##############################################################################
+
+
+class AppListFile(object):
+    """
+    Models data stored in a .apps file.  These files are used to
+    track apps available for the app manager. The apps file is
+    just a single key 'apps' containing a list of 'xxx/yyy' strings
+    where 'xxx' represents the package name and 'yyy' is the app name.
+    """
+
+    def __init__(self, filename):
+        '''
+          Just configures the container with basic parameters.
+
+          @param filename : file path to the .apps file.
+          @type str
+        '''
+        self.filename = filename
+        self.available_apps = []
+        self._file_mtime = None
+        self.update()
+
+    def _load(self):
+        available_apps = []
+        rospy.loginfo("App Manager : loading apps file [%s]" % self.filename)
+        with open(self.filename) as f:
+            apps_yaml = yaml.load(f)
+            if not 'apps' in apps_yaml:
+                rospy.logerr("App Manager : apps file [%s] is missing required key [%s]" % (self.filename, 'apps'))
+            for app_resource_name in apps_yaml['apps']:
+                app = App()
+                app.load_from_resource_name(app_resource_name)
+                available_apps.append(app)
+        self.available_apps = available_apps
+
+    def update(self):
+        """
+        Update app list
+        """
+        s = os.stat(self.filename)
+        if s.st_mtime != self._file_mtime:
+            self._load()
+            self._file_mtime = s.st_mtime
+
 
 class AppList(object):
 
