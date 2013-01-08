@@ -58,9 +58,6 @@ import gateway_msgs.srv as gateway_srvs
 
 class AppManager(object):
 
-    param = {}
-    apps = {}
-    app_list = None
     DEFAULT_APP_LIST_DIRECTORY = '/opt/ros/groovy/stacks/'
 
     init_srv_name = '~init'
@@ -86,6 +83,9 @@ class AppManager(object):
     ##########################################################################
 
     def __init__(self):
+        self.param = {}
+        self.apps = {}
+        self.app_list = None
 
         self._setup_ros_parameters()
         self._app_status = self.APP_STOPPED
@@ -226,10 +226,10 @@ class AppManager(object):
 
         return r
 
-    def createRule(self, name, type):
+    def createRule(self, name, api_type):
         r = gateway_msgs.Rule()
         r.name = name
-        r.type = type
+        r.type = api_type
         r.node = ''
         return r
 
@@ -244,6 +244,9 @@ class AppManager(object):
         param['white_list'] = rospy.get_param('~whitelist', '')
         param['black_list'] = rospy.get_param('~black_list', '')
         param['is_alone'] = rospy.get_param('~is_alone', False)
+        param['app_lists'] = rospy.get_param('~app_lists', [])
+        for app_list in param['app_lists']:
+            print("App list: %s" % app_list)
 
         self.param = param
 

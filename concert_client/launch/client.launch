@@ -3,6 +3,7 @@
   <arg name="robot_name" default="concert_client"/>
   <arg name="robot_type" default="turtlebot"/>
   <arg name="app_dirs" default="$(find rocon_apps)"/>
+  <arg name="app_lists" default="$(find rocon_apps)/apps.list"/>
   
   <node ns="zeroconf" pkg="zeroconf_avahi" type="zeroconf" name="zeroconf"/>
   
@@ -23,7 +24,7 @@
 
   <node pkg="rocon_appmanager" type="app_manager.py" name="appmanager" output="screen">
     <rosparam command="load" file="$(find rocon_appmanager)/param/default.yaml" />
-    <param name="app_from_source_directory" value="$(arg app_dirs)"/>
+    <!-- <rosparam param="app_lists">[ $(find rocon_apps)/apps.list ]</rosparam> -->
     <param name="robot_name" value="$(arg robot_name)"/>
     <param name="robot_type" value="$(arg robot_type)"/>
     <remap from="appmanager/flip" to="gateway/flip"/>
