@@ -2,29 +2,30 @@
 # CMake
 ##############################################################################
 
-cmake_minimum_required(VERSION 2.4.6)
+cmake_minimum_required(VERSION 2.8.3)
+project(rocon_apps)
 
 ##############################################################################
-# Ros
+# Catkin
 ##############################################################################
 
-include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
+find_package(catkin REQUIRED)
+catkin_package()
 
-# Set the build type.  Options are:
-#  Coverage       : w/ debug symbols, w/o optimization, w/ code-coverage
-#  Debug          : w/ debug symbols, w/o optimization
-#  Release        : w/o debug symbols, w/ optimization
-#  RelWithDebInfo : w/ debug symbols, w/ optimization
-#  MinSizeRel     : w/o debug symbols, w/ optimization, stripped binaries
-#set(ROS_BUILD_TYPE RelWithDebInfo)
-
-rosbuild_init()
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
-set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
-
+catkin_python_setup()
 
 ##############################################################################
-# Project
+# Installs
 ##############################################################################
 
-#add_subdirectory(navigation)
+#install(
+#    PROGRAMS 
+#        scripts/app_manager.py
+#    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+#    )
+
+install(DIRECTORY apps
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+
+install(DIRECTORY sounds
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})

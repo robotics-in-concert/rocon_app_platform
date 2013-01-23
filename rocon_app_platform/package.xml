@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<package>
+  <name>rocon_app_platform</name>
+  <version>0.1.0</version>
+  <description>
+    Application platform in python.
+  </description>
+  <maintainer email="d.stonier@gmail.com">Daniel Stonier</maintainer>
+  <maintainer email="jihoonl@rnd.yujinrobot.com">Jihoon Lee</maintainer>
+  <license>BSD</license>
+  <url type="website">http://www.ros.org/wiki/rocon_app_platform</url>
+  <url type="repository">https://github.com/robotics-in-concert/rocon_app_platform</url>
+  <url type="bugtracker">https://github.com/robotics-in-concert/rocon_app_platform/issues</url>
+  <author email="d.stonier@gmail.com">Daniel Stonier</author>
+  <author email="jihoonl@rnd.yujinrobot.com">Jihoon Lee</author>
+
+  <run_depend>rocon_appmanager</run_depend>
+  <run_depend>concert_client</run_depend>
+  <run_depend>rocon_appmanager_frontend</run_depend>
+  <run_depend>rocon_apps</run_depend>
+  
+  <export>
+    <metapackage/>
+  </export>
+</package>
+

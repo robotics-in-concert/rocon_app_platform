@@ -1,0 +1,26 @@
+<package>
+  <name>rocon_apps</name>
+  <version>0.1.0</version>
+  <description>
+    Core rocon apps for use with the appmanager and rocon concert.
+  </description>
+  <maintainer email="d.stonier@gmail.com">Daniel Stonier</maintainer>
+  <maintainer email="jihoonl@rnd.yujinrobot.com">Jihoon Lee</maintainer>
+  <license>BSD</license>
+  <url type="website">http://wiki.ros.org/rocon_apps</url>
+  <url type="repository">https://github.com/robotics-in-concert/rocon_app_platform</url>
+  <url type="bugtracker">https://github.com/robotics-in-concert/rocon_app_platform/issues</url>
+  <author email="d.stonier@gmail.com">Daniel Stonier</author> -->
+  <author email="jihoonl@rnd.yujinrobot.com">Jihoon Lee</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend>roslib</run_depend>
+  <run_depend>rospy</run_depend>
+  <run_depend>appmanager_msgs</run_depend>
+  <run_depend>concert_client</run_depend>
+  <run_depend>gateway_msgs</run_depend>
+  <export>
+    <rosdoc config="rosdoc.yaml"/>
+  </export>
+</package>
