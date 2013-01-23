@@ -20,7 +20,7 @@ catkin_python_setup()
 
 install(
     PROGRAMS 
-        scripts/concert_client.py
+        scripts/client.py
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
     )
 

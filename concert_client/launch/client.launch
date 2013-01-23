@@ -14,7 +14,7 @@
     <param name="hub_whitelist" value="[$(arg concert_name)]"/>
   </node>
   
-  <node pkg="concert_client" type="concert_client.py" name="concert_client" output="screen">
+  <node pkg="concert_client" type="client.py" name="concert_client" output="screen">
     <remap from="concert_client/gateway_info" to="gateway/gateway_info"/>
     <remap from="concert_client/flip" to="gateway/flip"/>
     <remap from="concert_client/init" to="appmanager/init"/>
