@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # License: BSD
-#   https://raw.github.com/robotics-in-concert/rocon_app_platform/master/rocon_appmanager/LICENSE
+#   https://raw.github.com/robotics-in-concert/rocon_app_platform/master/rocon_app_manager/LICENSE
 #
 ##############################################################################
 # Imports
@@ -41,7 +41,7 @@ class InvalidPlatformTupleException(Exception):
     pass
 
 
-class InvalidAppException(Exception):
+class InvalidRappException(Exception):
     '''
       Raised if the app definition is invalid.
     '''

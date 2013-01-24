@@ -2,7 +2,7 @@
 \mainpage
 \htmlinclude manifest.html
 
-\b rocon_appmanager_frontend 
+\b rocon_app_manager_www 
 
 <!-- 
 Provide an overview of your package.

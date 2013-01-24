@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 #
 # License: BSD
-#   https://raw.github.com/robotics-in-concert/rocon_app_platform/master/rocon_appmanager/LICENSE
+#   https://raw.github.com/robotics-in-concert/rocon_app_platform/master/rocon_app_manager/LICENSE
 #
 ##############################################################################
 # Overview
 ##############################################################################
 '''
- App lists store the apps that are being managed by the app manager. These
- can be preinstalled, installed or available apps from an app store.
+ Rapp lists store the apps that are being managed by the rapp manager. These
+ can be preinstalled, installed or available apps from an rapp store.
 
  Note: very much a work in progress (not currently used). Pull code from our
  old willow app manager:
@@ -22,14 +22,14 @@
 import os
 import rospy
 import yaml
-from .app import App
+from .rapp import Rapp
 
 ##############################################################################
 # Class
 ##############################################################################
 
 
-class AppListFile(object):
+class RappListFile(object):
     """
     Models data stored in a .apps file.  These files are used to
     track apps available for the app manager. The apps file is
@@ -51,13 +51,13 @@ class AppListFile(object):
 
     def _load(self):
         available_apps = []
-        rospy.loginfo("App Manager : loading apps file [%s]" % self.filename)
+        rospy.loginfo("Rapp Manager : loading apps file [%s]" % self.filename)
         with open(self.filename) as f:
             apps_yaml = yaml.load(f)
             if not 'apps' in apps_yaml:
-                rospy.logerr("App Manager : apps file [%s] is missing required key [%s]" % (self.filename, 'apps'))
+                rospy.logerr("Rapp Manager : apps file [%s] is missing required key [%s]" % (self.filename, 'apps'))
             for app_resource_name in apps_yaml['apps']:
-                app = App(app_resource_name)
+                app = Rapp(app_resource_name)
                 available_apps.append(app)
         self.available_apps = available_apps
 
@@ -71,7 +71,7 @@ class AppListFile(object):
             self._file_mtime = s.st_mtime
 
 
-class AppList(object):
+class RappList(object):
 
     def __init__(self, applist_directories):
         self._applist_directories = applist_directories

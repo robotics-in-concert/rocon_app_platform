@@ -4,12 +4,12 @@ from distutils.core import setup
 from catkin_pkg.python_setup import generate_distutils_setup
 
 d = generate_distutils_setup(
-    packages=['rocon_appmanager'],
+    packages=['rocon_app_manager'],
     package_dir={'': 'src'},
 #    scripts=['scripts/gateway_info',
 #             'scripts/remote_gateway_info'
 #             ],
-    requires=['roslib', 'rospy', 'appmanager_msgs', 'concert_client', 'gateway_msgs']
+    requires=['roslib', 'rospy', 'rocon_app_manager_msgs', 'concert_client', 'gateway_msgs']
 )
 
 setup(**d)

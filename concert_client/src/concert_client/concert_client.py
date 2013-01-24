@@ -15,7 +15,7 @@ from rocon_hub_client.hub_client import HubClient
 from .concertmaster_discovery import ConcertMasterDiscovery
 import concert_msgs.msg as concert_msgs
 import concert_msgs.srv as concert_srvs
-import appmanager_msgs.srv as appmanager_srvs
+import rocon_app_manager_msgs.srv as rocon_app_manager_srvs
 import gateway_msgs.msg as gateway_msgs
 import gateway_msgs.srv as gateway_srvs
 from .util import createRule, createRemoteRule
@@ -70,11 +70,11 @@ class ConcertClient(object):
             rospy.logerr("Concert Client : interrupted while waiting for gateway services to appear.")
             return
 
-        self.appmanager_srv = {}
-        self.appmanager_srv['init'] = rospy.ServiceProxy('~init', appmanager_srvs.Init)
-        self.appmanager_srv['init'].wait_for_service()
-        self.appmanager_srv['apiflip_request'] = rospy.ServiceProxy('~apiflip_request', appmanager_srvs.FlipRequest)
-        self.appmanager_srv['invitation'] = rospy.ServiceProxy('~relay_invitation', concert_srvs.Invitation)
+        self.rocon_app_manager_srv = {}
+        self.rocon_app_manager_srv['init'] = rospy.ServiceProxy('~init', rocon_app_manager_srvs.Init)
+        self.rocon_app_manager_srv['init'].wait_for_service()
+        self.rocon_app_manager_srv['apiflip_request'] = rospy.ServiceProxy('~apiflip_request', rocon_app_manager_srvs.FlipRequest)
+        self.rocon_app_manager_srv['invitation'] = rospy.ServiceProxy('~relay_invitation', concert_srvs.Invitation)
 
     def spin(self):
         self.connectToHub()
@@ -112,9 +112,9 @@ class ConcertClient(object):
         self.service['status'] = rospy.Service(self.name + '/' + self.status_srv, concert_srvs.Status, self._process_status)
         self.master_services = ['/' + self.name + '/' + self.invitation_srv, '/' + self.name + '/' + self.status_srv]
 
-        app_init_req = appmanager_srvs.InitRequest(name)
+        app_init_req = rocon_app_manager_srvs.InitRequest(name)
         rospy.loginfo("Concert Client : initialising the app manager [%s]" % name)
-        unused_resp = self.appmanager_srv['init'](app_init_req)
+        unused_resp = self.rocon_app_manager_srv['init'](app_init_req)
 
     def _setup_ros_parameters(self):
         param = {}
@@ -139,10 +139,10 @@ class ConcertClient(object):
     def joinMaster(self, master):
         self.flips(master, self.master_services, gateway_msgs.ConnectionType.SERVICE, True)
 
-        req = appmanager_srvs.FlipRequestRequest(master, True)
-        resp = self.appmanager_srv['apiflip_request'](req)
+        req = rocon_app_manager_srvs.FlipRequestRequest(master, True)
+        resp = self.rocon_app_manager_srv['apiflip_request'](req)
         if resp.result == False:
-            rospy.logerr("Concert Client : failed to flip appmanager APIs")
+            rospy.logerr("Concert Client : failed to flip rocon_app_manager APIs")
 
     def leaveMasters(self):
         self.masterdiscovery.set_stop()
@@ -154,8 +154,8 @@ class ConcertClient(object):
 
     def _leave_master(self, master):
         self.flips(master, self.master_services, gateway_msgs.ConnectionType.SERVICE, False)
-        req = appmanager_srvs.FlipRequestRequest(master, False)
-        resp = self.appmanager_srv['apiflip_request'](req)
+        req = rocon_app_manager_srvs.FlipRequestRequest(master, False)
+        resp = self.rocon_app_manager_srv['apiflip_request'](req)
         if resp.result == False:
             self.logerr("Failed to Flip Appmanager APIs")
 
@@ -172,7 +172,7 @@ class ConcertClient(object):
 
     def acceptInvitation(self, req):
         rospy.loginfo("Concert Client : accepting invitation from %s" % req.name)
-        resp = self.appmanager_srv['invitation'](req)
+        resp = self.rocon_app_manager_srv['invitation'](req)
         self._is_connected_to_concert = resp.success
         return resp
 

@@ -1,17 +1,15 @@
 #!/usr/bin/env python
 #
 # License: BSD
-#   https://raw.github.com/robotics-in-concert/rocon_app_platform/master/rocon_appmanager/LICENSE
+#   https://raw.github.com/robotics-in-concert/rocon_app_platform/master/rocon_app_manager/LICENSE
 #
 ##############################################################################
 # Imports
 ##############################################################################
 
 import argparse
-import roslib
-roslib.load_manifest('rocon_appmanager')
 import rospy
-import rocon_appmanager
+import rocon_app_manager
 
 ##############################################################################
 # Main
@@ -19,6 +17,6 @@ import rocon_appmanager
 
 if __name__ == '__main__':
 
-  rospy.init_node('appmanager')
-  manager = rocon_appmanager.AppManager()
+  rospy.init_node('rapp_manager')
+  manager = rocon_app_manager.RappManager()
   manager.spin()

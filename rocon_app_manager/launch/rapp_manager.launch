@@ -2,8 +2,8 @@
   <arg name="robot_name" default="johnny5"/>
   <arg name="app_lists" default="$(find rocon_apps)/apps/rocon.apps"/> <!-- semi colon separated list -->
    
-  <node pkg="rocon_appmanager" type="app_manager.py" name="appmanager" output="screen">
-    <rosparam command="load" file="$(find rocon_appmanager)/param/default.yaml" />
+  <node pkg="rocon_app_manager" type="rapp_manager.py" name="appmanager" output="screen">
+    <rosparam command="load" file="$(find rocon_app_manager)/param/default.yaml" />
     <param name="app_lists" value="$(arg app_lists)" />
     <param name="robot_name" value="$(arg robot_name)"/>
   </node>

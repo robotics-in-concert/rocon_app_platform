@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # License: BSD
-#   https://raw.github.com/robotics-in-concert/rocon_app_platform/master/rocon_appmanager/LICENSE
+#   https://raw.github.com/robotics-in-concert/rocon_app_platform/master/rocon_app_manager/LICENSE
 #
 ##############################################################################
 # Imports
@@ -17,14 +17,14 @@ import time
 import thread
 
 import utils
-from .exceptions import AppException, InvalidAppException
+from .exceptions import AppException, InvalidRappException
 
 ##############################################################################
 # Class
 ##############################################################################
 
 
-class App(object):
+class Rapp(object):
     '''
         Got many inspiration and imported from willow_app_manager
         implementation (Jihoon)
@@ -52,10 +52,10 @@ class App(object):
           @param name : unique identifier for the app, e.g. rocon_apps/chirp.
           @type str
 
-          @raise InvalidAppException if the app definition was for some reason invalid.
+          @raise InvalidRappException if the app definition was for some reason invalid.
         '''
         if not name:
-            raise InvalidAppException("app name was invalid [%s]" % name)
+            raise InvalidRappException("app name was invalid [%s]" % name)
         self.filename = utils.find_resource(name + '.app')
         self._load_from_app_file(self.filename, name)
 
@@ -66,7 +66,7 @@ class App(object):
           @param path : full path to the .app file
           @param app_name : unique name for the app (comes from the .app filename)
         '''
-        rospy.loginfo("App Manager : loading app '%s'" % app_name)  # str(path)
+        rospy.loginfo("Rapp Manager : loading app '%s'" % app_name)  # str(path)
         self.filename = path
 
         with open(path, 'r') as f:
@@ -183,7 +183,7 @@ class App(object):
                 finally:
                     self._launch = None
                     data['status'] = 'Ready'
-                rospy.loginfo("App Manager : stopped app [%s]" % data['name'])
+                rospy.loginfo("Rapp Manager : stopped app [%s]" % data['name'])
         except Exception as e:
             print str(e)
             rospy.loginfo("Error while stopping " + data['name'])

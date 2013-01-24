@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # License: BSD
-#   https://raw.github.com/robotics-in-concert/rocon_app_platform/master/rocon_appmanager/LICENSE
+#   https://raw.github.com/robotics-in-concert/rocon_app_platform/master/rocon_app_manager/LICENSE
 #
 ##############################################################################
 # Imports
@@ -12,13 +12,13 @@ import os
 import sys
 import traceback
 import roslaunch.pmon
-from .app import App
-from .app_list import AppListFile
+from .rapp import Rapp
+from .rapp_list import RappListFile
 from .logger import Logger
 from std_msgs.msg import String
 from .utils import platform_compatible, platform_tuple
-import appmanager_msgs.msg as appmanager_msgs
-import appmanager_msgs.srv as appmanager_srvs
+import rocon_app_manager_msgs.msg as rapp_manager_msgs
+import rocon_app_manager_msgs.srv as rapp_manager_srvs
 import concert_msgs.msg as concert_msgs
 import concert_msgs.srv as concert_srvs
 import gateway_msgs.msg as gateway_msgs
@@ -30,36 +30,13 @@ import gateway_msgs.srv as gateway_srvs
 
 
 """
-    AppManager - Jihoon Lee(jihoonl@yujinrobot.com)
-
-    Feature:
-        Configuration
-            - app_list_directory by yaml(Done)
-
-        App Management
-            - Load installed apps from app_list directory.
-            - launches app
-
-    Todo:
-        Configuration
-            - app_store url            by yaml
-
-        Concert Master Relation(in concert_client.py)
-            - When a new concert master comes in network, it flips out publisher that informs platform-info, and service to listen an invitation.
-            - When it receives a invitation from concert master, it validates the inviter with it's white/black list, then closes channels to other concert masters.
-            - Have install/uninstall/start/stop an app services
-
-        App Management
-            - have publisher that send out installed app list, available app list, and some more info. maybe latched=true one.
-            - 'apt-get' app from app store
-            - cache-ing the app lists
-
+    RobotAppManager ~ RoconAppManager
 """
 
 
-class AppManager(object):
+class RappManager(object):
 
-    DEFAULT_APP_LIST_DIRECTORY = None # '/opt/ros/groovy/stacks/'
+    DEFAULT_RAPP_LIST_DIRECTORY = None # '/opt/ros/groovy/stacks/'
 
     init_srv_name = '~init'
     flip_request_srv_name = '~apiflip_request'
@@ -75,9 +52,9 @@ class AppManager(object):
     pubs = {}
     gateway_srvs = {}
 
-    APP_STOPPED = "stopped"
-    APP_RUNNING = "running"
-    APP_BROKEN = "broken"
+    RAPP_STOPPED = "stopped"
+    RAPP_RUNNING = "running"
+    RAPP_BROKEN = "broken"
 
     ##########################################################################
     # Initialisation
@@ -89,7 +66,7 @@ class AppManager(object):
         self.app_list = None
 
         self._setup_ros_parameters()
-        self._app_status = self.APP_STOPPED
+        self._app_status = self.RAPP_STOPPED
 
         roslaunch.pmon._init_signal_handlers()
 
@@ -101,8 +78,8 @@ class AppManager(object):
 
     def _set_app_manager_api(self):
         self.services = {}
-        self.services['init'] = rospy.Service(self.init_srv_name, appmanager_srvs.Init, self._process_init)
-        self.services['apiflip_request'] = rospy.Service(self. flip_request_srv_name, appmanager_srvs.FlipRequest, self._process_flip_request)
+        self.services['init'] = rospy.Service(self.init_srv_name, rapp_manager_srvs.Init, self._process_init)
+        self.services['apiflip_request'] = rospy.Service(self. flip_request_srv_name, rapp_manager_srvs.FlipRequest, self._process_flip_request)
         self.services['invitation'] = rospy.Service(self.invitation_srv_name, concert_srvs.Invitation, self._process_invitation)
 
     def _set_gateway_services(self):
@@ -128,8 +105,8 @@ class AppManager(object):
             self.setAPIs(self.name)
         except Exception as unused_e:
             traceback.print_exc(file=sys.stdout)
-            return appmanager_srvs.InitResponse(False)
-        return appmanager_srvs.InitResponse(True)
+            return rapp_manager_srvs.InitResponse(False)
+        return rapp_manager_srvs.InitResponse(True)
 
     def _process_flip_request(self, req):
         try:
@@ -139,9 +116,9 @@ class AppManager(object):
             self.flips(remotename, service, gateway_msgs.ConnectionType.SERVICE, req.ok_flag)
         except Exception as unused_e:
             traceback.print_exc(file=sys.stdout)
-            return appmanager_srvs.FlipRequestResponse(False)
+            return rapp_manager_srvs.FlipRequestResponse(False)
 
-        return appmanager_srvs.FlipRequestResponse(True)
+        return rapp_manager_srvs.FlipRequestResponse(True)
 
     def _process_invitation(self, req):
         self.log(str(req))
@@ -161,11 +138,11 @@ class AppManager(object):
         return concert_srvs.GetPlatformInfoResponse(self.platform_info)
 
     def _process_get_app_list(self, req):
-        apps_description = appmanager_srvs.GetAppListResponse()
+        apps_description = rapp_manager_srvs.GetAppListResponse()
 
         for app_name in self.apps['from_source']:
             app = self.apps['from_source'][app_name]
-            a = appmanager_msgs.AppDescription()
+            a = rapp_manager_msgs.AppDescription()
             a.name = app.data['name']
             a.display = app.data['display']
             a.description = app.data['description']
@@ -176,13 +153,13 @@ class AppManager(object):
         return apps_description
 
     def _process_start_app(self, req):
-        resp = appmanager_srvs.StartAppResponse()
-        if self._app_status == self.APP_RUNNING:
+        resp = rapp_manager_srvs.StartAppResponse()
+        if self._app_status == self.RAPP_RUNNING:
             resp.started = False
             resp.message = "an app is already running"
             return resp
 
-        rospy.loginfo("App Manager : starting app : " + req.name)
+        rospy.loginfo("Rapp Manager : starting app : " + req.name)
 
         resp.started, resp.message, subscribers, publishers, services = \
                 self.apps['from_source'][req.name].start(self.param['robot_name'], req.remappings)
@@ -197,14 +174,14 @@ class AppManager(object):
             self.flips(self.remotename, publishers, gateway_msgs.ConnectionType.PUBLISHER, True)
             self.flips(self.remotename, services, gateway_msgs.ConnectionType.SERVICE, True)
         if resp.started:
-            self._app_status = self.APP_RUNNING
+            self._app_status = self.RAPP_RUNNING
         return resp
 
     def _process_stop_app(self, req):
-        if self._app_status == self.APP_STOPPED:
+        if self._app_status == self.RAPP_STOPPED:
             return
-        rospy.loginfo("App Manager : stopping app : " + req.name)
-        resp = appmanager_srvs.StopAppResponse()
+        rospy.loginfo("Rapp Manager : stopping app : " + req.name)
+        resp = rapp_manager_srvs.StopAppResponse()
 
         resp.stopped, resp.message, subscribers, publishers, services = self.apps['from_source'][req.name].stop()
 
@@ -213,7 +190,7 @@ class AppManager(object):
             self.flips(self.remotename, publishers, gateway_msgs.ConnectionType.PUBLISHER, False)
             self.flips(self.remotename, services, gateway_msgs.ConnectionType.SERVICE, False)
         if resp.stopped:
-            self._app_status = self.APP_STOPPED
+            self._app_status = self.RAPP_STOPPED
         return resp
 
     ##########################################################################
@@ -235,7 +212,7 @@ class AppManager(object):
         return r
 
     def _setup_ros_parameters(self):
-        rospy.logdebug("App Manager : parsing parameters")
+        rospy.logdebug("Rapp Manager : parsing parameters")
         param = {}
         param['robot_type'] = rospy.get_param('~robot_type')
         param['robot_name'] = rospy.get_param('~robot_name')
@@ -258,7 +235,7 @@ class AppManager(object):
         # Getting apps from installed list
         for filename in self.param['app_lists']:
             # should do some exception checking here, also utilise AppListFile properly.
-            app_list_file = AppListFile(filename)
+            app_list_file = RappListFile(filename)
             # ach, put in jihoon's format
             for app in app_list_file.available_apps:
                 if platform_compatible(platform_tuple(self.platform_info.platform, self.platform_info.system, self.platform_info.robot), app.data['platform']):
@@ -280,14 +257,14 @@ class AppManager(object):
         return applist
 
     def setAPIs(self, namespace):
-        rospy.loginfo("App Manager : advertising services")
+        rospy.loginfo("Rapp Manager : advertising services")
         self.platform_info.name = namespace
         service_names = [namespace + '/' + self.listapp_srv_name, '/' + namespace + '/' + self.platform_info_srv_name, '/' + namespace + '/' + self.start_app_srv_name, '/' + namespace + '/' + self.stop_app_srv_name]
         self.service_names = service_names
-        self.services['list_apps'] = rospy.Service(service_names[0], appmanager_srvs.GetAppList, self._process_get_app_list)
+        self.services['list_apps'] = rospy.Service(service_names[0], rapp_manager_srvs.GetAppList, self._process_get_app_list)
         self.services['platform_info'] = rospy.Service(service_names[1], concert_srvs.GetPlatformInfo, self._process_platform_info)
-        self.services['start_app'] = rospy.Service(service_names[2], appmanager_srvs.StartApp, self._process_start_app)
-        self.services['stop_app'] = rospy.Service(service_names[3], appmanager_srvs.StopApp, self._process_stop_app)
+        self.services['start_app'] = rospy.Service(service_names[2], rapp_manager_srvs.StartApp, self._process_start_app)
+        self.services['stop_app'] = rospy.Service(service_names[3], rapp_manager_srvs.StopApp, self._process_stop_app)
 
         self.pubs = {}
         pub_names = ['/' + namespace + '/' + self.log_pub_name]
@@ -313,18 +290,18 @@ class AppManager(object):
         resp = self.gateway_srv['flip'](req)
 
         if resp.result == 0:
-            rospy.loginfo("App Manager : successfully flipped %s" % str(topics))
+            rospy.loginfo("Rapp Manager : successfully flipped %s" % str(topics))
         else:
-            rospy.logerr("App Manager : failed to flip [%s]" % resp.error_message)
+            rospy.logerr("Rapp Manager : failed to flip [%s]" % resp.error_message)
 
     def process_stdmsg(self, message):
         self.pubs['log'].publish(message)
 
     def log(self, msg):
-        rospy.loginfo("App Manager : " + msg)
+        rospy.loginfo("Rapp Manager : " + msg)
 
     def logerr(self, msg):
-        rospy.logerr("App Manager : " + msg)
+        rospy.logerr("Rapp Manager : " + msg)
 
     def spin(self):
         # TODO: Test if gateway is connected

@@ -18,12 +18,6 @@ catkin_python_setup()
 # Installs
 ##############################################################################
 
-#install(
-#    PROGRAMS 
-#        scripts/app_manager.py
-#    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-#    )
-
 install(DIRECTORY apps
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 

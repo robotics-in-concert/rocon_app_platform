@@ -3,7 +3,7 @@
 ##############################################################################
 
 cmake_minimum_required(VERSION 2.8.3)
-project(rocon_appmanager)
+project(rocon_app_manager)
 
 ##############################################################################
 # Catkin
@@ -20,7 +20,7 @@ catkin_python_setup()
 
 install(
     PROGRAMS 
-        scripts/app_manager.py
+        scripts/rapp_manager.py
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
     )
 

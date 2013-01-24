@@ -3,7 +3,7 @@
 ##############################################################################
 
 cmake_minimum_required(VERSION 2.8.3)
-project(rocon_appmanager_frontend)
+project(rocon_app_manager_www)
 
 ##############################################################################
 # Catkin

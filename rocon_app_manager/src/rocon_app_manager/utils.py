@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # License: BSD
-#   https://raw.github.com/robotics-in-concert/rocon_app_platform/master/rocon_appmanager/LICENSE
+#   https://raw.github.com/robotics-in-concert/rocon_app_platform/master/rocon_app_manager/LICENSE
 #
 ##############################################################################
 # Imports
@@ -107,7 +107,7 @@ def platform_compatible(first_platform_tuple, second_platform_tuple):
         platform_one = PlatformTuple(first_platform_tuple)
         platform_two = PlatformTuple(second_platform_tuple)
     except InvalidPlatformTupleException as e:
-        rospy.logwarn("App Manager : invalid platform tuple [%s]" % str(e))
+        rospy.logwarn("Rapp Manager : invalid platform tuple [%s]" % str(e))
         return False
     if platform_one.platform != concert_msgs.Constants.PLATFORM_ANY and \
        platform_two.platform != concert_msgs.Constants.PLATFORM_ANY and \

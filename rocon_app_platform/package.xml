@@ -14,9 +14,9 @@
   <author email="d.stonier@gmail.com">Daniel Stonier</author>
   <author email="jihoonl@rnd.yujinrobot.com">Jihoon Lee</author>
 
-  <run_depend>rocon_appmanager</run_depend>
+  <run_depend>rocon_app_manager</run_depend>
   <run_depend>concert_client</run_depend>
-  <run_depend>rocon_appmanager_frontend</run_depend>
+  <run_depend>rocon_app_manager_www</run_depend>
   <run_depend>rocon_apps</run_depend>
   
   <export>
