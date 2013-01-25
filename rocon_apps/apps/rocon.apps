@@ -1,5 +1,7 @@
 apps:
  - rocon_apps/chirp
+ - rocon_apps/talker
+ - rocon_apps/listener
  
 # Currently not updated.
 # - rocon_apps/turtlesim_control
