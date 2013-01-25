@@ -15,6 +15,7 @@ import roslaunch.parent
 import traceback
 import time
 import thread
+import tempfile
 
 import utils
 from .exceptions import AppException, InvalidRappException
@@ -66,7 +67,7 @@ class Rapp(object):
           @param path : full path to the .app file
           @param app_name : unique name for the app (comes from the .app filename)
         '''
-        rospy.loginfo("Rapp Manager : loading app '%s'" % app_name)  # str(path)
+        rospy.loginfo("App Manager : loading app '%s'" % app_name)  # str(path)
         self.filename = path
 
         with open(path, 'r') as f:
@@ -101,10 +102,10 @@ class Rapp(object):
             raise AppException("Invalid appfile [%s]: bad %s entry: %s" % (app_name, log, e))
             """
         except NotFoundException:
-            raise AppException("App file [%s] feres to %s that is not installed"%(app_name,log))
+            raise AppException("App file [%s] refers to %s which is not installed"%(app_name,log))
             """
         except InvalidROSPkgException as e:
-            raise AppException("App file [%s] feres to %s that is not installed: %s" % (app_name, log, str(e)))
+            raise AppException("App file [%s] refers to %s which is not installed: %s" % (app_name, log, str(e)))
 
     def _load_interface(self, data):
         d = {}
@@ -130,6 +131,21 @@ class Rapp(object):
         return d
 
     def start(self, robot_name, remappings=[]):
+        '''
+          Some important jobs here.
+
+          1) run the rapp launcher under the unique robot name namespace
+
+          This guarantees that flipped entities generate unique node id's that won't collide when communicating
+          with each other (refer to https://github.com/robotics-in-concert/rocon_multimaster/issues/136).
+
+          2) Apply remapping rules while ignoring the namespace underneath.
+
+          @param robot_name ; unique name granted indirectly via the gateways, we namespace everything under this
+          @type str
+          @param remapping : rules for the app flips.
+          @type list of rocon_app_manager_msgs.msg.Remapping values.
+        '''
         data = self.data
         rospy.loginfo("Launching: %s" % (data['name']))
 
@@ -137,9 +153,14 @@ class Rapp(object):
         try:
             prefix = robot_name
 
+            temp = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
+            launch_text = '<launch>\n  <include ns="%s" file="%s"/>\n</launch>\n' % (robot_name, data['launch'])
+            temp.write(launch_text)
+            temp.close()  # unlink it later
+
             # Create roslaunch
             self._launch = roslaunch.parent.ROSLaunchParent(rospy.get_param("/run_id"),
-                                                            [data['launch']],
+                                                            [temp.name],
                                                             is_core=False,
                                                             process_listeners=())
             self._launch._load_config()
@@ -153,10 +174,12 @@ class Rapp(object):
             for connection_type in ['publishers', 'subscribers', 'services']:
                 self._connections[connection_type] = []
                 for t in data['interface'][connection_type]:
-                    remapped_name = prefix + '/' + t
+                    # Now we push the rapp launcher down into the prefixed
+                    # namespace, so just use it directly
+                    remapped_name = t
                     indices = [i for i, x in enumerate(remap_from_list) if x == t]
                     if indices:
-                        remapped_name = remap_to_list[indices[0]]
+                        remapped_name = '/' + remap_to_list[indices[0]]
                     self._connections[connection_type].append(remapped_name)
                     for N in self._launch.config.nodes:
                         N.remap_args.append((t, remapped_name))
@@ -172,6 +195,8 @@ class Rapp(object):
             rospy.loginfo("Error While launching " + data['launch'])
             data['status'] = "Error While launching " + data['launch']
             return False, "Error while launching " + data['name'], [], [], []
+        finally:
+            os.unlink(temp.name)
 
     def stop(self):
         data = self.data
@@ -183,7 +208,7 @@ class Rapp(object):
                 finally:
                     self._launch = None
                     data['status'] = 'Ready'
-                rospy.loginfo("Rapp Manager : stopped app [%s]" % data['name'])
+                rospy.loginfo("App Manager : stopped app [%s]" % data['name'])
         except Exception as e:
             print str(e)
             rospy.loginfo("Error while stopping " + data['name'])
