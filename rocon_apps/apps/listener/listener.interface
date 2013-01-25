@@ -1,4 +1,4 @@
-publishers:
+publishers: []
+subscribers:
   - chatter
-subscribers: []
 services: []
