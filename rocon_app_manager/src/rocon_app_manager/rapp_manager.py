@@ -36,7 +36,7 @@ import gateway_msgs.srv as gateway_srvs
 
 class RappManager(object):
 
-    DEFAULT_RAPP_LIST_DIRECTORY = None # '/opt/ros/groovy/stacks/'
+    DEFAULT_APP_LIST_DIRECTORY = None # '/opt/ros/groovy/stacks/'
 
     init_srv_name = '~init'
     flip_request_srv_name = '~apiflip_request'
@@ -52,9 +52,9 @@ class RappManager(object):
     pubs = {}
     gateway_srvs = {}
 
-    RAPP_STOPPED = "stopped"
-    RAPP_RUNNING = "running"
-    RAPP_BROKEN = "broken"
+    APP_STOPPED = "stopped"
+    APP_RUNNING = "running"
+    APP_BROKEN = "broken"
 
     ##########################################################################
     # Initialisation
@@ -66,7 +66,7 @@ class RappManager(object):
         self.app_list = None
 
         self._setup_ros_parameters()
-        self._app_status = self.RAPP_STOPPED
+        self._app_status = self.APP_STOPPED
 
         roslaunch.pmon._init_signal_handlers()
 
@@ -154,19 +154,19 @@ class RappManager(object):
 
     def _process_start_app(self, req):
         resp = rapp_manager_srvs.StartAppResponse()
-        if self._app_status == self.RAPP_RUNNING:
+        if self._app_status == self.APP_RUNNING:
             resp.started = False
             resp.message = "an app is already running"
             return resp
 
-        rospy.loginfo("Rapp Manager : starting app : " + req.name)
+        rospy.loginfo("App Manager : starting app : " + req.name)
 
         resp.started, resp.message, subscribers, publishers, services = \
                 self.apps['from_source'][req.name].start(self.param['robot_name'], req.remappings)
 
         # self.pullinTopics(pullin_topics,True)
-        print subscribers
-        print publishers
+        #print subscribers
+        #print publishers
 
         self.log(self.remotename)
         if self.remotename:
@@ -174,13 +174,13 @@ class RappManager(object):
             self.flips(self.remotename, publishers, gateway_msgs.ConnectionType.PUBLISHER, True)
             self.flips(self.remotename, services, gateway_msgs.ConnectionType.SERVICE, True)
         if resp.started:
-            self._app_status = self.RAPP_RUNNING
+            self._app_status = self.APP_RUNNING
         return resp
 
     def _process_stop_app(self, req):
-        if self._app_status == self.RAPP_STOPPED:
+        if self._app_status == self.APP_STOPPED:
             return
-        rospy.loginfo("Rapp Manager : stopping app : " + req.name)
+        rospy.loginfo("App Manager : stopping app : " + req.name)
         resp = rapp_manager_srvs.StopAppResponse()
 
         resp.stopped, resp.message, subscribers, publishers, services = self.apps['from_source'][req.name].stop()
@@ -190,7 +190,7 @@ class RappManager(object):
             self.flips(self.remotename, publishers, gateway_msgs.ConnectionType.PUBLISHER, False)
             self.flips(self.remotename, services, gateway_msgs.ConnectionType.SERVICE, False)
         if resp.stopped:
-            self._app_status = self.RAPP_STOPPED
+            self._app_status = self.APP_STOPPED
         return resp
 
     ##########################################################################
@@ -212,7 +212,7 @@ class RappManager(object):
         return r
 
     def _setup_ros_parameters(self):
-        rospy.logdebug("Rapp Manager : parsing parameters")
+        rospy.logdebug("App Manager : parsing parameters")
         param = {}
         param['robot_type'] = rospy.get_param('~robot_type')
         param['robot_name'] = rospy.get_param('~robot_name')
@@ -257,7 +257,7 @@ class RappManager(object):
         return applist
 
     def setAPIs(self, namespace):
-        rospy.loginfo("Rapp Manager : advertising services")
+        rospy.loginfo("App Manager : advertising services")
         self.platform_info.name = namespace
         service_names = [namespace + '/' + self.listapp_srv_name, '/' + namespace + '/' + self.platform_info_srv_name, '/' + namespace + '/' + self.start_app_srv_name, '/' + namespace + '/' + self.stop_app_srv_name]
         self.service_names = service_names
@@ -290,18 +290,18 @@ class RappManager(object):
         resp = self.gateway_srv['flip'](req)
 
         if resp.result == 0:
-            rospy.loginfo("Rapp Manager : successfully flipped %s" % str(topics))
+            rospy.loginfo("App Manager : successfully flipped %s" % str(topics))
         else:
-            rospy.logerr("Rapp Manager : failed to flip [%s]" % resp.error_message)
+            rospy.logerr("App Manager : failed to flip [%s]" % resp.error_message)
 
     def process_stdmsg(self, message):
         self.pubs['log'].publish(message)
 
     def log(self, msg):
-        rospy.loginfo("Rapp Manager : " + msg)
+        rospy.loginfo("App Manager : " + msg)
 
     def logerr(self, msg):
-        rospy.logerr("Rapp Manager : " + msg)
+        rospy.logerr("App Manager : " + msg)
 
     def spin(self):
         # TODO: Test if gateway is connected

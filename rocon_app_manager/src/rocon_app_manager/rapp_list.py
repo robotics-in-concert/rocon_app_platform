@@ -51,11 +51,11 @@ class RappListFile(object):
 
     def _load(self):
         available_apps = []
-        rospy.loginfo("Rapp Manager : loading apps file [%s]" % self.filename)
+        rospy.loginfo("App Manager : loading apps file [%s]" % self.filename)
         with open(self.filename) as f:
             apps_yaml = yaml.load(f)
             if not 'apps' in apps_yaml:
-                rospy.logerr("Rapp Manager : apps file [%s] is missing required key [%s]" % (self.filename, 'apps'))
+                rospy.logerr("App Manager : apps file [%s] is missing required key [%s]" % (self.filename, 'apps'))
             for app_resource_name in apps_yaml['apps']:
                 app = Rapp(app_resource_name)
                 available_apps.append(app)
