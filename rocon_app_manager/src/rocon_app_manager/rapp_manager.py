@@ -259,23 +259,41 @@ class RappManager(object):
     def setAPIs(self, namespace):
         rospy.loginfo("App Manager : advertising services")
         self.platform_info.name = namespace
-        service_names = [namespace + '/' + self.listapp_srv_name, '/' + namespace + '/' + self.platform_info_srv_name, '/' + namespace + '/' + self.start_app_srv_name, '/' + namespace + '/' + self.stop_app_srv_name]
-        self.service_names = service_names
-        self.services['list_apps'] = rospy.Service(service_names[0], rapp_manager_srvs.GetAppList, self._process_get_app_list)
-        self.services['platform_info'] = rospy.Service(service_names[1], rapp_manager_srvs.GetPlatformInfo, self._process_platform_info)
-        self.services['start_app'] = rospy.Service(service_names[2], rapp_manager_srvs.StartApp, self._process_start_app)
-        self.services['stop_app'] = rospy.Service(service_names[3], rapp_manager_srvs.StopApp, self._process_stop_app)
+        prefix = '/' + namespace + '/'
+        self.service_names = [prefix + name for name in 
+                              [self.listapp_srv_name, self.platform_info_srv_name, self.start_app_srv_name, self.stop_app_srv_name]]
+
+        self.services['list_apps'] = rospy.Service(self.service_names[0], rapp_manager_srvs.GetAppList, self._process_get_app_list)
+        self.services['platform_info'] = rospy.Service(self.service_names[1], rapp_manager_srvs.GetPlatformInfo, self._process_platform_info)
+        self.services['start_app'] = rospy.Service(self.service_names[2], rapp_manager_srvs.StartApp, self._process_start_app)
+        self.services['stop_app'] = rospy.Service(self.service_names[3], rapp_manager_srvs.StopApp, self._process_stop_app)
 
         self.pubs = {}
         pub_names = ['/' + namespace + '/' + self.log_pub_name]
         self.pub_names = pub_names
         self.pubs['log'] = rospy.Publisher(self.pub_names[0], String)
+        
+        # Advertisements
+        req = gateway_srvs.AdvertiseRequest()
+        req.cancel = False
+        req.rules = []
+        rule = gateway_msgs.Rule()
+        rule.type = gateway_msgs.ConnectionType.SERVICE
+        rule.name = prefix + self.platform_info_srv_name
+        rule.node = ''  # Shouldn't need to worry about setting the node name here, maybe rospy.get_name()
+        req.rules.append(rule)
+        unused_resp = self.gateway_srv['advertise'](req)
 
         # Logging mechanism. hooks std_out and publish as a topic
         self.logger = Logger(sys.stdout)
         sys.stdout = self.logger
         self.logger.addCallback(self.process_stdmsg)
 
+    def advertise(self, connection, type):
+        '''
+          Advertise a local connection.
+        '''
+        
     def flips(self, remotename, topics, type, ok_flag):
         if len(topics) == 0:
             return
