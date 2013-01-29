@@ -89,10 +89,10 @@ class RappManager(object):
         self.gateway_srv['pull'] = rospy.ServiceProxy('~pull', gateway_srvs.Remote)
 
     def _set_platform_info(self):
-        self.platform_info = concert_msgs.PlatformInfo()
+        self.platform_info = rapp_manager_msgs.PlatformInfo()
         self.platform_info.platform = concert_msgs.Constants.PLATFORM_LINUX
         self.platform_info.system = concert_msgs.Constants.SYSTEM_ROS
-        self.platform_info.robot = self.param['robot_type']  # TODO Validate this against concert_msgs.Constants ROBOT_XXX
+        self.platform_info.robot = self.param['robot_type']  # TODO Validate this against concert_msgs.Constants ROBOT_XXX, but shouldn't be a concert_msgs type
         self.platform_info.name = self.param['robot_name']
 
     ##########################################################################
@@ -135,7 +135,7 @@ class RappManager(object):
         return concert_srvs.InvitationResponse(True)
 
     def _process_platform_info(self, req):
-        return concert_srvs.GetPlatformInfoResponse(self.platform_info)
+        return rapp_manager_srvs.GetPlatformInfoResponse(self.platform_info)
 
     def _process_get_app_list(self, req):
         apps_description = rapp_manager_srvs.GetAppListResponse()
@@ -262,7 +262,7 @@ class RappManager(object):
         service_names = [namespace + '/' + self.listapp_srv_name, '/' + namespace + '/' + self.platform_info_srv_name, '/' + namespace + '/' + self.start_app_srv_name, '/' + namespace + '/' + self.stop_app_srv_name]
         self.service_names = service_names
         self.services['list_apps'] = rospy.Service(service_names[0], rapp_manager_srvs.GetAppList, self._process_get_app_list)
-        self.services['platform_info'] = rospy.Service(service_names[1], concert_srvs.GetPlatformInfo, self._process_platform_info)
+        self.services['platform_info'] = rospy.Service(service_names[1], rapp_manager_srvs.GetPlatformInfo, self._process_platform_info)
         self.services['start_app'] = rospy.Service(service_names[2], rapp_manager_srvs.StartApp, self._process_start_app)
         self.services['stop_app'] = rospy.Service(service_names[3], rapp_manager_srvs.StopApp, self._process_stop_app)
 
