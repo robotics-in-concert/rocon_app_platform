@@ -14,7 +14,6 @@ import traceback
 import roslaunch.pmon
 from .rapp import Rapp
 from .rapp_list import RappListFile
-from .logger import Logger
 from std_msgs.msg import String
 from .utils import platform_compatible, platform_tuple
 import rocon_app_manager_msgs.msg as rapp_manager_msgs
@@ -286,16 +285,6 @@ class RappManager(object):
         req.rules.append(rule)
         unused_resp = self.gateway_srv['advertise'](req)
 
-        # Logging mechanism. hooks std_out and publish as a topic
-        self.logger = Logger(sys.stdout)
-        sys.stdout = self.logger
-        self.logger.addCallback(self.process_stdmsg)
-
-    def advertise(self, connection, type):
-        '''
-          Advertise a local connection.
-        '''
-        
     def flips(self, remotename, topics, type, ok_flag):
         if len(topics) == 0:
             return
