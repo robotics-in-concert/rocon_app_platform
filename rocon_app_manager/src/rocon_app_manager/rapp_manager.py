@@ -260,19 +260,21 @@ class RappManager(object):
         rospy.loginfo("App Manager : advertising services")
         self.platform_info.name = namespace
         prefix = '/' + namespace + '/'
-        self.service_names = [prefix + name for name in 
-                              [self.listapp_srv_name, self.platform_info_srv_name, self.start_app_srv_name, self.stop_app_srv_name]]
 
+        # To be advertised services
+        self.services['platform_info'] = rospy.Service(prefix + self.platform_info_srv_name, rapp_manager_srvs.GetPlatformInfo, self._process_platform_info)
+
+        # To be flipped services
+        self.service_names = [prefix + name for name in [self.listapp_srv_name, self.start_app_srv_name, self.stop_app_srv_name]]
         self.services['list_apps'] = rospy.Service(self.service_names[0], rapp_manager_srvs.GetAppList, self._process_get_app_list)
-        self.services['platform_info'] = rospy.Service(self.service_names[1], rapp_manager_srvs.GetPlatformInfo, self._process_platform_info)
-        self.services['start_app'] = rospy.Service(self.service_names[2], rapp_manager_srvs.StartApp, self._process_start_app)
-        self.services['stop_app'] = rospy.Service(self.service_names[3], rapp_manager_srvs.StopApp, self._process_stop_app)
+        self.services['start_app'] = rospy.Service(self.service_names[1], rapp_manager_srvs.StartApp, self._process_start_app)
+        self.services['stop_app'] = rospy.Service(self.service_names[2], rapp_manager_srvs.StopApp, self._process_stop_app)
 
         self.pubs = {}
         pub_names = ['/' + namespace + '/' + self.log_pub_name]
         self.pub_names = pub_names
         self.pubs['log'] = rospy.Publisher(self.pub_names[0], String)
-        
+
         # Advertisements
         req = gateway_srvs.AdvertiseRequest()
         req.cancel = False
