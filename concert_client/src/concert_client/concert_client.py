@@ -73,7 +73,6 @@ class ConcertClient(object):
         self.rocon_app_manager_srv = {}
         self.rocon_app_manager_srv['init'] = rospy.ServiceProxy('~init', rocon_app_manager_srvs.Init)
         self.rocon_app_manager_srv['init'].wait_for_service()
-        self.rocon_app_manager_srv['apiflip_request'] = rospy.ServiceProxy('~apiflip_request', rocon_app_manager_srvs.FlipRequest)
         self.rocon_app_manager_srv['invitation'] = rospy.ServiceProxy('~relay_invitation', concert_srvs.Invitation)
 
     def spin(self):
@@ -139,11 +138,6 @@ class ConcertClient(object):
     def joinMaster(self, master):
         self.flips(master, self.master_services, gateway_msgs.ConnectionType.SERVICE, True)
 
-        req = rocon_app_manager_srvs.FlipRequestRequest(master, True)
-        resp = self.rocon_app_manager_srv['apiflip_request'](req)
-        if resp.result == False:
-            rospy.logerr("Concert Client : failed to flip rocon_app_manager APIs")
-
     def leaveMasters(self):
         self.masterdiscovery.set_stop()
         try:
@@ -154,10 +148,6 @@ class ConcertClient(object):
 
     def _leave_master(self, master):
         self.flips(master, self.master_services, gateway_msgs.ConnectionType.SERVICE, False)
-        req = rocon_app_manager_srvs.FlipRequestRequest(master, False)
-        resp = self.rocon_app_manager_srv['apiflip_request'](req)
-        if resp.result == False:
-            self.logerr("Failed to Flip Appmanager APIs")
 
     def _process_invitation(self, req):
         cm_name = req.name

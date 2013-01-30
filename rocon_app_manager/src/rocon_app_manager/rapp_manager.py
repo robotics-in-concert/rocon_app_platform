@@ -38,17 +38,11 @@ class RappManager(object):
     DEFAULT_APP_LIST_DIRECTORY = None # '/opt/ros/groovy/stacks/'
 
     init_srv_name = '~init'
-    flip_request_srv_name = '~apiflip_request'
     invitation_srv_name = '~invitation'
 
-    listapp_srv_name = 'list_apps'
-    platform_info_srv_name = 'platform_info'
-    start_app_srv_name = 'start_app'
-    stop_app_srv_name = 'stop_app'
     log_pub_name = 'log'
 
     services = {}
-    pubs = {}
     gateway_srvs = {}
 
     APP_STOPPED = "stopped"
@@ -63,29 +57,15 @@ class RappManager(object):
         self.param = {}
         self.apps = {}
         self.app_list = None
-
-        self._setup_ros_parameters()
         self._app_status = self.APP_STOPPED
-
         roslaunch.pmon._init_signal_handlers()
 
-        self._set_gateway_services()
+        self._setup_ros_parameters()
         self._set_platform_info()
+        self._init_gateway_services()
+        self._init_app_manager_services()
 
         self._get_installed_app_list()  # It sets up an app directory and load installed app list from directory
-        self._set_app_manager_api()  # Must be after get app list, so it doesn't try to access nonexistant apps['from_source']
-
-    def _set_app_manager_api(self):
-        self.services = {}
-        self.services['init'] = rospy.Service(self.init_srv_name, rapp_manager_srvs.Init, self._process_init)
-        self.services['apiflip_request'] = rospy.Service(self. flip_request_srv_name, rapp_manager_srvs.FlipRequest, self._process_flip_request)
-        self.services['invitation'] = rospy.Service(self.invitation_srv_name, concert_srvs.Invitation, self._process_invitation)
-
-    def _set_gateway_services(self):
-        self.gateway_srv = {}
-        self.gateway_srv['flip'] = rospy.ServiceProxy('~flip', gateway_srvs.Remote)
-        self.gateway_srv['advertise'] = rospy.ServiceProxy('~advertise', gateway_srvs.Advertise)
-        self.gateway_srv['pull'] = rospy.ServiceProxy('~pull', gateway_srvs.Remote)
 
     def _set_platform_info(self):
         self.platform_info = rapp_manager_msgs.PlatformInfo()
@@ -94,12 +74,33 @@ class RappManager(object):
         self.platform_info.robot = self.param['robot_type']  # TODO Validate this against concert_msgs.Constants ROBOT_XXX, but shouldn't be a concert_msgs type
         self.platform_info.name = self.param['robot_name']
 
+    def _init_app_manager_services(self):
+        self._service_names = {}
+        self._service_names['platform_info'] = 'platform_info' # these will get prefixed by the gateway name later
+        self._service_names['list_apps'] = 'list_apps'
+        self._service_names['start_app'] = 'start_app'
+        self._service_names['stop_app'] = 'stop_app'
+
+        self.services = {}
+        self.services['init'] = rospy.Service(self.init_srv_name, rapp_manager_srvs.Init, self._process_init)
+        self.services['invitation'] = rospy.Service(self.invitation_srv_name, concert_srvs.Invitation, self._process_invitation)
+
+    def _init_gateway_services(self):
+        self.gateway_srv = {}
+        self.gateway_srv['flip'] = rospy.ServiceProxy('~flip', gateway_srvs.Remote)
+        self.gateway_srv['advertise'] = rospy.ServiceProxy('~advertise', gateway_srvs.Advertise)
+        self.gateway_srv['pull'] = rospy.ServiceProxy('~pull', gateway_srvs.Remote)
+
     ##########################################################################
     # Ros Callbacks
     ##########################################################################
 
     def _process_init(self, req):
         self.name = req.name
+        # Prefix all services with the unique name
+        for name in self._service_names:
+            self._service_names[name] = '/' + self.name + '/' + name 
+        
         try:
             self.setAPIs(self.name)
         except Exception as unused_e:
@@ -107,27 +108,17 @@ class RappManager(object):
             return rapp_manager_srvs.InitResponse(False)
         return rapp_manager_srvs.InitResponse(True)
 
-    def _process_flip_request(self, req):
-        try:
-            remotename = req.remotename
-            self.remotename = remotename
-            service = self.service_names[0:2]
-            self.flips(remotename, service, gateway_msgs.ConnectionType.SERVICE, req.ok_flag)
-        except Exception as unused_e:
-            traceback.print_exc(file=sys.stdout)
-            return rapp_manager_srvs.FlipRequestResponse(False)
-
-        return rapp_manager_srvs.FlipRequestResponse(True)
-
     def _process_invitation(self, req):
         self.log(str(req))
-        #self.remotename = req.name
-        service = self.service_names[2:]
-        self.log("accepted invitation to remote concert [%s]" % str(self.remotename))
+        self._remote_name = req.name
+        self.log("accepted invitation to remote concert [%s]" % str(self._remote_name))
 
         try:
-            self.flips(self.remotename, service, gateway_msgs.ConnectionType.SERVICE, req.ok_flag)
-            self.flips(self.remotename, self.pub_names, gateway_msgs.ConnectionType.PUBLISHER, req.ok_flag)
+            self._flip_connections(self._remote_name, 
+                                   [self._service_names['start_app'], self._service_names['stop_app']], 
+                                   gateway_msgs.ConnectionType.SERVICE, 
+                                   req.ok_flag
+                                   )
         except Exception as unused_e:
             traceback.print_exc(file=sys.stdout)
             return concert_srvs.InvitationResponse(False)
@@ -167,11 +158,11 @@ class RappManager(object):
         #print subscribers
         #print publishers
 
-        self.log(self.remotename)
-        if self.remotename:
-            self.flips(self.remotename, subscribers, gateway_msgs.ConnectionType.SUBSCRIBER, True)
-            self.flips(self.remotename, publishers, gateway_msgs.ConnectionType.PUBLISHER, True)
-            self.flips(self.remotename, services, gateway_msgs.ConnectionType.SERVICE, True)
+        self.log(self._remote_name)
+        if self._remote_name:
+            self._flip_connections(self._remote_name, subscribers, gateway_msgs.ConnectionType.SUBSCRIBER, True)
+            self._flip_connections(self._remote_name, publishers, gateway_msgs.ConnectionType.PUBLISHER, True)
+            self._flip_connections(self._remote_name, services, gateway_msgs.ConnectionType.SERVICE, True)
         if resp.started:
             self._app_status = self.APP_RUNNING
         return resp
@@ -184,10 +175,10 @@ class RappManager(object):
 
         resp.stopped, resp.message, subscribers, publishers, services = self.apps['from_source'][req.name].stop()
 
-        if self.remotename:
-            self.flips(self.remotename, subscribers, gateway_msgs.ConnectionType.SUBSCRIBER, False)
-            self.flips(self.remotename, publishers, gateway_msgs.ConnectionType.PUBLISHER, False)
-            self.flips(self.remotename, services, gateway_msgs.ConnectionType.SERVICE, False)
+        if self._remote_name:
+            self._flip_connections(self._remote_name, subscribers, gateway_msgs.ConnectionType.SUBSCRIBER, False)
+            self._flip_connections(self._remote_name, publishers, gateway_msgs.ConnectionType.PUBLISHER, False)
+            self._flip_connections(self._remote_name, services, gateway_msgs.ConnectionType.SERVICE, False)
         if resp.stopped:
             self._app_status = self.APP_STOPPED
         return resp
@@ -258,53 +249,59 @@ class RappManager(object):
     def setAPIs(self, namespace):
         rospy.loginfo("App Manager : advertising services")
         self.platform_info.name = namespace
-        prefix = '/' + namespace + '/'
 
         # To be advertised services
-        self.services['platform_info'] = rospy.Service(prefix + self.platform_info_srv_name, rapp_manager_srvs.GetPlatformInfo, self._process_platform_info)
+        self.services['platform_info'] = rospy.Service(self._service_names['platform_info'], rapp_manager_srvs.GetPlatformInfo, self._process_platform_info)
+        self.services['list_apps'] = rospy.Service(self._service_names['list_apps'], rapp_manager_srvs.GetAppList, self._process_get_app_list)
+        self._advertise_service(self._service_names['platform_info'])
+        self._advertise_service(self._service_names['list_apps'])
 
         # To be flipped services
-        self.service_names = [prefix + name for name in [self.listapp_srv_name, self.start_app_srv_name, self.stop_app_srv_name]]
-        self.services['list_apps'] = rospy.Service(self.service_names[0], rapp_manager_srvs.GetAppList, self._process_get_app_list)
-        self.services['start_app'] = rospy.Service(self.service_names[1], rapp_manager_srvs.StartApp, self._process_start_app)
-        self.services['stop_app'] = rospy.Service(self.service_names[2], rapp_manager_srvs.StopApp, self._process_stop_app)
+        self.services['start_app'] = rospy.Service(self._service_names['start_app'], rapp_manager_srvs.StartApp, self._process_start_app)
+        self.services['stop_app'] = rospy.Service(self._service_names['stop_app'], rapp_manager_srvs.StopApp, self._process_stop_app)
 
-        self.pubs = {}
-        pub_names = ['/' + namespace + '/' + self.log_pub_name]
-        self.pub_names = pub_names
-        self.pubs['log'] = rospy.Publisher(self.pub_names[0], String)
-
-        # Advertisements
+    def _advertise_service(self, service_name):
+        '''
+          Advertise a rocon_app_manager service via the gateway.
+          
+          @param service_name
+          @type string
+        '''
         req = gateway_srvs.AdvertiseRequest()
         req.cancel = False
         req.rules = []
         rule = gateway_msgs.Rule()
         rule.type = gateway_msgs.ConnectionType.SERVICE
-        rule.name = prefix + self.platform_info_srv_name
+        rule.name = service_name
         rule.node = ''  # Shouldn't need to worry about setting the node name here, maybe rospy.get_name()
         req.rules.append(rule)
         unused_resp = self.gateway_srv['advertise'](req)
-
-    def flips(self, remotename, topics, type, ok_flag):
-        if len(topics) == 0:
+        
+    def _flip_connections(self, remote_name, connection_names, connection_type, direction_flag):
+        '''
+          (Un)Flip a service to a remote gateway.
+          
+          @param remote_name : the name of the remote gateway to flip to. 
+          @type str
+          @param connection_names : the topic/service/action_xxx names
+          @type list of str
+          @param connection_type : publisher, subscriber, service, action_client or action_server
+          @type gateway_msgs.ConnectionType
+          @param cancel_flag : whether or not we are flipping (false) or unflipping (true)
+          @type bool
+        '''
+        if len(connection_names) == 0:
             return
         req = gateway_srvs.RemoteRequest()
-        req.cancel = not ok_flag
-
+        req.cancel = not direction_flag 
         req.remotes = []
-
-        for t in topics:
-            req.remotes.append(self.createRemoteRule(remotename, self.createRule(t, type)))
-
+        for connection_name in connection_names:
+            req.remotes.append(self.createRemoteRule(remote_name, self.createRule(connection_name, connection_type)))
         resp = self.gateway_srv['flip'](req)
-
         if resp.result == 0:
-            rospy.loginfo("App Manager : successfully flipped %s" % str(topics))
+            rospy.loginfo("App Manager : successfully flipped %s" % str(connection_names))
         else:
             rospy.logerr("App Manager : failed to flip [%s]" % resp.error_message)
-
-    def process_stdmsg(self, message):
-        self.pubs['log'].publish(message)
 
     def log(self, msg):
         rospy.loginfo("App Manager : " + msg)
