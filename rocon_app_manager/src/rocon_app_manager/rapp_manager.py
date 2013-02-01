@@ -253,16 +253,15 @@ class RappManager(object):
         # To be advertised services
         self.services['platform_info'] = rospy.Service(self._service_names['platform_info'], rapp_manager_srvs.GetPlatformInfo, self._process_platform_info)
         self.services['list_apps'] = rospy.Service(self._service_names['list_apps'], rapp_manager_srvs.GetAppList, self._process_get_app_list)
-        self._advertise_service(self._service_names['platform_info'])
-        self._advertise_service(self._service_names['list_apps'])
+        self._advertise_services([self._service_names['platform_info'], self._service_names['list_apps']])
 
         # To be flipped services
         self.services['start_app'] = rospy.Service(self._service_names['start_app'], rapp_manager_srvs.StartApp, self._process_start_app)
         self.services['stop_app'] = rospy.Service(self._service_names['stop_app'], rapp_manager_srvs.StopApp, self._process_stop_app)
 
-    def _advertise_service(self, service_name):
+    def _advertise_services(self, service_names):
         '''
-          Advertise a rocon_app_manager service via the gateway.
+          Advertise rocon_app_manager services via the gateway.
           
           @param service_name
           @type string
@@ -270,11 +269,12 @@ class RappManager(object):
         req = gateway_srvs.AdvertiseRequest()
         req.cancel = False
         req.rules = []
-        rule = gateway_msgs.Rule()
-        rule.type = gateway_msgs.ConnectionType.SERVICE
-        rule.name = service_name
-        rule.node = ''  # Shouldn't need to worry about setting the node name here, maybe rospy.get_name()
-        req.rules.append(rule)
+        for service_name in service_names:
+            rule = gateway_msgs.Rule()
+            rule.type = gateway_msgs.ConnectionType.SERVICE
+            rule.name = service_name
+            rule.node = ''  # Shouldn't need to worry about setting the node name here, maybe rospy.get_name()
+            req.rules.append(rule)
         unused_resp = self.gateway_srv['advertise'](req)
         
     def _flip_connections(self, remote_name, connection_names, connection_type, direction_flag):
