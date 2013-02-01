@@ -18,7 +18,7 @@ import concert_msgs.srv as concert_srvs
 import rocon_app_manager_msgs.srv as rocon_app_manager_srvs
 import gateway_msgs.msg as gateway_msgs
 import gateway_msgs.srv as gateway_srvs
-from .util import createRule, createRemoteRule
+from rocon_utilities import create_gateway_rule, create_gateway_remote_rule
 
 ##############################################################################
 # Concert Client
@@ -181,7 +181,7 @@ class ConcertClient(object):
         req.cancel = not ok_flag
         req.remotes = []
         for t in topics:
-            req.remotes.append(createRemoteRule(remote_name, createRule(t, type)))
+            req.remotes.append(create_gateway_remote_rule(remote_name, create_gateway_rule(t, type)))
 
         resp = self.gateway_srv['flip'](req)
 

@@ -14,6 +14,7 @@ import traceback
 import roslaunch.pmon
 from .rapp_list import RappListFile
 from .utils import platform_compatible, platform_tuple
+from rocon_utilities import create_gateway_rule, create_gateway_remote_rule
 import rocon_app_manager_msgs.msg as rapp_manager_msgs
 import rocon_app_manager_msgs.srv as rapp_manager_srvs
 import concert_msgs.msg as concert_msgs
@@ -204,20 +205,6 @@ class RappManager(object):
     # Utilities
     ##########################################################################
 
-    def _create_remote_rule(self, gateway, rule):
-        r = gateway_msgs.RemoteRule()
-        r.gateway = gateway
-        r.rule = rule
-
-        return r
-
-    def _create_rule(self, name, api_type):
-        r = gateway_msgs.Rule()
-        r.name = name
-        r.type = api_type
-        r.node = ''
-        return r
-
     def _load(self, directory, typ):
         '''
           It searchs *.app in directories
@@ -256,7 +243,7 @@ class RappManager(object):
         req.cancel = False
         req.rules = []
         for service_name in service_names:
-            req.rules.append(self._create_rule(service_name, gateway_msgs.ConnectionType.SERVICE))
+            req.rules.append(create_gateway_rule(service_name, gateway_msgs.ConnectionType.SERVICE))
         unused_resp = self._gateway_services['advertise'](req)
 
     def _flip_connections(self, remote_name, connection_names, connection_type, direction_flag):
@@ -278,7 +265,7 @@ class RappManager(object):
         req.cancel = not direction_flag
         req.remotes = []
         for connection_name in connection_names:
-            req.remotes.append(self._create_remote_rule(remote_name, self._create_rule(connection_name, connection_type)))
+            req.remotes.append(create_gateway_remote_rule(remote_name, create_gateway_rule(connection_name, connection_type)))
         resp = self._gateway_services['flip'](req)
         if resp.result == 0:
             rospy.loginfo("App Manager : successfully flipped %s" % str(connection_names))
