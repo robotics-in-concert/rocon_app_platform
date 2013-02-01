@@ -44,6 +44,7 @@ class RappManager(object):
     ##########################################################################
 
     def __init__(self):
+        self._namespace = "app_manager"
         self._app_status = self.APP_STOPPED
         roslaunch.pmon._init_signal_handlers()
 
@@ -59,10 +60,9 @@ class RappManager(object):
         self._param = {}
         self._param['robot_type'] = rospy.get_param('~robot_type')
         self._param['robot_name'] = rospy.get_param('~robot_name')
+        self._namespace = self._param['robot_name']
         self._param['app_store_url'] = rospy.get_param('~app_store_url', '')
         self._param['platform_info'] = rospy.get_param('~platform_info', '')
-        self._param['white_list'] = rospy.get_param('~whitelist', '')
-        self._param['black_list'] = rospy.get_param('~black_list', '')
         self._param['app_lists'] = rospy.get_param('~app_lists', '').split(';')
         # If we have list parameters - https://github.com/ros/ros_comm/pull/50/commits
         # self._param['app_lists'] = rospy.get_param('~app_lists', [])
@@ -115,13 +115,23 @@ class RappManager(object):
     ##########################################################################
 
     def _process_init(self, req):
-        self.name = req.name
+        self._namespace = req.name
         # Prefix all services with the unique name
         for name in self._service_names:
-            self._service_names[name] = '/' + self.name + '/' + name
+            self._service_names[name] = '/' + self._namespace + '/' + name
 
         try:
-            self.setAPIs(self.name)
+            rospy.loginfo("App Manager : advertising services")
+            self.platform_info.name = self._namespace
+
+            # To be advertised services
+            self._services['platform_info'] = rospy.Service(self._service_names['platform_info'], rapp_manager_srvs.GetPlatformInfo, self._process_platform_info)
+            self._services['list_apps'] = rospy.Service(self._service_names['list_apps'], rapp_manager_srvs.GetAppList, self._process_get_app_list)
+            self._advertise_services([self._service_names['platform_info'], self._service_names['list_apps']])
+
+            # To be flipped services
+            self._services['start_app'] = rospy.Service(self._service_names['start_app'], rapp_manager_srvs.StartApp, self._process_start_app)
+            self._services['stop_app'] = rospy.Service(self._service_names['stop_app'], rapp_manager_srvs.StopApp, self._process_stop_app)
         except Exception as unused_e:
             traceback.print_exc(file=sys.stdout)
             return rapp_manager_srvs.InitResponse(False)
@@ -218,19 +228,6 @@ class RappManager(object):
             applist += list(zip(apps_name, apps_with_path))
 
         return applist
-
-    def setAPIs(self, namespace):
-        rospy.loginfo("App Manager : advertising services")
-        self.platform_info.name = namespace
-
-        # To be advertised services
-        self._services['platform_info'] = rospy.Service(self._service_names['platform_info'], rapp_manager_srvs.GetPlatformInfo, self._process_platform_info)
-        self._services['list_apps'] = rospy.Service(self._service_names['list_apps'], rapp_manager_srvs.GetAppList, self._process_get_app_list)
-        self._advertise_services([self._service_names['platform_info'], self._service_names['list_apps']])
-
-        # To be flipped services
-        self._services['start_app'] = rospy.Service(self._service_names['start_app'], rapp_manager_srvs.StartApp, self._process_start_app)
-        self._services['stop_app'] = rospy.Service(self._service_names['stop_app'], rapp_manager_srvs.StopApp, self._process_stop_app)
 
     def _advertise_services(self, service_names):
         '''

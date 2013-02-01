@@ -1,4 +1,4 @@
-robot_name: 'dude'
+robot_name: 'kobuki'
 # This goes to making up part of the platform_info triple.
 robot_type: 'turtlebot'
 
@@ -6,9 +6,3 @@ robot_type: 'turtlebot'
 # app_lists: '/home/jihoonl/ros/groovy/turtlebot/turtlebot_apps/turtlebot_core_apps/turtlebot.apps'
 
 app_store_url: []
-
-# These are currently unused
-white_list: ["concert_master"]
-black_list: ["pirate_master"]
-
-remote_name: "gateway1"
