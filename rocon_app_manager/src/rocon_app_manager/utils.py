@@ -8,9 +8,8 @@
 ##############################################################################
 
 import rospy
-import roslib
 import roslib.names
-import concert_msgs.msg as concert_msgs
+import rocon_app_manager_msgs.msg as rapp_manager_msgs
 from .exceptions import NotFoundException, InvalidPlatformTupleException
 
 ##############################################################################
@@ -29,35 +28,10 @@ class PlatformTuple(object):
         platform_tuple_list = platform_tuple.split('.')
         if len(platform_tuple_list) != 3:
             raise InvalidPlatformTupleException("len('%s') != 3" % platform_tuple)
-        # also validate against concert_msgs.Constants
+        # should also validate against rapp_manager_msgs.PLatformInfo constant definitions
         self.platform = platform_tuple_list[0]
         self.system = platform_tuple_list[1]
         self.robot = platform_tuple_list[2]
-
-
-def findResource(resource):
-    '''
-      @return: filepath of resource.  Does not validate if filepath actually exists.
-      @raise ValueError: if resource is not a valid resource name.
-      @raise roslib.packages.InvalidROSPkgException: if package referred
-        to in resource name cannot be found.
-      @raise NotFoundException: if resource does not exist.
-    '''
-
-    p, a = roslib.names.package_resource_name(resource)
-
-    if not p:
-        raise ValueError("Resource is missing package name: %s" % (resource))
-    matches = roslib.packages.find_resource(p, a)
-
-    # TODO: convert ValueError to better type for better error messages
-    if len(matches) == 1:
-        return matches[0]
-    elif not matches:
-        raise NotFoundException("No resource [%s]" % (resource))
-    else:
-        print matches
-        raise ValueError("Multiple resources named [%s]" % (resource))
 
 
 def find_resource(resource):
@@ -109,14 +83,14 @@ def platform_compatible(first_platform_tuple, second_platform_tuple):
     except InvalidPlatformTupleException as e:
         rospy.logwarn("App Manager : invalid platform tuple [%s]" % str(e))
         return False
-    if platform_one.platform != concert_msgs.Constants.PLATFORM_ANY and \
-       platform_two.platform != concert_msgs.Constants.PLATFORM_ANY and \
+    if platform_one.platform != rapp_manager_msgs.PlatformInfo.PLATFORM_ANY and \
+       platform_two.platform != rapp_manager_msgs.PlatformInfo.PLATFORM_ANY and \
        platform_one.platform != platform_two.platform:
         return False
     if platform_one.system != platform_two.system:
         return False
-    if platform_one.robot != concert_msgs.Constants.ROBOT_ANY and \
-       platform_two.robot != concert_msgs.Constants.ROBOT_ANY and \
+    if platform_one.robot != rapp_manager_msgs.PlatformInfo.ROBOT_ANY and \
+       platform_two.robot != rapp_manager_msgs.PlatformInfo.ROBOT_ANY and \
        platform_one.robot != platform_two.robot:
         return False
     return True

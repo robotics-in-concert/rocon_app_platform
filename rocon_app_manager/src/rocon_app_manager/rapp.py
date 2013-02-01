@@ -94,7 +94,7 @@ class Rapp(object):
 
     def loadFromFile(self, path, log, app_name="Unknown"):
         try:
-            data = utils.findResource(path)
+            data = utils.find_resource(path)
             if not os.path.exists(data):
                 raise AppException("Invalid appfile [%s]: %s file does not exist." % (app_name, log))
             return data

@@ -1,6 +1,3 @@
-# Standalone mode.
-is_alone: true
-
 robot_name: 'dude'
 # This goes to making up part of the platform_info triple.
 robot_type: 'turtlebot'
