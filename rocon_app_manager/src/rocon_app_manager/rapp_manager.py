@@ -17,8 +17,6 @@ from .utils import platform_compatible, platform_tuple
 from rocon_utilities import create_gateway_rule, create_gateway_remote_rule
 import rocon_app_manager_msgs.msg as rapp_manager_msgs
 import rocon_app_manager_msgs.srv as rapp_manager_srvs
-import concert_msgs.msg as concert_msgs
-import concert_msgs.srv as concert_srvs
 import gateway_msgs.msg as gateway_msgs
 import gateway_msgs.srv as gateway_srvs
 
@@ -33,7 +31,6 @@ class RappManager(object):
     """
 
     init_srv_name = '~init'
-    invitation_srv_name = '~invitation'
 
     APP_STOPPED = "stopped"
     APP_RUNNING = "running"
@@ -83,7 +80,7 @@ class RappManager(object):
 
         self._services = {}
         self._services['init'] = rospy.Service(self.init_srv_name, rapp_manager_srvs.Init, self._process_init)
-        self._services['invitation'] = rospy.Service(self.invitation_srv_name, concert_srvs.Invitation, self._process_invitation)
+        self._services['remote_control'] = rospy.Service("~remote_control", rapp_manager_srvs.RemoteControl, self._process_remote_control)
         # Other services currently only fire up when the app manager gets initialised
         # with a remote targget name later. Might be nice to fire them up by default,
         # and then close them, restart them when re-initialised with a different remote
@@ -137,20 +134,20 @@ class RappManager(object):
             return rapp_manager_srvs.InitResponse(False)
         return rapp_manager_srvs.InitResponse(True)
 
-    def _process_invitation(self, req):
+    def _process_remote_control(self, req):
         rospy.loginfo("App Manager : " + str(req))
-        self._remote_name = req.name
+        self._remote_name = req.remote_target_name
         rospy.loginfo("App Manager : accepted invitation to remote concert [%s]" % str(self._remote_name))
         try:
             self._flip_connections(self._remote_name,
                                    [self._service_names['start_app'], self._service_names['stop_app']],
                                    gateway_msgs.ConnectionType.SERVICE,
-                                   req.ok_flag
+                                   req.cancel
                                    )
         except Exception as unused_e:
             traceback.print_exc(file=sys.stdout)
-            return concert_srvs.InvitationResponse(False)
-        return concert_srvs.InvitationResponse(True)
+            return rapp_manager_srvs.RemoteControlResponse(False)
+        return rapp_manager_srvs.RemoteControlResponse(True)
 
     def _process_platform_info(self, req):
         return rapp_manager_srvs.GetPlatformInfoResponse(self.platform_info)
@@ -188,9 +185,9 @@ class RappManager(object):
 
         rospy.loginfo("App Manager : %s" % self._remote_name)
         if self._remote_name:
-            self._flip_connections(self._remote_name, subscribers, gateway_msgs.ConnectionType.SUBSCRIBER, True)
-            self._flip_connections(self._remote_name, publishers, gateway_msgs.ConnectionType.PUBLISHER, True)
-            self._flip_connections(self._remote_name, services, gateway_msgs.ConnectionType.SERVICE, True)
+            self._flip_connections(self._remote_name, subscribers, gateway_msgs.ConnectionType.SUBSCRIBER)
+            self._flip_connections(self._remote_name, publishers, gateway_msgs.ConnectionType.PUBLISHER)
+            self._flip_connections(self._remote_name, services, gateway_msgs.ConnectionType.SERVICE)
         if resp.started:
             self._app_status = self.APP_RUNNING
         return resp
@@ -204,9 +201,9 @@ class RappManager(object):
         resp.stopped, resp.message, subscribers, publishers, services = self.apps['pre_installed'][req.name].stop()
 
         if self._remote_name:
-            self._flip_connections(self._remote_name, subscribers, gateway_msgs.ConnectionType.SUBSCRIBER, False)
-            self._flip_connections(self._remote_name, publishers, gateway_msgs.ConnectionType.PUBLISHER, False)
-            self._flip_connections(self._remote_name, services, gateway_msgs.ConnectionType.SERVICE, False)
+            self._flip_connections(self._remote_name, subscribers, gateway_msgs.ConnectionType.SUBSCRIBER, True)
+            self._flip_connections(self._remote_name, publishers, gateway_msgs.ConnectionType.PUBLISHER, True)
+            self._flip_connections(self._remote_name, services, gateway_msgs.ConnectionType.SERVICE, True)
         if resp.stopped:
             self._app_status = self.APP_STOPPED
         return resp
@@ -243,7 +240,7 @@ class RappManager(object):
             req.rules.append(create_gateway_rule(service_name, gateway_msgs.ConnectionType.SERVICE))
         unused_resp = self._gateway_services['advertise'](req)
 
-    def _flip_connections(self, remote_name, connection_names, connection_type, direction_flag):
+    def _flip_connections(self, remote_name, connection_names, connection_type, cancel_flag=False):
         '''
           (Un)Flip a service to a remote gateway.
 
@@ -259,7 +256,7 @@ class RappManager(object):
         if len(connection_names) == 0:
             return
         req = gateway_srvs.RemoteRequest()
-        req.cancel = not direction_flag
+        req.cancel = cancel_flag
         req.remotes = []
         for connection_name in connection_names:
             req.remotes.append(create_gateway_remote_rule(remote_name, create_gateway_rule(connection_name, connection_type)))

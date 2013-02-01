@@ -73,7 +73,8 @@ class ConcertClient(object):
         self.rocon_app_manager_srv = {}
         self.rocon_app_manager_srv['init'] = rospy.ServiceProxy('~init', rocon_app_manager_srvs.Init)
         self.rocon_app_manager_srv['init'].wait_for_service()
-        self.rocon_app_manager_srv['invitation'] = rospy.ServiceProxy('~relay_invitation', concert_srvs.Invitation)
+        self.rocon_app_manager_srv['remote_control'] = rospy.ServiceProxy('~remote_control', rocon_app_manager_srvs.RemoteControl)
+        self.rocon_app_manager_srv['remote_control'].wait_for_service()
 
     def spin(self):
         self.connectToHub()
@@ -156,15 +157,18 @@ class ConcertClient(object):
         if cm_name in self.param['cm_whitelist']:
             return self.acceptInvitation(req)
         elif len(self.param['cm_whitelist']) == 0 and cm_name not in self.param['cm_blacklist']:
-            return self.acceptInvitation(req)
+            return concert_srvs.InvitationResponse(self.acceptInvitation(req))
         else:
             return concert_srvs.InvitationResponse(False)
 
     def acceptInvitation(self, req):
         rospy.loginfo("Concert Client : accepting invitation from %s" % req.name)
-        resp = self.rocon_app_manager_srv['invitation'](req)
-        self._is_connected_to_concert = resp.success
-        return resp
+        remote_control_request = rocon_app_manager_srvs.RemoteControlRequest()
+        remote_control_request.remote_target_name = req.name
+        remote_control_request.cancel = not req.ok_flag
+        resp = self.rocon_app_manager_srv['remote_control'](remote_control_request)
+        self._is_connected_to_concert = resp.result
+        return resp.result
 
     def _process_status(self, req):
         resp = concert_srvs.StatusResponse()

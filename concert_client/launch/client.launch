@@ -19,7 +19,7 @@
     <remap from="concert_client/gateway_info" to="gateway/gateway_info"/>
     <remap from="concert_client/flip" to="gateway/flip"/>
     <remap from="concert_client/init" to="appmanager/init"/>
-    <remap from="concert_client/relay_invitation" to="appmanager/invitation"/>
+    <remap from="concert_client/remote_control" to="appmanager/remote_control"/>
   </node>
 
   <node pkg="rocon_app_manager" type="rapp_manager.py" name="appmanager" output="screen">
