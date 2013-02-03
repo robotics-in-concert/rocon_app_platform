@@ -39,6 +39,7 @@ class RappManager(object):
     def __init__(self):
         self._namespace = "app_manager"
         self._app_status = rapp_manager_msgs.Constants.APP_STOPPED
+        self._remote_name = None
         roslaunch.pmon._init_signal_handlers()
 
         self._setup_ros_parameters()
@@ -71,7 +72,7 @@ class RappManager(object):
         self._service_names = {}
         self._service_names['platform_info'] = 'platform_info'
         self._service_names['list_apps'] = 'list_apps'
-        self._service_names['statusd'] = 'statusd'
+        self._service_names['status'] = 'status'
         self._service_names['start_app'] = 'start_app'
         self._service_names['stop_app'] = 'stop_app'
 
@@ -79,7 +80,7 @@ class RappManager(object):
         self._services['init'] = rospy.Service(self.init_srv_name, rapp_manager_srvs.Init, self._process_init)
         self._services['invite'] = rospy.Service("~invite", rapp_manager_srvs.Invite, self._process_invite)
         # Other services currently only fire up when the app manager gets initialised
-        # with a remote targget name later. Might be nice to fire them up by default,
+        # with a remote target name later. Might be nice to fire them up by default,
         # and then close them, restart them when re-initialised with a different remote
         # target later.
 
@@ -121,11 +122,11 @@ class RappManager(object):
             # To be advertised services
             self._services['platform_info'] = rospy.Service(self._service_names['platform_info'], rapp_manager_srvs.GetPlatformInfo, self._process_platform_info)
             self._services['list_apps'] = rospy.Service(self._service_names['list_apps'], rapp_manager_srvs.GetAppList, self._process_get_app_list)
-            self._services['statusd'] = rospy.Service(self._service_names['statusd'], rapp_manager_srvs.GetAppList, self._process_status)
+            self._services['status'] = rospy.Service(self._service_names['status'], rapp_manager_srvs.Status, self._process_status)
             self._advertise_services([
                          self._service_names['platform_info'],
                          self._service_names['list_apps'],
-                         self._service_names['statusd']
+                         self._service_names['status']
                          ])
 
             # To be flipped services
@@ -170,7 +171,7 @@ class RappManager(object):
         if self._remote_name:
             response.remote_controller = self._remote_name
         else:
-            response.remote_controller = rapp_manager_msgs.Constants.STATUS_AVAILABLE
+            response.remote_controller = rapp_manager_msgs.Constants.NO_REMOTE_CONNECTION
         response.namespace = self._namespace
         return response
 

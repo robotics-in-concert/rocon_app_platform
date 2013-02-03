@@ -36,7 +36,6 @@ class ConcertClient(object):
     concertmasterlist = []
 
     invitation_srv = 'invitation'
-    status_srv = 'status'
 
     def __init__(self):
         ####################
@@ -109,8 +108,7 @@ class ConcertClient(object):
 
         self.service = {}
         self.service['invitation'] = rospy.Service(self.name + '/' + self.invitation_srv, concert_srvs.Invitation, self._process_invitation)
-        self.service['status'] = rospy.Service(self.name + '/' + self.status_srv, concert_srvs.Status, self._process_status)
-        self.master_services = ['/' + self.name + '/' + self.invitation_srv, '/' + self.name + '/' + self.status_srv]
+        self.master_services = ['/' + self.name + '/' + self.invitation_srv]
 
         app_init_req = rocon_app_manager_srvs.InitRequest(name)
         rospy.loginfo("Concert Client : initialising the app manager [%s]" % name)
@@ -169,14 +167,6 @@ class ConcertClient(object):
         resp = self.rocon_app_manager_srv['invite'](app_manager_invite_request)
         self._is_connected_to_concert = resp.result
         return resp.result
-
-    def _process_status(self, req):
-        resp = concert_srvs.StatusResponse()
-        resp.status = "free-agent" if not self._is_connected_to_concert else "busy"
-        resp.client_status = concert_msgs.Constants.CONCERT_CLIENT_STATUS_AVAILABLE \
-                        if not self._is_connected_to_concert else concert_msgs.Constants.CONCERT_CLIENT_STATUS_CONCERT
-        resp.app_status = concert_msgs.Constants.APP_STATUS_STOPPED  # This is just a stub for now https://github.com/robotics-in-concert/rocon_app_platform/issues/20
-        return resp
 
     def flips(self, remote_name, topics, type, ok_flag):
         if len(topics) == 0:
