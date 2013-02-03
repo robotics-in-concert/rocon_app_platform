@@ -80,7 +80,7 @@ class RappManager(object):
 
         self._services = {}
         self._services['init'] = rospy.Service(self.init_srv_name, rapp_manager_srvs.Init, self._process_init)
-        self._services['remote_control'] = rospy.Service("~remote_control", rapp_manager_srvs.RemoteControl, self._process_remote_control)
+        self._services['invite'] = rospy.Service("~invite", rapp_manager_srvs.Invite, self._process_invite)
         # Other services currently only fire up when the app manager gets initialised
         # with a remote targget name later. Might be nice to fire them up by default,
         # and then close them, restart them when re-initialised with a different remote
@@ -134,7 +134,7 @@ class RappManager(object):
             return rapp_manager_srvs.InitResponse(False)
         return rapp_manager_srvs.InitResponse(True)
 
-    def _process_remote_control(self, req):
+    def _process_invite(self, req):
         rospy.loginfo("App Manager : " + str(req))
         self._remote_name = req.remote_target_name
         rospy.loginfo("App Manager : accepted invitation to remote concert [%s]" % str(self._remote_name))
@@ -146,8 +146,8 @@ class RappManager(object):
                                    )
         except Exception as unused_e:
             traceback.print_exc(file=sys.stdout)
-            return rapp_manager_srvs.RemoteControlResponse(False)
-        return rapp_manager_srvs.RemoteControlResponse(True)
+            return rapp_manager_srvs.InviteResponse(False)
+        return rapp_manager_srvs.InviteResponse(True)
 
     def _process_platform_info(self, req):
         return rapp_manager_srvs.GetPlatformInfoResponse(self.platform_info)

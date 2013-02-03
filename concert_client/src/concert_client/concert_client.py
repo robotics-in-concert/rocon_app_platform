@@ -73,8 +73,8 @@ class ConcertClient(object):
         self.rocon_app_manager_srv = {}
         self.rocon_app_manager_srv['init'] = rospy.ServiceProxy('~init', rocon_app_manager_srvs.Init)
         self.rocon_app_manager_srv['init'].wait_for_service()
-        self.rocon_app_manager_srv['remote_control'] = rospy.ServiceProxy('~remote_control', rocon_app_manager_srvs.RemoteControl)
-        self.rocon_app_manager_srv['remote_control'].wait_for_service()
+        self.rocon_app_manager_srv['invite'] = rospy.ServiceProxy('~invite', rocon_app_manager_srvs.Invite)
+        self.rocon_app_manager_srv['invite'].wait_for_service()
 
     def spin(self):
         self.connectToHub()
@@ -163,10 +163,10 @@ class ConcertClient(object):
 
     def acceptInvitation(self, req):
         rospy.loginfo("Concert Client : accepting invitation from %s" % req.name)
-        remote_control_request = rocon_app_manager_srvs.RemoteControlRequest()
-        remote_control_request.remote_target_name = req.name
-        remote_control_request.cancel = not req.ok_flag
-        resp = self.rocon_app_manager_srv['remote_control'](remote_control_request)
+        app_manager_invite_request = rocon_app_manager_srvs.InviteRequest()
+        app_manager_invite_request.remote_target_name = req.name
+        app_manager_invite_request.cancel = not req.ok_flag
+        resp = self.rocon_app_manager_srv['invite'](app_manager_invite_request)
         self._is_connected_to_concert = resp.result
         return resp.result
 
