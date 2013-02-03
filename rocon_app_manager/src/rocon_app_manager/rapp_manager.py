@@ -32,17 +32,13 @@ class RappManager(object):
 
     init_srv_name = '~init'
 
-    APP_STOPPED = "stopped"
-    APP_RUNNING = "running"
-    APP_BROKEN = "broken"
-
     ##########################################################################
     # Initialisation
     ##########################################################################
 
     def __init__(self):
         self._namespace = "app_manager"
-        self._app_status = self.APP_STOPPED
+        self._app_status = rapp_manager_msgs.Constants.APP_STOPPED
         roslaunch.pmon._init_signal_handlers()
 
         self._setup_ros_parameters()
@@ -75,6 +71,7 @@ class RappManager(object):
         self._service_names = {}
         self._service_names['platform_info'] = 'platform_info'
         self._service_names['list_apps'] = 'list_apps'
+        self._service_names['statusd'] = 'statusd'
         self._service_names['start_app'] = 'start_app'
         self._service_names['stop_app'] = 'stop_app'
 
@@ -124,7 +121,12 @@ class RappManager(object):
             # To be advertised services
             self._services['platform_info'] = rospy.Service(self._service_names['platform_info'], rapp_manager_srvs.GetPlatformInfo, self._process_platform_info)
             self._services['list_apps'] = rospy.Service(self._service_names['list_apps'], rapp_manager_srvs.GetAppList, self._process_get_app_list)
-            self._advertise_services([self._service_names['platform_info'], self._service_names['list_apps']])
+            self._services['statusd'] = rospy.Service(self._service_names['statusd'], rapp_manager_srvs.GetAppList, self._process_status)
+            self._advertise_services([
+                         self._service_names['platform_info'],
+                         self._service_names['list_apps'],
+                         self._service_names['statusd']
+                         ])
 
             # To be flipped services
             self._services['start_app'] = rospy.Service(self._service_names['start_app'], rapp_manager_srvs.StartApp, self._process_start_app)
@@ -152,6 +154,26 @@ class RappManager(object):
     def _process_platform_info(self, req):
         return rapp_manager_srvs.GetPlatformInfoResponse(self.platform_info)
 
+    def _process_status(self, req):
+        '''
+          Serve some details about the current app manager status:
+
+          - who is controlling it (i.e. who it flipped start_app etc to)
+          - the namespace it is publishing it and its apps interfaces on
+          - the current app status (runnning or stopped)
+
+          @param req : status request object (empty)
+          @type rapp_maanger_srvs.StatusRequest
+        '''
+        response = rapp_manager_srvs.StatusResponse()
+        response.app_status = self._app_status
+        if self._remote_name:
+            response.remote_controller = self._remote_name
+        else:
+            response.remote_controller = rapp_manager_msgs.Constants.STATUS_AVAILABLE
+        response.namespace = self._namespace
+        return response
+
     def _process_get_app_list(self, req):
         apps_description = rapp_manager_srvs.GetAppListResponse()
 
@@ -169,7 +191,7 @@ class RappManager(object):
 
     def _process_start_app(self, req):
         resp = rapp_manager_srvs.StartAppResponse()
-        if self._app_status == self.APP_RUNNING:
+        if self._app_status == rapp_manager_msgs.Constants.APP_RUNNING:
             resp.started = False
             resp.message = "an app is already running"
             return resp
@@ -189,11 +211,11 @@ class RappManager(object):
             self._flip_connections(self._remote_name, publishers, gateway_msgs.ConnectionType.PUBLISHER)
             self._flip_connections(self._remote_name, services, gateway_msgs.ConnectionType.SERVICE)
         if resp.started:
-            self._app_status = self.APP_RUNNING
+            self._app_status = rapp_manager_msgs.Constants.APP_RUNNING
         return resp
 
     def _process_stop_app(self, req):
-        if self._app_status == self.APP_STOPPED:
+        if self._app_status == rapp_manager_msgs.Constants.APP_STOPPED:
             return
         rospy.loginfo("App Manager : stopping app : " + req.name)
         resp = rapp_manager_srvs.StopAppResponse()
@@ -205,7 +227,7 @@ class RappManager(object):
             self._flip_connections(self._remote_name, publishers, gateway_msgs.ConnectionType.PUBLISHER, True)
             self._flip_connections(self._remote_name, services, gateway_msgs.ConnectionType.SERVICE, True)
         if resp.stopped:
-            self._app_status = self.APP_STOPPED
+            self._app_status = rapp_manager_msgs.Constants.APP_STOPPED
         return resp
 
     ##########################################################################
