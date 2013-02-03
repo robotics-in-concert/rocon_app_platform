@@ -58,6 +58,10 @@ class RappManager(object):
         self._param['app_store_url'] = rospy.get_param('~app_store_url', '')
         self._param['platform_info'] = rospy.get_param('~platform_info', '')
         self._param['app_lists'] = rospy.get_param('~app_lists', '').split(';')
+        # Todo fix these up with proper whitelist/blacklists
+        self._param['remote_controller_whitelist'] = rospy.get_param('~remote_controller_whitelist', [])
+        self._param['remote_controller_blacklist'] = rospy.get_param('~remote_controller_blacklist', [])
+
         # If we have list parameters - https://github.com/ros/ros_comm/pull/50/commits
         # self._param['app_lists'] = rospy.get_param('~app_lists', [])
 
@@ -73,12 +77,13 @@ class RappManager(object):
         self._service_names['platform_info'] = 'platform_info'
         self._service_names['list_apps'] = 'list_apps'
         self._service_names['status'] = 'status'
+        self._service_names['invite'] = 'invite'
         self._service_names['start_app'] = 'start_app'
         self._service_names['stop_app'] = 'stop_app'
 
         self._services = {}
         self._services['init'] = rospy.Service(self.init_srv_name, rapp_manager_srvs.Init, self._process_init)
-        self._services['invite'] = rospy.Service("~invite", rapp_manager_srvs.Invite, self._process_invite)
+
         # Other services currently only fire up when the app manager gets initialised
         # with a remote target name later. Might be nice to fire them up by default,
         # and then close them, restart them when re-initialised with a different remote
@@ -123,10 +128,12 @@ class RappManager(object):
             self._services['platform_info'] = rospy.Service(self._service_names['platform_info'], rapp_manager_srvs.GetPlatformInfo, self._process_platform_info)
             self._services['list_apps'] = rospy.Service(self._service_names['list_apps'], rapp_manager_srvs.GetAppList, self._process_get_app_list)
             self._services['status'] = rospy.Service(self._service_names['status'], rapp_manager_srvs.Status, self._process_status)
+            self._services['invite'] = rospy.Service(self._service_names['invite'], rapp_manager_srvs.Invite, self._process_invite)
             self._advertise_services([
                          self._service_names['platform_info'],
                          self._service_names['list_apps'],
-                         self._service_names['status']
+                         self._service_names['status'],
+                         self._service_names['invite']
                          ])
 
             # To be flipped services
@@ -138,9 +145,18 @@ class RappManager(object):
         return rapp_manager_srvs.InitResponse(True)
 
     def _process_invite(self, req):
+        # Todo : add checks for whether client is currently busy or not
+        if req.remote_target_name in self._param['remote_controller_whitelist']:
+            return rapp_manager_srvs.InviteResponse(self._accept_invitation(req))
+        elif len(self._param['remote_controller_whitelist']) == 0 and req.remote_target_name not in self._param['remote_controller_blacklist']:
+            return rapp_manager_srvs.InviteResponse(self._accept_invitation(req))
+        else:
+            return rapp_manager_srvs.InviteResponse(False)
+
+    def _accept_invitation(self, req):
         rospy.loginfo("App Manager : " + str(req))
         self._remote_name = req.remote_target_name
-        rospy.loginfo("App Manager : accepted invitation to remote concert [%s]" % str(self._remote_name))
+        rospy.loginfo("App Manager : accepting invitation to remote concert [%s]" % str(self._remote_name))
         try:
             self._flip_connections(self._remote_name,
                                    [self._service_names['start_app'], self._service_names['stop_app']],
@@ -149,8 +165,8 @@ class RappManager(object):
                                    )
         except Exception as unused_e:
             traceback.print_exc(file=sys.stdout)
-            return rapp_manager_srvs.InviteResponse(False)
-        return rapp_manager_srvs.InviteResponse(True)
+            return False
+        return True
 
     def _process_platform_info(self, req):
         return rapp_manager_srvs.GetPlatformInfoResponse(self.platform_info)

@@ -2,6 +2,11 @@ robot_name: 'kobuki'
 # This goes to making up part of the platform_info triple.
 robot_type: 'turtlebot'
 
+# Whitelist/blacklists for who can take control of the app manager
+# These are currently lists of remote gateway names...
+remote_controller_whitelist: []
+remote_controller_blacklist: []
+
 # Semi colon separated string. This is very non-portable, use launchers where you can use $(find..) instead
 # app_lists: '/home/jihoonl/ros/groovy/turtlebot/turtlebot_apps/turtlebot_core_apps/turtlebot.apps'
 

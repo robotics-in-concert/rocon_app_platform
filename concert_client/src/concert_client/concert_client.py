@@ -61,10 +61,8 @@ class ConcertClient(object):
         ####################
         self.gateway_srv = {}
         self.gateway_srv['gateway_info'] = rospy.ServiceProxy('~gateway_info', gateway_srvs.GatewayInfo)
-        self.gateway_srv['flip'] = rospy.ServiceProxy('~flip', gateway_srvs.Remote)
         try:
             self.gateway_srv['gateway_info'].wait_for_service()
-            self.gateway_srv['flip'].wait_for_service()
         except rospy.exceptions.ROSInterruptException:
             rospy.logerr("Concert Client : interrupted while waiting for gateway services to appear.")
             return
@@ -72,8 +70,6 @@ class ConcertClient(object):
         self.rocon_app_manager_srv = {}
         self.rocon_app_manager_srv['init'] = rospy.ServiceProxy('~init', rocon_app_manager_srvs.Init)
         self.rocon_app_manager_srv['init'].wait_for_service()
-        self.rocon_app_manager_srv['invite'] = rospy.ServiceProxy('~invite', rocon_app_manager_srvs.Invite)
-        self.rocon_app_manager_srv['invite'].wait_for_service()
 
     def spin(self):
         self.connectToHub()
@@ -81,7 +77,7 @@ class ConcertClient(object):
         rospy.loginfo("Concert Client; scanning for concerts...")
         self.masterdiscovery.start()
         rospy.spin()
-        self.leaveMasters()
+        self.masterdiscovery.set_stop()
 
     def connectToHub(self):
         while not rospy.is_shutdown() and not self._is_connected_to_hub:
@@ -106,8 +102,6 @@ class ConcertClient(object):
         self.name = name
         self.hub_uri = uri
 
-        self.service = {}
-        self.service['invitation'] = rospy.Service(self.name + '/' + self.invitation_srv, concert_srvs.Invitation, self._process_invitation)
         self.master_services = ['/' + self.name + '/' + self.invitation_srv]
 
         app_init_req = rocon_app_manager_srvs.InitRequest(name)
@@ -118,8 +112,6 @@ class ConcertClient(object):
         param = {}
         param['hub_whitelist'] = ''
         param['hub_blacklist'] = ''
-        param['cm_whitelist'] = []
-        param['cm_blacklist'] = []
 
         return param
 
@@ -128,58 +120,5 @@ class ConcertClient(object):
         new_masters = [m for m in discovered_masterlist if m not in self.concertmasterlist]
         self.concertmasterlist += new_masters
 
-        for master in new_masters:
-            self.joinMaster(master)
-
         # cleaning gone masters
         self.concertmasterlist = [m for m in self.concertmasterlist and discovered_masterlist]
-
-    def joinMaster(self, master):
-        self.flips(master, self.master_services, gateway_msgs.ConnectionType.SERVICE, True)
-
-    def leaveMasters(self):
-        self.masterdiscovery.set_stop()
-        try:
-            for master in self.concertmasterlist:
-                self._leave_master(master)
-        except Exception as unused_e:
-            rospy.logdebug("Concert Client: gateway already down, no shutdown work required.")
-
-    def _leave_master(self, master):
-        self.flips(master, self.master_services, gateway_msgs.ConnectionType.SERVICE, False)
-
-    def _process_invitation(self, req):
-        cm_name = req.name
-
-        # Check if concert master is in white list
-        if cm_name in self.param['cm_whitelist']:
-            return self.acceptInvitation(req)
-        elif len(self.param['cm_whitelist']) == 0 and cm_name not in self.param['cm_blacklist']:
-            return concert_srvs.InvitationResponse(self.acceptInvitation(req))
-        else:
-            return concert_srvs.InvitationResponse(False)
-
-    def acceptInvitation(self, req):
-        rospy.loginfo("Concert Client : accepting invitation from %s" % req.name)
-        app_manager_invite_request = rocon_app_manager_srvs.InviteRequest()
-        app_manager_invite_request.remote_target_name = req.name
-        app_manager_invite_request.cancel = not req.ok_flag
-        resp = self.rocon_app_manager_srv['invite'](app_manager_invite_request)
-        self._is_connected_to_concert = resp.result
-        return resp.result
-
-    def flips(self, remote_name, topics, type, ok_flag):
-        if len(topics) == 0:
-            return
-        req = gateway_srvs.RemoteRequest()
-        req.cancel = not ok_flag
-        req.remotes = []
-        for t in topics:
-            req.remotes.append(create_gateway_remote_rule(remote_name, create_gateway_rule(t, type)))
-
-        resp = self.gateway_srv['flip'](req)
-
-        if resp.result == 0:
-            rospy.loginfo("Concert Client : successfully flipped to the concert %s" % str(topics))
-        else:
-            rospy.logerr("Concert Client : failed to flip [%s][%s]" % (str(topics), str(resp.error_message)))
