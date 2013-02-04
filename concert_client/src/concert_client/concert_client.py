@@ -7,14 +7,8 @@
 # Imports
 ##############################################################################
 
-import roslib
-roslib.load_manifest('concert_client')
 import rospy
 
-from rocon_hub_client.hub_client import HubClient
-from .concertmaster_discovery import ConcertMasterDiscovery
-import concert_msgs.msg as concert_msgs
-import concert_msgs.srv as concert_srvs
 import rocon_app_manager_msgs.srv as rocon_app_manager_srvs
 import gateway_msgs.msg as gateway_msgs
 import gateway_msgs.srv as gateway_srvs
@@ -35,26 +29,12 @@ class ConcertClient(object):
 
     concertmasterlist = []
 
-    invitation_srv = 'invitation'
-
     def __init__(self):
         ####################
         # Variables
         ####################
-        self._is_connected_to_hub = False
         self.name = rospy.get_name()
-        self.param = self._setup_ros_parameters()
-
-        self.hub_client = HubClient(whitelist=self.param['hub_whitelist'],
-                                    blacklist=self.param['hub_blacklist'],
-                                    is_zeroconf=False,
-                                    namespace='rocon',
-                                    name=self.name,
-                                    callbacks=None)
-
-        self.masterdiscovery = ConcertMasterDiscovery(self.hub_client, self.concertmaster_key, self.processNewMaster)
-        self._is_connected_to_concert = False
-        self._is_connected_to_hub = False
+        self._param = self._setup_ros_parameters()
 
         ####################
         # Ros Api Handles
@@ -72,37 +52,25 @@ class ConcertClient(object):
         self.rocon_app_manager_srv['init'].wait_for_service()
 
     def spin(self):
-        self.connectToHub()
-        rospy.loginfo("Concert Client: connected to Hub [%s]" % self.hub_uri)
-        rospy.loginfo("Concert Client; scanning for concerts...")
-        self.masterdiscovery.start()
-        rospy.spin()
-        self.masterdiscovery.set_stop()
-
-    def connectToHub(self):
-        while not rospy.is_shutdown() and not self._is_connected_to_hub:
-            rospy.loginfo("Getting Hub info from gateway...")
+        gateway_info = gateway_srvs.GatewayInfoResponse()
+        gateway_info.connected = False
+        while not rospy.is_shutdown() and not gateway_info.connected:
             gateway_info = self.gateway_srv['gateway_info']()
-            if gateway_info.connected == True:
-                hub_uri = gateway_info.hub_uri
-                if self.hub_client.connect(hub_uri):
-                    self.init(gateway_info.name, hub_uri)
+            if gateway_info.connected:
+                self.init(gateway_info.name)
             else:
-                rospy.loginfo("No hub is available. Try later")
+                rospy.loginfo("Concert Client : gateway not yet connected,")
             rospy.sleep(1.0)
+        rospy.spin()
 
-    def init(self, name, uri):
+    def init(self, name):
         '''
         @param name : the unique gateway name
         @type string
         @param uri : the hub uri
         @type string
         '''
-        self._is_connected_to_hub = True
         self.name = name
-        self.hub_uri = uri
-
-        self.master_services = ['/' + self.name + '/' + self.invitation_srv]
 
         app_init_req = rocon_app_manager_srvs.InitRequest(name)
         rospy.loginfo("Concert Client : initialising the app manager [%s]" % name)
@@ -110,15 +78,4 @@ class ConcertClient(object):
 
     def _setup_ros_parameters(self):
         param = {}
-        param['hub_whitelist'] = ''
-        param['hub_blacklist'] = ''
-
         return param
-
-    def processNewMaster(self, discovered_masterlist):
-        # find newly discovered masters
-        new_masters = [m for m in discovered_masterlist if m not in self.concertmasterlist]
-        self.concertmasterlist += new_masters
-
-        # cleaning gone masters
-        self.concertmasterlist = [m for m in self.concertmasterlist and discovered_masterlist]

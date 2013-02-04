@@ -16,8 +16,6 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <run_depend>rospy</run_depend>
-  <run_depend>rocon_hub_client</run_depend>
-  <run_depend>concert_msgs</run_depend>
   <run_depend>rocon_app_manager_msgs</run_depend>
   <run_depend>rocon_utilities</run_depend>
   <run_depend>redis</run_depend>
