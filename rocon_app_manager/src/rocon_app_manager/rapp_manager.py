@@ -82,7 +82,6 @@ class RappManager(object):
         self._service_names['stop_app'] = 'stop_app'
 
         self._services = {}
-        self._services['init'] = rospy.Service(self.init_srv_name, rapp_manager_srvs.Init, self._process_init)
 
         # Other services currently only fire up when the app manager gets initialised
         # with a remote target name later. Might be nice to fire them up by default,
@@ -91,6 +90,7 @@ class RappManager(object):
 
     def _init_gateway_services(self):
         self._gateway_services = {}
+        self._gateway_services['gateway_info'] = rospy.ServiceProxy('~gateway_info', gateway_srvs.GatewayInfo)
         self._gateway_services['flip'] = rospy.ServiceProxy('~flip', gateway_srvs.Remote)
         self._gateway_services['advertise'] = rospy.ServiceProxy('~advertise', gateway_srvs.Advertise)
         self._gateway_services['pull'] = rospy.ServiceProxy('~pull', gateway_srvs.Remote)
@@ -113,36 +113,6 @@ class RappManager(object):
     ##########################################################################
     # Ros Callbacks
     ##########################################################################
-
-    def _process_init(self, req):
-        self._namespace = req.name
-        # Prefix all services with the unique name
-        for name in self._service_names:
-            self._service_names[name] = '/' + self._namespace + '/' + name
-
-        try:
-            rospy.loginfo("App Manager : advertising services")
-            self.platform_info.name = self._namespace
-
-            # To be advertised services
-            self._services['platform_info'] = rospy.Service(self._service_names['platform_info'], rapp_manager_srvs.GetPlatformInfo, self._process_platform_info)
-            self._services['list_apps'] = rospy.Service(self._service_names['list_apps'], rapp_manager_srvs.GetAppList, self._process_get_app_list)
-            self._services['status'] = rospy.Service(self._service_names['status'], rapp_manager_srvs.Status, self._process_status)
-            self._services['invite'] = rospy.Service(self._service_names['invite'], rapp_manager_srvs.Invite, self._process_invite)
-            self._advertise_services([
-                         self._service_names['platform_info'],
-                         self._service_names['list_apps'],
-                         self._service_names['status'],
-                         self._service_names['invite']
-                         ])
-
-            # To be flipped services
-            self._services['start_app'] = rospy.Service(self._service_names['start_app'], rapp_manager_srvs.StartApp, self._process_start_app)
-            self._services['stop_app'] = rospy.Service(self._service_names['stop_app'], rapp_manager_srvs.StopApp, self._process_stop_app)
-        except Exception as unused_e:
-            traceback.print_exc(file=sys.stdout)
-            return rapp_manager_srvs.InitResponse(False)
-        return rapp_manager_srvs.InitResponse(True)
 
     def _process_invite(self, req):
         # Todo : add checks for whether client is currently busy or not
@@ -218,10 +188,6 @@ class RappManager(object):
         resp.started, resp.message, subscribers, publishers, services = \
                 self.apps['pre_installed'][req.name].start(self._param['robot_name'], req.remappings)
 
-        # self.pullinTopics(pullin_topics,True)
-        #print subscribers
-        #print publishers
-
         rospy.loginfo("App Manager : %s" % self._remote_name)
         if self._remote_name:
             self._flip_connections(self._remote_name, subscribers, gateway_msgs.ConnectionType.SUBSCRIBER)
@@ -250,6 +216,36 @@ class RappManager(object):
     ##########################################################################
     # Utilities
     ##########################################################################
+
+    def _init_namespace(self, name):
+        self._namespace = name
+        # Prefix all services with the unique name
+        for name in self._service_names:
+            self._service_names[name] = '/' + self._namespace + '/' + name
+
+        try:
+            rospy.loginfo("App Manager : advertising services")
+            self.platform_info.name = self._namespace
+
+            # To be advertised services
+            self._services['platform_info'] = rospy.Service(self._service_names['platform_info'], rapp_manager_srvs.GetPlatformInfo, self._process_platform_info)
+            self._services['list_apps'] = rospy.Service(self._service_names['list_apps'], rapp_manager_srvs.GetAppList, self._process_get_app_list)
+            self._services['status'] = rospy.Service(self._service_names['status'], rapp_manager_srvs.Status, self._process_status)
+            self._services['invite'] = rospy.Service(self._service_names['invite'], rapp_manager_srvs.Invite, self._process_invite)
+            self._advertise_services([
+                         self._service_names['platform_info'],
+                         self._service_names['list_apps'],
+                         self._service_names['status'],
+                         self._service_names['invite']
+                         ])
+
+            # To be flipped services
+            self._services['start_app'] = rospy.Service(self._service_names['start_app'], rapp_manager_srvs.StartApp, self._process_start_app)
+            self._services['stop_app'] = rospy.Service(self._service_names['stop_app'], rapp_manager_srvs.StopApp, self._process_stop_app)
+        except Exception as unused_e:
+            traceback.print_exc(file=sys.stdout)
+            return rapp_manager_srvs.InitResponse(False)
+        return rapp_manager_srvs.InitResponse(True)
 
     def _load(self, directory, typ):
         '''
@@ -306,4 +302,13 @@ class RappManager(object):
             rospy.logerr("App Manager : failed to flip [%s]" % resp.error_message)
 
     def spin(self):
+        gateway_info = gateway_srvs.GatewayInfoResponse()
+        gateway_info.connected = False
+        while not rospy.is_shutdown() and not gateway_info.connected:
+            gateway_info = self._gateway_services['gateway_info']()
+            if gateway_info.connected:
+                self._init_namespace(gateway_info.name)
+            #else:
+            #    rospy.loginfo("App Manager : gateway not yet connected,")
+            rospy.sleep(1.0)
         rospy.spin()
