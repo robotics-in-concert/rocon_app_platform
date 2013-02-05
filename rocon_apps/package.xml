@@ -1,6 +1,6 @@
 <package>
   <name>rocon_apps</name>
-  <version>0.2.0</version>
+  <version>0.3.0</version>
   <description>
     Core rocon apps for use with the appmanager and rocon concert.
   </description>
