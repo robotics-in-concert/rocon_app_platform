@@ -57,15 +57,15 @@ class Rapp(object):
         '''
         if not name:
             raise InvalidRappException("app name was invalid [%s]" % name)
-        self.filename = utils.find_resource(name + '.app')
+        self.filename = utils.find_resource(name + '.rapp')
         self._load_from_app_file(self.filename, name)
 
     def _load_from_app_file(self, path, app_name):
         '''
-          Open and read directly from the app definition file (.app file).
+          Open and read directly from the app definition file (.rapp file).
 
-          @param path : full path to the .app file
-          @param app_name : unique name for the app (comes from the .app filename)
+          @param path : full path to the .rapp file
+          @param app_name : unique name for the app (comes from the .rapp filename)
         '''
         rospy.loginfo("App Manager : loading app '%s'" % app_name)  # str(path)
         self.filename = path

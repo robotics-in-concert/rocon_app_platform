@@ -31,7 +31,7 @@ from .rapp import Rapp
 
 class RappListFile(object):
     """
-    Models data stored in a .apps file.  These files are used to
+    Models data stored in a .rapps file.  These files are used to
     track apps available for the app manager. The apps file is
     just a single key 'apps' containing a list of 'xxx/yyy' strings
     where 'xxx' represents the package name and 'yyy' is the app name.
@@ -41,7 +41,7 @@ class RappListFile(object):
         '''
           Just configures the container with basic parameters.
 
-          @param filename : file path to the .apps file.
+          @param filename : file path to the .rapps file.
           @type str
         '''
         self.filename = filename

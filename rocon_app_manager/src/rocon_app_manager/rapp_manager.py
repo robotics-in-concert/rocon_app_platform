@@ -249,7 +249,7 @@ class RappManager(object):
 
     def _load(self, directory, typ):
         '''
-          It searchs *.app in directories
+          It searchs *.rapp in directories
         '''
         applist = []
         for dpath, unused_, files in os.walk(directory):
