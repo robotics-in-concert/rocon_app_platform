@@ -109,6 +109,10 @@ class RappManager(object):
             for app in app_list_file.available_apps:
                 if platform_compatible(platform_tuple(self.platform_info.platform, self.platform_info.system, self.platform_info.robot), app.data['platform']):
                     self.apps['pre_installed'][app.data['name']] = app
+                else:
+                    rospy.logwarn('App : ' + str(app.data['name']) +' is incompatible. App : (' + str(app.data['platform']) +')  System : (' + str(self.platform_info.platform) + '.'+str(self.platform_info.system)+'.'+str(self.platform_info.robot)+')')
+
+
 
     ##########################################################################
     # Ros Callbacks
