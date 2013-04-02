@@ -189,7 +189,7 @@ class RappManager(object):
 
         rospy.loginfo("App Manager : starting app : " + req.name)
 
-        resp.started, resp.message, subscribers, publishers, services = \
+        resp.started, resp.message, subscribers, publishers, services, action_clients, action_servers = \
                 self.apps['pre_installed'][req.name].start(self._param['robot_name'], req.remappings)
 
         rospy.loginfo("App Manager : %s" % self._remote_name)
@@ -197,6 +197,8 @@ class RappManager(object):
             self._flip_connections(self._remote_name, subscribers, gateway_msgs.ConnectionType.SUBSCRIBER)
             self._flip_connections(self._remote_name, publishers, gateway_msgs.ConnectionType.PUBLISHER)
             self._flip_connections(self._remote_name, services, gateway_msgs.ConnectionType.SERVICE)
+            self._flip_connections(self._remote_name, action_clients, gateway_msgs.ConnectionType.ACTION_CLIENT)
+            self._flip_connections(self._remote_name, action_servers, gateway_msgs.ConnectionType.ACTION_SERVER)
         if resp.started:
             self._app_status = rapp_manager_msgs.Constants.APP_RUNNING
         return resp
@@ -207,12 +209,15 @@ class RappManager(object):
         rospy.loginfo("App Manager : stopping app : " + req.name)
         resp = rapp_manager_srvs.StopAppResponse()
 
-        resp.stopped, resp.message, subscribers, publishers, services = self.apps['pre_installed'][req.name].stop()
+        resp.stopped, resp.message, subscribers, publishers, services, action_clients, action_servers = \
+                self.apps['pre_installed'][req.name].stop()
 
         if self._remote_name:
             self._flip_connections(self._remote_name, subscribers, gateway_msgs.ConnectionType.SUBSCRIBER, True)
             self._flip_connections(self._remote_name, publishers, gateway_msgs.ConnectionType.PUBLISHER, True)
             self._flip_connections(self._remote_name, services, gateway_msgs.ConnectionType.SERVICE, True)
+            self._flip_connections(self._remote_name, action_clients, gateway_msgs.ConnectionType.ACTION_CLIENT, True)
+            self._flip_connections(self._remote_name, action_servers, gateway_msgs.ConnectionType.ACTION_SERVER, True)
         if resp.stopped:
             self._app_status = rapp_manager_msgs.Constants.APP_STOPPED
         return resp

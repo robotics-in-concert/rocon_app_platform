@@ -36,7 +36,7 @@ class Rapp(object):
     def __init__(self, resource_name):
         self.filename = ""
         self._connections = {}
-        for connection_type in ['publishers', 'subscribers', 'services']:
+        for connection_type in ['publishers', 'subscribers', 'services','action_clients','action_servers']:
             self._connections[connection_type] = []
         self._load_from_resource_name(resource_name)
 
@@ -109,7 +109,7 @@ class Rapp(object):
 
     def _load_interface(self, data):
         d = {}
-        keys = ['subscribers', 'publishers', 'services']
+        keys = ['subscribers', 'publishers', 'services','action_clients','action_servers']
         with open(data, 'r') as f:
             y = yaml.load(f.read())
             y = y or {}
@@ -148,6 +148,7 @@ class Rapp(object):
         '''
         data = self.data
         rospy.loginfo("Launching: %s" % (data['name']))
+        print str(remappings)
 
         # Starts app
         try:
@@ -171,7 +172,7 @@ class Rapp(object):
             # Prefix with robot name by default (later pass in remap argument)
             remap_from_list = [remapping.remap_from for remapping in remappings]
             remap_to_list = [remapping.remap_to for remapping in remappings]
-            for connection_type in ['publishers', 'subscribers', 'services']:
+            for connection_type in ['publishers', 'subscribers', 'services','action_clients','action_servers']:
                 self._connections[connection_type] = []
                 for t in data['interface'][connection_type]:
                     # Now we push the rapp launcher down into the prefixed
@@ -187,7 +188,7 @@ class Rapp(object):
 
             thread.start_new_thread(self.app_monitor, ())
             data['status'] = 'Running'
-            return True, "Success", self._connections['subscribers'], self._connections['publishers'], self._connections['services']
+            return True, "Success", self._connections['subscribers'], self._connections['publishers'], self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
 
         except Exception as e:
             print str(e)
@@ -213,9 +214,9 @@ class Rapp(object):
             print str(e)
             rospy.loginfo("Error while stopping " + data['name'])
             data['status'] = 'Error'
-            return False, "Error while stopping " + data['name'], self._connections['subscribers'], self._connections['publishers'], self._connections['services']
+            return False, "Error while stopping " + data['name'], self._connections['subscribers'], self._connections['publishers'], self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
 
-        return True, "Success", self._connections['subscribers'], self._connections['publishers'], self._connections['services']
+        return True, "Success", self._connections['subscribers'], self._connections['publishers'], self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
 
     def app_monitor(self):
         while self._launch:
