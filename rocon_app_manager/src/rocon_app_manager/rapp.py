@@ -147,8 +147,7 @@ class Rapp(object):
           @type list of rocon_app_manager_msgs.msg.Remapping values.
         '''
         data = self.data
-        rospy.loginfo("Launching: %s" % (data['name']))
-        print str(remappings)
+        rospy.loginfo("Launching: " + (data['name']) + " as " + robot_name)
 
         # Starts app
         try:

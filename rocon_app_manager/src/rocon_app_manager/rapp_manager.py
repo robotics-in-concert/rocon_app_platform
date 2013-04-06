@@ -54,7 +54,7 @@ class RappManager(object):
         self._param = {}
         self._param['robot_type'] = rospy.get_param('~robot_type')
         self._param['robot_name'] = rospy.get_param('~robot_name')
-        self._namespace = self._param['robot_name']
+#        self._namespace = self._param['robot_name']
         self._param['app_store_url'] = rospy.get_param('~app_store_url', '')
         self._param['platform_info'] = rospy.get_param('~platform_info', '')
         self._param['app_lists'] = rospy.get_param('~app_lists', '').split(';')
@@ -162,7 +162,7 @@ class RappManager(object):
             response.remote_controller = self._remote_name
         else:
             response.remote_controller = rapp_manager_msgs.Constants.NO_REMOTE_CONNECTION
-        response.namespace = self._namespace
+        response.namespace = self._param['robot_name']
         return response
 
     def _process_get_app_list(self, req):
@@ -227,14 +227,14 @@ class RappManager(object):
     ##########################################################################
 
     def _init_namespace(self, name):
-        self._namespace = name
+        self._param['robot_name'] = name
         # Prefix all services with the unique name
         for name in self._service_names:
-            self._service_names[name] = '/' + self._namespace + '/' + name
+            self._service_names[name] = '/' + self._param['robot_name'] + '/' + name
 
         try:
             rospy.loginfo("App Manager : advertising services")
-            self.platform_info.name = self._namespace
+            self.platform_info.name = self._param['robot_name']
 
             # To be advertised services
             self._services['platform_info'] = rospy.Service(self._service_names['platform_info'], rapp_manager_srvs.GetPlatformInfo, self._process_platform_info)
