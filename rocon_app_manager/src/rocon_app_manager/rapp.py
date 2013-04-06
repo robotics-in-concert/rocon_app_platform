@@ -36,7 +36,7 @@ class Rapp(object):
     def __init__(self, resource_name):
         self.filename = ""
         self._connections = {}
-        for connection_type in ['publishers', 'subscribers', 'services','action_clients','action_servers']:
+        for connection_type in ['publishers', 'subscribers', 'services', 'action_clients', 'action_servers']:
             self._connections[connection_type] = []
         self._load_from_resource_name(resource_name)
 
@@ -109,7 +109,7 @@ class Rapp(object):
 
     def _load_interface(self, data):
         d = {}
-        keys = ['subscribers', 'publishers', 'services','action_clients','action_servers']
+        keys = ['subscribers', 'publishers', 'services', 'action_clients', 'action_servers']
         with open(data, 'r') as f:
             y = yaml.load(f.read())
             y = y or {}
@@ -151,8 +151,6 @@ class Rapp(object):
 
         # Starts app
         try:
-            prefix = robot_name
-
             temp = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
             launch_text = '<launch>\n  <include ns="%s" file="%s"/>\n</launch>\n' % (robot_name, data['launch'])
             temp.write(launch_text)
@@ -171,7 +169,7 @@ class Rapp(object):
             # Prefix with robot name by default (later pass in remap argument)
             remap_from_list = [remapping.remap_from for remapping in remappings]
             remap_to_list = [remapping.remap_to for remapping in remappings]
-            for connection_type in ['publishers', 'subscribers', 'services','action_clients','action_servers']:
+            for connection_type in ['publishers', 'subscribers', 'services', 'action_clients', 'action_servers']:
                 self._connections[connection_type] = []
                 for t in data['interface'][connection_type]:
                     # Now we push the rapp launcher down into the prefixed
