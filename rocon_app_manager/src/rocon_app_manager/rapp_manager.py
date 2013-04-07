@@ -14,6 +14,7 @@ import traceback
 import roslaunch.pmon
 from .rapp_list import RappListFile
 from .utils import platform_compatible, platform_tuple
+import rocon_utilities
 from rocon_utilities import create_gateway_rule, create_gateway_remote_rule
 import rocon_app_manager_msgs.msg as rapp_manager_msgs
 import rocon_app_manager_msgs.srv as rapp_manager_srvs
@@ -90,7 +91,7 @@ class RappManager(object):
 
     def _init_gateway_services(self):
         self._gateway_services = {}
-        self._gateway_services['gateway_info'] = rospy.ServiceProxy('~gateway_info', gateway_srvs.GatewayInfo)
+        self._gateway_services['gateway_info'] = rocon_utilities.SubscriberProxy('~gateway_info', gateway_msgs.GatewayInfo)
         self._gateway_services['flip'] = rospy.ServiceProxy('~flip', gateway_srvs.Remote)
         self._gateway_services['advertise'] = rospy.ServiceProxy('~advertise', gateway_srvs.Advertise)
         self._gateway_services['pull'] = rospy.ServiceProxy('~pull', gateway_srvs.Remote)
@@ -310,13 +311,12 @@ class RappManager(object):
             rospy.logerr("App Manager : failed to flip [%s]" % resp.error_message)
 
     def spin(self):
-        gateway_info = gateway_srvs.GatewayInfoResponse()
-        gateway_info.connected = False
-        while not rospy.is_shutdown() and not gateway_info.connected:
-            gateway_info = self._gateway_services['gateway_info']()
-            if gateway_info.connected:
-                self._init_namespace(gateway_info.name)
-            #else:
-            #    rospy.loginfo("App Manager : gateway not yet connected,")
+        while not rospy.is_shutdown():
+            gateway_info = self._gateway_services['gateway_info'](rospy.Duration(0.2))
+            if gateway_info:
+                if gateway_info.connected:
+                    self._init_namespace(gateway_info.name)
+                    break
             rospy.sleep(1.0)
+            #    rospy.loginfo("App Manager : gateway not yet connected,")
         rospy.spin()
