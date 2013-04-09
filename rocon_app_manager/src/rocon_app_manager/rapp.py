@@ -34,6 +34,12 @@ class Rapp(object):
     data = {}
 
     def __init__(self, resource_name):
+        '''
+          @param resource_name : a package/name pair for this rapp
+          @type str/str
+          @param app_monitor : worker function for a thread that monitors the rapp's life cycle
+          @type function that accepts a launch object
+        '''
         self.filename = ""
         self._connections = {}
         for connection_type in ['publishers', 'subscribers', 'services', 'action_clients', 'action_servers']:
@@ -130,7 +136,7 @@ class Rapp(object):
 
         return d
 
-    def start(self, robot_name, remappings=[]):
+    def start(self, application_namespace, remappings=[]):
         '''
           Some important jobs here.
 
@@ -141,18 +147,18 @@ class Rapp(object):
 
           2) Apply remapping rules while ignoring the namespace underneath.
 
-          @param robot_name ; unique name granted indirectly via the gateways, we namespace everything under this
+          @param application_namespace ; unique name granted indirectly via the gateways, we namespace everything under this
           @type str
           @param remapping : rules for the app flips.
           @type list of rocon_app_manager_msgs.msg.Remapping values.
         '''
         data = self.data
-        rospy.loginfo("Launching: " + (data['name']) + " as " + robot_name)
+        rospy.loginfo("Launching: " + (data['name']) + " as " + application_namespace)
 
         # Starts app
         try:
             temp = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
-            launch_text = '<launch>\n  <include ns="%s" file="%s"/>\n</launch>\n' % (robot_name, data['launch'])
+            launch_text = '<launch>\n  <include ns="%s" file="%s"/>\n</launch>\n' % (application_namespace, data['launch'])
             temp.write(launch_text)
             temp.close()  # unlink it later
 
@@ -168,7 +174,9 @@ class Rapp(object):
 
             # Prefix with robot name by default (later pass in remap argument)
             remap_from_list = [remapping.remap_from for remapping in remappings]
+            print("remap_from_list: ........%s" % remap_from_list)
             remap_to_list = [remapping.remap_to for remapping in remappings]
+            print("remap_to_list: ........%s" % remap_to_list)
             for connection_type in ['publishers', 'subscribers', 'services', 'action_clients', 'action_servers']:
                 self._connections[connection_type] = []
                 for t in data['interface'][connection_type]:
@@ -179,6 +187,8 @@ class Rapp(object):
                     if indices:
                         remapped_name = '/' + remap_to_list[indices[0]]
                     self._connections[connection_type].append(remapped_name)
+                    print("t...........%s"%t)
+                    print("remapped_name.........%s"%remapped_name)
                     for N in self._launch.config.nodes:
                         N.remap_args.append((t, remapped_name))
             self._launch.start()
@@ -216,6 +226,12 @@ class Rapp(object):
         return True, "Success", self._connections['subscribers'], self._connections['publishers'], self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
 
     def app_monitor(self):
+        '''
+         Move this to the rapp_manager and pass it in via the app_monitor variable
+         in the constructor.
+
+         https://github.com/robotics-in-concert/rocon_app_platform/issues/31
+        '''
         while self._launch:
             time.sleep(0.1)
             launch = self._launch
