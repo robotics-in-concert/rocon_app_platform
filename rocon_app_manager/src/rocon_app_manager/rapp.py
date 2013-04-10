@@ -14,7 +14,6 @@ import rospy
 import roslaunch.parent
 import traceback
 import time
-import thread
 import tempfile
 
 import utils
@@ -37,8 +36,6 @@ class Rapp(object):
         '''
           @param resource_name : a package/name pair for this rapp
           @type str/str
-          @param app_monitor : worker function for a thread that monitors the rapp's life cycle
-          @type function that accepts a launch object
         '''
         self.filename = ""
         self._connections = {}
@@ -155,7 +152,7 @@ class Rapp(object):
         data = self.data
         rospy.loginfo("Launching: " + (data['name']) + " as " + application_namespace)
 
-        # Starts app
+        # Starts rapp
         try:
             temp = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
             launch_text = '<launch>\n  <include ns="%s" file="%s"/>\n</launch>\n' % (application_namespace, data['launch'])
@@ -189,7 +186,6 @@ class Rapp(object):
                         N.remap_args.append((t, remapped_name))
             self._launch.start()
 
-            thread.start_new_thread(self.app_monitor, ())
             data['status'] = 'Running'
             return True, "Success", self._connections['subscribers'], self._connections['publishers'], self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
 
@@ -221,20 +217,23 @@ class Rapp(object):
 
         return True, "Success", self._connections['subscribers'], self._connections['publishers'], self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
 
-    def app_monitor(self):
+    def is_running(self):
         '''
-         Move this to the rapp_manager and pass it in via the app_monitor variable
-         in the constructor.
+         Is the rapp both launched and currently running?
 
-         https://github.com/robotics-in-concert/rocon_app_platform/issues/31
+         Actually three possible states 1) not launched 2) running, 3) stopped
+         Could acutally return a tertiary value, but rapp manager doesn't need
+         to make any decision making about that (for now), so just return
+         running or not.
+
+         Used by the rapp_manager.
+
+         @return True if the rapp is executing or False otherwise.
+         @type Bool
         '''
-        while self._launch:
-            time.sleep(0.1)
-            launch = self._launch
-            if launch:
-                pm = launch.pm
-                if pm:
-                    if pm.done:
-                        time.sleep(1.0)
-                        self.stop()
-                        break
+        if not self._launch:
+            return False
+        elif self._launch.pm and self._launch.pm.done:
+            # time.sleep(1.0)  # do we need this sleep?
+            return False
+        return True
