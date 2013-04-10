@@ -14,6 +14,7 @@
   <author email="d.stonier@gmail.com">Daniel Stonier</author>
   <author email="jihoonlee.in@gmail.com">Jihoon Lee</author>
 
+  <buildtool_depend>catkin</buildtool_depend>
   <run_depend>rocon_app_manager</run_depend>
   <run_depend>rocon_app_manager_www</run_depend>
   <run_depend>rocon_apps</run_depend>
