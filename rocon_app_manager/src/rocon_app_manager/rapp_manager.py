@@ -165,6 +165,7 @@ class RappManager(object):
     def _accept_invitation(self, req):
         rospy.loginfo("App Manager : " + str(req))
         self._remote_name = req.remote_target_name
+        self._application_namespace = req.client_local_name
         rospy.loginfo("App Manager : accepting invitation to remote concert [%s]" % str(self._remote_name))
         try:
             self._flip_connections(self._remote_name,
