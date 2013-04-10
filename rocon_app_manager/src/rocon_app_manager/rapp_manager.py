@@ -42,7 +42,7 @@ class RappManager(object):
         self._namespace = None  # Namespace that gets used as default namespace for rapp connections
         self._gateway_name = None  # Name of our local gateway (if available)
         self._remote_name = None  # Name (gateway name) for the entity that is remote controlling this app manager
-        self._app_status = rapp_manager_msgs.Constants.APP_STOPPED
+        self._app_status = None  # App that is running, otherwise None
         self._application_namespace = None  # Push all app connections underneath this namespace
         roslaunch.pmon._init_signal_handlers()
 
@@ -193,7 +193,8 @@ class RappManager(object):
           @type rapp_maanger_srvs.StatusRequest
         '''
         response = rapp_manager_srvs.StatusResponse()
-        response.app_status = self._app_status
+        response.app_status = rapp_manager_msgs.Constants.APP_RUNNING if self._app_status \
+                         else rapp_manager_msgs.Constants.APP_STOPPED
         if self._remote_name:
             response.remote_controller = self._remote_name
         else:
@@ -219,15 +220,16 @@ class RappManager(object):
     def _process_start_app(self, req):
         resp = rapp_manager_srvs.StartAppResponse()
         resp.app_namespace = self._application_namespace
-        if self._app_status == rapp_manager_msgs.Constants.APP_RUNNING:
+        if self._app_status:
             resp.started = False
             resp.message = "an app is already running"
             return resp
 
         rospy.loginfo("App Manager : starting app : " + req.name)
 
+        rapp = self.apps['pre_installed'][req.name]
         resp.started, resp.message, subscribers, publishers, services, action_clients, action_servers = \
-                self.apps['pre_installed'][req.name].start(self._application_namespace, req.remappings)
+                        rapp.start(self._application_namespace, req.remappings)
 
         rospy.loginfo("App Manager : %s" % self._remote_name)
         if self._remote_name:
@@ -237,11 +239,11 @@ class RappManager(object):
             self._flip_connections(self._remote_name, action_clients, gateway_msgs.ConnectionType.ACTION_CLIENT)
             self._flip_connections(self._remote_name, action_servers, gateway_msgs.ConnectionType.ACTION_SERVER)
         if resp.started:
-            self._app_status = rapp_manager_msgs.Constants.APP_RUNNING
+            self._app_status = rapp
         return resp
 
     def _process_stop_app(self, req):
-        if self._app_status == rapp_manager_msgs.Constants.APP_STOPPED:
+        if not self._app_status:
             return
         rospy.loginfo("App Manager : stopping app : " + req.name)
         resp = rapp_manager_srvs.StopAppResponse()
@@ -256,7 +258,7 @@ class RappManager(object):
             self._flip_connections(self._remote_name, action_clients, gateway_msgs.ConnectionType.ACTION_CLIENT, True)
             self._flip_connections(self._remote_name, action_servers, gateway_msgs.ConnectionType.ACTION_SERVER, True)
         if resp.stopped:
-            self._app_status = rapp_manager_msgs.Constants.APP_STOPPED
+            self._app_status = None
         return resp
 
     ##########################################################################

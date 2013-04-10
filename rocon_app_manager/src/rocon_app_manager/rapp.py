@@ -174,9 +174,7 @@ class Rapp(object):
 
             # Prefix with robot name by default (later pass in remap argument)
             remap_from_list = [remapping.remap_from for remapping in remappings]
-            print("remap_from_list: ........%s" % remap_from_list)
             remap_to_list = [remapping.remap_to for remapping in remappings]
-            print("remap_to_list: ........%s" % remap_to_list)
             for connection_type in ['publishers', 'subscribers', 'services', 'action_clients', 'action_servers']:
                 self._connections[connection_type] = []
                 for t in data['interface'][connection_type]:
@@ -187,8 +185,6 @@ class Rapp(object):
                     if indices:
                         remapped_name = '/' + remap_to_list[indices[0]]
                     self._connections[connection_type].append(remapped_name)
-                    print("t...........%s"%t)
-                    print("remapped_name.........%s"%remapped_name)
                     for N in self._launch.config.nodes:
                         N.remap_args.append((t, remapped_name))
             self._launch.start()
