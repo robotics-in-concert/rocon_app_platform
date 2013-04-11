@@ -194,7 +194,7 @@ class Rapp(object):
             traceback.print_stack()
             rospy.loginfo("Error While launching " + data['launch'])
             data['status'] = "Error While launching " + data['launch']
-            return False, "Error while launching " + data['name'], [], [], []
+            return False, "Error while launching " + data['name'], [], [], [], [], []
         finally:
             os.unlink(temp.name)
 
