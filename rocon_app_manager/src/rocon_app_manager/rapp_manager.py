@@ -10,7 +10,8 @@
 import rospy
 import os
 import sys
-import copy
+import time
+import thread
 import traceback
 import roslaunch.pmon
 from .rapp_list import RappListFile
@@ -42,7 +43,7 @@ class RappManager(object):
         self._namespace = None  # Namespace that gets used as default namespace for rapp connections
         self._gateway_name = None  # Name of our local gateway (if available)
         self._remote_name = None  # Name (gateway name) for the entity that is remote controlling this app manager
-        self._app_status = rapp_manager_msgs.Constants.APP_STOPPED
+        self._current_rapp = None  # App that is running, otherwise None
         self._application_namespace = None  # Push all app connections underneath this namespace
         roslaunch.pmon._init_signal_handlers()
 
@@ -193,7 +194,8 @@ class RappManager(object):
           @type rapp_maanger_srvs.StatusRequest
         '''
         response = rapp_manager_srvs.StatusResponse()
-        response.app_status = self._app_status
+        response.app_status = rapp_manager_msgs.Constants.APP_RUNNING if self._current_rapp \
+                         else rapp_manager_msgs.Constants.APP_STOPPED
         if self._remote_name:
             response.remote_controller = self._remote_name
         else:
@@ -219,15 +221,16 @@ class RappManager(object):
     def _process_start_app(self, req):
         resp = rapp_manager_srvs.StartAppResponse()
         resp.app_namespace = self._application_namespace
-        if self._app_status == rapp_manager_msgs.Constants.APP_RUNNING:
+        if self._current_rapp:
             resp.started = False
             resp.message = "an app is already running"
             return resp
 
         rospy.loginfo("App Manager : starting app : " + req.name)
 
+        rapp = self.apps['pre_installed'][req.name]
         resp.started, resp.message, subscribers, publishers, services, action_clients, action_servers = \
-                self.apps['pre_installed'][req.name].start(self._application_namespace, req.remappings)
+                        rapp.start(self._application_namespace, req.remappings)
 
         rospy.loginfo("App Manager : %s" % self._remote_name)
         if self._remote_name:
@@ -237,17 +240,30 @@ class RappManager(object):
             self._flip_connections(self._remote_name, action_clients, gateway_msgs.ConnectionType.ACTION_CLIENT)
             self._flip_connections(self._remote_name, action_servers, gateway_msgs.ConnectionType.ACTION_SERVER)
         if resp.started:
-            self._app_status = rapp_manager_msgs.Constants.APP_RUNNING
+            self._current_rapp = rapp
+            thread.start_new_thread(self._monitor_rapp, ())
         return resp
 
-    def _process_stop_app(self, req):
-        if self._app_status == rapp_manager_msgs.Constants.APP_STOPPED:
-            return
-        rospy.loginfo("App Manager : stopping app : " + req.name)
+    def _process_stop_app(self, req=None):
+        '''
+          Stops a currently running rapp. This can be triggered via the stop_app service call (in which
+          case req is configured), or if the rapp monitoring thread detects that it has
+          naturally stopped by itself (in which case req is None).
+
+          @param req : variable configured when triggered from the service call.
+        '''
         resp = rapp_manager_srvs.StopAppResponse()
+        if not self._current_rapp:
+            resp.stopped = False
+            resp.error_code = rapp_manager_msgs.ErrorCodes.RAPP_IS_NOT_RUNNING
+            resp.message = "tried to stop a rapp, but no rapp found running"
+            rospy.logwarn("App Manager : received a request to stop a rapp, but no rapp found running.")
+            return resp
+
+        rospy.loginfo("App Manager : stopping rapp : " + self._current_rapp.data['name'])
 
         resp.stopped, resp.message, subscribers, publishers, services, action_clients, action_servers = \
-                self.apps['pre_installed'][req.name].stop()
+                self._current_rapp.stop()
 
         if self._remote_name:
             self._flip_connections(self._remote_name, subscribers, gateway_msgs.ConnectionType.SUBSCRIBER, True)
@@ -256,12 +272,26 @@ class RappManager(object):
             self._flip_connections(self._remote_name, action_clients, gateway_msgs.ConnectionType.ACTION_CLIENT, True)
             self._flip_connections(self._remote_name, action_servers, gateway_msgs.ConnectionType.ACTION_SERVER, True)
         if resp.stopped:
-            self._app_status = rapp_manager_msgs.Constants.APP_STOPPED
+            self._current_rapp = None
         return resp
 
     ##########################################################################
     # Utilities
     ##########################################################################
+
+    def _monitor_rapp(self):
+        '''
+         Monitors an executing rapp's status to determine if it's finished
+         yet or not.Move this to the rapp_manager and pass it in via the app_monitor variable
+         in the constructor.
+
+         https://github.com/robotics-in-concert/rocon_app_platform/issues/31
+        '''
+        while self._current_rapp:  # can be unset if stop_app service was directly called
+            if not self._current_rapp.is_running():
+                self._process_stop_app()
+                break
+            time.sleep(0.1)
 
     def _load(self, directory, typ):
         '''
