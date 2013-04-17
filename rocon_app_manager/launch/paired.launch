@@ -18,4 +18,6 @@
     <param name="robot_type" value="$(arg robot_type)"/>
   </node>
 
+  <!-- The public master -->
+  <node pkg="rocon_app_manager" type="public_master.py" name="public_master" args="-p 11312"/>
 </launch>
