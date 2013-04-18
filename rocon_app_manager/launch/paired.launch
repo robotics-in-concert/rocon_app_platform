@@ -4,12 +4,41 @@
   the basic apps (chirp and talker etc with this).
  -->
 <launch>
-  <arg name="robot_name" default="app_manager"/>
-  <arg name="robot_type" default="standalone"/>
+  <!-- ******************************* Arguments ******************************* -->
+  <arg name="robot_name" default="Cybernetic Pirate"/>
+  <arg name="robot_type" default="robot"/>
   <arg name="app_lists" default="$(find rocon_apps)/apps/rocon.rapps"/> <!-- semi colon separated list --> 
+  <arg name="zeroconf" default="true"/>
+  <arg name="zeroconf_configuration_file" default="$(find rocon_app_manager)/param/zeroconf.yaml"/>
   
+  <!-- ******************************* Zeroconf ******************************** -->
+  <group if="$(arg zeroconf)">
+    <node pkg="zeroconf_avahi" type="zeroconf" name="zeroconf_avahi" ns="zeroconf">
+      <rosparam file="$(arg zeroconf_configuration_file)" command="load"/>
+      <!-- Instead of by file, I'd like to use the following with robot name as an $(arg), but
+           this is pending https://github.com/ros/ros_comm/pull/218 -->
+      <!-- 
+      <rosparam param="services" subst_value="true">
+        [ { name: "$(arg robot_name)", type: _ros-master._tcp, port: 11312, domain: local, description: "ros master" } ]
+      </rosparam>
+      -->
+    </node>
+  </group>
+
+  <!-- ******************************** Gateway ******************************** -->
+  <node pkg="rocon_gateway" type="gateway.py" name="gateway" output="screen">
+    <rosparam command="load" file="$(find rocon_gateway)/param/default.yaml" />
+    <rosparam command="load" file="$(find rocon_gateway)/param/default_blacklist.yaml" />
+    <rosparam command="load" file="$(find rocon_app_manager)/param/app_manager_advertisements.yaml" />
+    <rosparam param="hub_uri">http://localhost:6380</rosparam> <!-- The paired hub -->
+    <param name="name" value="$(arg robot_name)"/> <!-- <rosparam param="name" subst_value="true">$(arg robot_name)</rosparam> -->
+    <rosparam param="watch_loop_period">5</rosparam>
+    <rosparam param="firewall">true</rosparam> <!-- Nothing comes in! -->
+  </node>
+
+  <!-- ****************************** App Manager ****************************** -->
   <node pkg="rocon_app_manager" type="rapp_manager.py" name="app_manager" output="screen">
-    <rosparam command="load" file="$(find rocon_app_manager)/param/default.yaml" />
+    <rosparam command="load" file="$(find rocon_app_manager)/param/app_manager.yaml" />
     <!--  I would like to use args in rosparam tags : https://github.com/ros/ros_comm/pull/50/commits for alt. param list cfg -->
     <!--  <rosparam param="app_lists" subst_value="True">[ $(find rocon_apps)/apps.list ]</rosparam> -->
     <!--  <rosparam param="app_lists" subst_value="True">[$(arg app_lists)]</rosparam> -->
@@ -17,7 +46,4 @@
     <param name="robot_name" value="$(arg robot_name)"/>
     <param name="robot_type" value="$(arg robot_type)"/>
   </node>
-
-  <!-- The public master -->
-  <node pkg="rocon_app_manager" type="public_master.py" name="public_master" args="-p 11312"/>
 </launch>

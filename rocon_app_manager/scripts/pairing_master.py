@@ -15,4 +15,6 @@ import sys
 ##############################################################################
 
 if __name__ == '__main__':
+    rospy.init_node('pairing_master')
+    
     rosmaster.rosmaster_main(argv=[a for a in sys.argv if not ':=' in a])

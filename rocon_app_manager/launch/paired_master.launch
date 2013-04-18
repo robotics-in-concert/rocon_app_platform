@@ -1,0 +1,34 @@
+<!--
+  The public master for pairing connections. Externally paired
+  devices should connect to this ros master where they can
+  find the publicly exposed connections of the robot.
+ -->
+<launch>
+  <include file="$(find rocon_hub)/launch/hub.launch">
+    <arg name="hub_name" value="Internal Hub" />
+    <arg name="hub_port" value="6380" />
+    <arg name="zeroconf" value="false" />
+  </include>
+
+  <!--
+    While it might be intuitive to run the zeroconf publisher here in the public master
+    it is better to have that component in the private master:
+    
+    1) private master's app manager usually needs zeroconf for hub discovery
+        -> no need to double up on nodes in the same system
+    2) we can make use of app manager's robot name arg.
+       -->
+  <!--
+    The public gateway does not use zeroconf, it needs to know where it can find the internal
+    hub shared by private and public ros masters.
+   -->
+  <node pkg="rocon_gateway" type="gateway.py" name="gateway" output="screen">
+    <rosparam command="load" file="$(find rocon_gateway)/param/default.yaml" />
+    <rosparam command="load" file="$(find rocon_gateway)/param/default_blacklist.yaml" />
+    <rosparam command="load" file="$(find rocon_app_manager)/param/paired_master_pulls.yaml" />
+    <rosparam param="hub_uri">http://localhost:6380</rosparam>
+    <rosparam param="name">Public Gateway</rosparam>
+    <rosparam param="watch_loop_period">5</rosparam>
+    <rosparam param="firewall">false</rosparam>
+  </node>
+</launch>

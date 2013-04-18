@@ -1,0 +1,4 @@
+<concert>
+  <launch package="rocon_app_manager" name="private.xml" port="11311"/>
+  <launch package="rocon_app_manager" name="public.xml" port="11312"/>
+</concert>
