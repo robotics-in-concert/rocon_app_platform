@@ -22,7 +22,7 @@
     The public gateway does not use zeroconf, it needs to know where it can find the internal
     hub shared by private and public ros masters.
    -->
-  <node pkg="rocon_gateway" type="gateway.py" name="gateway" output="screen">
+  <node pkg="rocon_gateway" type="gateway.py" name="gateway">
     <rosparam command="load" file="$(find rocon_gateway)/param/default.yaml" />
     <rosparam command="load" file="$(find rocon_gateway)/param/default_blacklist.yaml" />
     <rosparam command="load" file="$(find rocon_app_manager)/param/paired_master_pulls.yaml" />
@@ -30,5 +30,15 @@
     <rosparam param="name">Public Gateway</rosparam>
     <rosparam param="watch_loop_period">5</rosparam>
     <rosparam param="firewall">false</rosparam>
+  </node>
+  
+  <!--
+    Manages the pairing master ecosystem, i.e. makes sure the invitation and
+    application namespace setting part of the process works smoothly.
+  -->
+  <node pkg="rocon_app_manager" type="pairing_master.py" name="pairing_master">
+    <rosparam param="auto_invite">true</rosparam>
+    <remap from="pairing_master/gateway_info" to="gateway/gateway_info"/>
+    <remap from="pairing_master/remote_gateway_info" to="gateway/remote_gateway_info"/>
   </node>
 </launch>

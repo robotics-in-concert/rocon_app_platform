@@ -7,8 +7,62 @@
 # Imports
 ##############################################################################
 
-import rosmaster
 import sys
+import rospy
+import gateway_msgs.msg as gateway_msgs
+import gateway_msgs.srv as gateway_srvs
+import rocon_app_manager_msgs.srv as rocon_app_manager_srvs
+import rocon_utilities
+import rocon_utilities.console as console
+
+##############################################################################
+# Methods
+##############################################################################
+
+def local_gateway_name():
+    
+    gateway_name = None
+    gateway_info_service = rocon_utilities.SubscriberProxy('~gateway_info', gateway_msgs.GatewayInfo)
+    while not rospy.is_shutdown():
+        gateway_info = gateway_info_service(timeout=rospy.Duration(0.2))
+        if gateway_info:
+            if gateway_info.connected:
+                gateway_name = gateway_info.name
+                break
+        rospy.sleep(1.0)
+    return gateway_name
+
+def remote_gateway_name():
+    '''
+      Assumption: note that the remote gateway info in the paired master system
+      should only ever show at most, one remote gateway. That should be the
+      private counterpart (we're not using zeroconf over here).
+      
+      @return namespace of the app manager (matches the remote gateway name)
+      @rtype string or None : string does not yet prefix a leading '/'
+    '''
+    remote_gateway_info_service = rospy.ServiceProxy('~remote_gateway_info', gateway_srvs.RemoteGatewayInfo)
+    remote_gateway_name = None
+    while not rospy.is_shutdown():
+        try:
+            rospy.wait_for_service('~remote_gateway_info', timeout=0.2)
+        except rospy.exceptions.ROSException:  # timeout exceeded
+            continue
+        except rospy.exceptions.ROSInterruptException:  # shutdown exception
+            sys.exit(0)
+        remote_gateway_info = remote_gateway_info_service()
+        if len(remote_gateway_info.gateways) == 1:
+            remote_gateway_name = remote_gateway_info.gateways[0].name
+            break
+        elif len(remote_gateway_info.gateways) == 2:
+            console.error("Pairing Master : found two remote gateways when there should only ever be one.")
+            sys.exit(1)
+        rospy.sleep(1.0)
+    if remote_gateway_name is None:
+        # probably shutting down
+        #console.error("Pairing Master : app_manager_namespace returned 'None', probably shutting down.")
+        sys.exit(0)
+    return remote_gateway_name
 
 ##############################################################################
 # Main
@@ -16,5 +70,34 @@ import sys
 
 if __name__ == '__main__':
     rospy.init_node('pairing_master')
-    
-    rosmaster.rosmaster_main(argv=[a for a in sys.argv if not ':=' in a])
+    auto_invite = rospy.get_param("~auto_invite", "false")
+    rospy.loginfo("Pairing Master : starting %s" % auto_invite)
+    local_gateway_name = local_gateway_name()
+    if local_gateway_name is None:
+        console.logerror("Pairing Master : shutting down.")
+        sys.exit(1)
+    #invite_service = rospy.Service('invite', rapp_manager_srvs.GetPlatformInfo, self._process_platform_info)
+    rospy.loginfo("Pairing Master : local gateway name [%s]" % local_gateway_name)
+    remote_gateway_name = remote_gateway_name()
+    invite_service_name = '/' + remote_gateway_name + '/invite'
+    invite_service = rospy.ServiceProxy(invite_service_name, rocon_app_manager_srvs.Invite)
+    try:
+        rospy.wait_for_service(invite_service_name)
+        if auto_invite:
+            rospy.loginfo("Pairing Master : automatically taking control (inviting) the application manager.")
+            invite_service(rocon_app_manager_srvs.Invite(remote_target_name=local_gateway_name,
+                                                         application_namespace='',
+                                                         cancel=False))
+    except rospy.service.ServiceException:  # service call failed
+        console.logerror("Pairing Master: invite service call failed.")
+        sys.exit(1)
+    except rospy.exceptions.ROSInterruptException:  # shutdown exception
+        sys.exit(0)
+
+    rospy.spin()
+    # Shutting down, turn off the service
+    invite_service(rocon_app_manager_srvs.Invite(remote_target_name=local_gateway_name,
+                                                   application_namespace='',
+                                                   cancel=True))
+
+ #   while not rospy.is_shutdown():

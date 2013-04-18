@@ -351,7 +351,7 @@ class RappManager(object):
 
     def spin(self):
         while not rospy.is_shutdown():
-            gateway_info = self._gateway_services['gateway_info'](rospy.Duration(0.2))
+            gateway_info = self._gateway_services['gateway_info'](timeout=rospy.Duration(0.2))
             if gateway_info:
                 if gateway_info.connected:
                     self._gateway_name = gateway_info.name
