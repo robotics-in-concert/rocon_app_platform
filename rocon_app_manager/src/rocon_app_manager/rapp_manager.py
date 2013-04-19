@@ -350,7 +350,11 @@ class RappManager(object):
         req.remotes = []
         for connection_name in connection_names:
             req.remotes.append(create_gateway_remote_rule(remote_name, create_gateway_rule(connection_name, connection_type)))
-        resp = self._gateway_services['flip'](req)
+        try:
+            resp = self._gateway_services['flip'](req)
+        except rospy.service.ServiceException:
+            # often disappears when the gateway shuts down just before the app manager, ignore silently.
+            return
         if resp.result == 0:
             rospy.loginfo("App Manager : successfully flipped %s" % str([os.path.basename(name) for name in connection_names]))
         else:
