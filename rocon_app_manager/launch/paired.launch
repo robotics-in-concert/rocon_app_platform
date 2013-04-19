@@ -5,7 +5,7 @@
  -->
 <launch>
   <!-- ******************************* Arguments ******************************* -->
-  <arg name="robot_name" default="Cybernetic Pirate"/>
+  <arg name="robot_name" default="cybernetic_pirate"/>
   <arg name="robot_type" default="robot"/>
   <arg name="app_lists" default="$(find rocon_apps)/apps/rocon.rapps"/> <!-- semi colon separated list --> 
   <arg name="zeroconf" default="true"/>
@@ -45,5 +45,8 @@
     <param name="app_lists" value="$(arg app_lists)" />
     <param name="robot_name" value="$(arg robot_name)"/>
     <param name="robot_type" value="$(arg robot_type)"/>
+    <remap from="app_manager/gateway_info" to="gateway/gateway_info"/>
+    <remap from="app_manager/advertise" to="gateway/advertise"/>
+    <remap from="app_manager/flip" to="gateway/flip"/>
   </node>
 </launch>

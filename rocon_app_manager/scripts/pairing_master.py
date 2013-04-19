@@ -79,13 +79,15 @@ if __name__ == '__main__':
     #invite_service = rospy.Service('invite', rapp_manager_srvs.GetPlatformInfo, self._process_platform_info)
     rospy.loginfo("Pairing Master : local gateway name [%s]" % local_gateway_name)
     remote_gateway_name = remote_gateway_name()
+    rospy.loginfo("Pairing Master : remote gateway name [%s]" % remote_gateway_name)
     invite_service_name = '/' + remote_gateway_name + '/invite'
     invite_service = rospy.ServiceProxy(invite_service_name, rocon_app_manager_srvs.Invite)
     try:
+        rospy.loginfo("Pairing Master : waiting for invite service [%s]" % invite_service_name)
         rospy.wait_for_service(invite_service_name)
         if auto_invite:
             rospy.loginfo("Pairing Master : automatically taking control (inviting) the application manager.")
-            invite_service(rocon_app_manager_srvs.Invite(remote_target_name=local_gateway_name,
+            invite_service(rocon_app_manager_srvs.InviteRequest(remote_target_name=local_gateway_name,
                                                          application_namespace='',
                                                          cancel=False))
     except rospy.service.ServiceException:  # service call failed
@@ -95,9 +97,3 @@ if __name__ == '__main__':
         sys.exit(0)
 
     rospy.spin()
-    # Shutting down, turn off the service
-    invite_service(rocon_app_manager_srvs.Invite(remote_target_name=local_gateway_name,
-                                                   application_namespace='',
-                                                   cancel=True))
-
- #   while not rospy.is_shutdown():

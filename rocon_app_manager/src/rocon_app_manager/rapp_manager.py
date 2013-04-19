@@ -33,7 +33,7 @@ class RappManager(object):
         Robot App Manager ~ Rocon App Manager
     """
 
-    init_srv_name = '~init'
+    default_application_namespace = "application"
 
     ##########################################################################
     # Initialisation
@@ -61,7 +61,7 @@ class RappManager(object):
         self._param['robot_type'] = rospy.get_param('~robot_type', 'robot')
         self._param['robot_name'] = rospy.get_param('~robot_name', 'app_manager')
         self._param['app_store_url'] = rospy.get_param('~app_store_url', '')
-        self._param['platform_info'] = rospy.get_param('~platform_info', '')
+        self._param['platform_info'] = rospy.get_param('~platform_info', 'linux.ros.*')
         self._param['app_lists'] = rospy.get_param('~app_lists', '').split(';')
         # Todo fix these up with proper whitelist/blacklists
         self._param['remote_controller_whitelist'] = rospy.get_param('~remote_controller_whitelist', [])
@@ -106,18 +106,17 @@ class RappManager(object):
                 self._service_names[name] = '/' + self._gateway_name + '/' + name
             self._application_namespace = self._gateway_name
         else:  # It's a local standalone initialisation
-            self._application_namespace = "application"
+            self._application_namespace = RappManager.default_application_namespace
             for name in self._default_service_names:
                 self._service_names[name] = '~' + name
         try:
-            rospy.loginfo("App Manager : advertising services")
-
             # Advertisable services
             self._services['platform_info'] = rospy.Service(self._service_names['platform_info'], rapp_manager_srvs.GetPlatformInfo, self._process_platform_info)
             self._services['list_apps'] = rospy.Service(self._service_names['list_apps'], rapp_manager_srvs.GetAppList, self._process_get_app_list)
             self._services['status'] = rospy.Service(self._service_names['status'], rapp_manager_srvs.Status, self._process_status)
             self._services['invite'] = rospy.Service(self._service_names['invite'], rapp_manager_srvs.Invite, self._process_invite)
             if self._gateway_name:
+                rospy.loginfo("App Manager: advertising services [%s]" % self._gateway_name)
                 self._advertise_services([
                              self._service_names['platform_info'],
                              self._service_names['list_apps'],
@@ -164,10 +163,10 @@ class RappManager(object):
             return rapp_manager_srvs.InviteResponse(False)
 
     def _accept_invitation(self, req):
-        rospy.loginfo("App Manager : " + str(req))
+        #rospy.loginfo("App Manager : " + str(req))
         self._remote_name = req.remote_target_name
-        self._application_namespace = req.client_local_name
-        rospy.loginfo("App Manager : accepting invitation to remote concert [%s]" % str(self._remote_name))
+        self._application_namespace = RappManager.default_application_namespace if req.application_namespace == '' else req.application_namespace
+        rospy.loginfo("App Manager : accepting invitation to relay controls to remote system [%s]" % str(self._remote_name))
         try:
             self._flip_connections(self._remote_name,
                                    [self._service_names['start_app'], self._service_names['stop_app']],
@@ -351,12 +350,13 @@ class RappManager(object):
 
     def spin(self):
         while not rospy.is_shutdown():
-            gateway_info = self._gateway_services['gateway_info'](timeout=rospy.Duration(0.2))
+            gateway_info = self._gateway_services['gateway_info'](timeout=rospy.Duration(0.3))
+            rospy.loginfo("Spinning")
             if gateway_info:
+                rospy.loginfo("  Gateway info [%s]" % gateway_info.name)
                 if gateway_info.connected:
                     self._gateway_name = gateway_info.name
                     self._init_services()
                     break
-            rospy.sleep(1.0)
-            #    rospy.loginfo("App Manager : gateway not yet connected,")
+            # don't need a sleep since our timeout on the service call acts like this.
         rospy.spin()
