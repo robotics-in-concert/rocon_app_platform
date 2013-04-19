@@ -115,14 +115,16 @@ class RappManager(object):
             self._services['list_apps'] = rospy.Service(self._service_names['list_apps'], rapp_manager_srvs.GetAppList, self._process_get_app_list)
             self._services['status'] = rospy.Service(self._service_names['status'], rapp_manager_srvs.Status, self._process_status)
             self._services['invite'] = rospy.Service(self._service_names['invite'], rapp_manager_srvs.Invite, self._process_invite)
-            if self._gateway_name:
-                rospy.loginfo("App Manager: advertising services [%s]" % self._gateway_name)
-                self._advertise_services([
-                             self._service_names['platform_info'],
-                             self._service_names['list_apps'],
-                             self._service_names['status'],
-                             self._service_names['invite']
-                             ])
+            # Actually much easier to just set default advertisement rules for the app manager's gateway, then the gateway itself doesn't have to do
+            # any of this hardwork.
+            # if self._gateway_name:
+            #     rospy.loginfo("App Manager: advertising services [%s]" % self._gateway_name)
+            #     self._advertise_services([
+            #                  self._service_names['platform_info'],
+            #                  self._service_names['list_apps'],
+            #                  self._service_names['status'],
+            #                  self._service_names['invite']
+            #                  ])
             # Flippable services
             self._services['start_app'] = rospy.Service(self._service_names['start_app'], rapp_manager_srvs.StartApp, self._process_start_app)
             self._services['stop_app'] = rospy.Service(self._service_names['stop_app'], rapp_manager_srvs.StopApp, self._process_stop_app)
@@ -351,7 +353,6 @@ class RappManager(object):
     def spin(self):
         while not rospy.is_shutdown():
             gateway_info = self._gateway_services['gateway_info'](timeout=rospy.Duration(0.3))
-            rospy.loginfo("Spinning")
             if gateway_info:
                 rospy.loginfo("  Gateway info [%s]" % gateway_info.name)
                 if gateway_info.connected:

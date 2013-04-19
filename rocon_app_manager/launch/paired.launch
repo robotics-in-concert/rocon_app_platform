@@ -46,7 +46,6 @@
     <param name="robot_name" value="$(arg robot_name)"/>
     <param name="robot_type" value="$(arg robot_type)"/>
     <remap from="app_manager/gateway_info" to="gateway/gateway_info"/>
-    <remap from="app_manager/advertise" to="gateway/advertise"/>
     <remap from="app_manager/flip" to="gateway/flip"/>
   </node>
 </launch>
