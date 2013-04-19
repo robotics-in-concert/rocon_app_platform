@@ -46,6 +46,7 @@ class RappManager(object):
         self._current_rapp = None  # App that is running, otherwise None
         self._application_namespace = None  # Push all app connections underneath this namespace
         roslaunch.pmon._init_signal_handlers()
+        self._services = {}
 
         self._setup_ros_parameters()
         self._set_platform_info()
@@ -85,7 +86,6 @@ class RappManager(object):
         self._default_service_names['invite'] = 'invite'
         self._default_service_names['start_app'] = 'start_app'
         self._default_service_names['stop_app'] = 'stop_app'
-        self._services = {}
 
         # Other services currently only fire up when the app manager gets initialised
         # with a remote target name later. Might be nice to fire them up by default,
@@ -100,6 +100,12 @@ class RappManager(object):
         self._gateway_services['pull'] = rospy.ServiceProxy('~pull', gateway_srvs.Remote)
 
     def _init_services(self):
+        if self._services:
+            self._services['platform_info'].shutdown()
+            self._services['list_apps'].shutdown()
+            self._services['status'].shutdown()
+            self._services['invite'].shutdown()
+            self._services = {}
         self._service_names = {}
         if self._gateway_name:
             for name in self._default_service_names:
