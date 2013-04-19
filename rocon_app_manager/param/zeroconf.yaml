@@ -2,7 +2,7 @@
 
 services:
   - 
-     name: "Turtlebot"
+     name: "Cybernetic Pirate"
      type: _ros-master._tcp
      domain: local
      port: 11312

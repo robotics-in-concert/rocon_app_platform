@@ -6,7 +6,7 @@
 <launch>
   <!-- ******************************* Arguments ******************************* -->
   <arg name="robot_name" default="cybernetic_pirate"/>
-  <arg name="robot_type" default="robot"/>
+  <arg name="robot_type" default="turtlebot"/>
   <arg name="app_lists" default="$(find rocon_apps)/apps/rocon.rapps"/> <!-- semi colon separated list --> 
   <arg name="zeroconf" default="true"/>
   <arg name="zeroconf_configuration_file" default="$(find rocon_app_manager)/param/zeroconf.yaml"/>
