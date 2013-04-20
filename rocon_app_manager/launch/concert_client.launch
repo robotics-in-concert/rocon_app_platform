@@ -3,7 +3,7 @@
  -->
 <launch>
   <arg name="concert_name" default="concert"/>
-  <arg name="robot_name" default="concert_client"/>
+  <arg name="robot_name" default="cybernetic_pirate"/>
   <arg name="robot_type" default="turtlebot"/>
   <arg name="app_lists" default="$(find rocon_apps)/apps/rocon.rapps"/> <!-- semi colon separated list --> 
   <arg name="gateway_watch_loop_period" default="10"/> <!-- Polling period for multimaster advertising/flipping -->
@@ -13,13 +13,15 @@
   <node pkg="rocon_gateway" type="gateway.py" name="gateway" >
     <rosparam command="load" file="$(find rocon_gateway)/param/default.yaml"/>
     <rosparam command="load" file="$(find rocon_gateway)/param/default_blacklist.yaml"/>
-    <param name="name" value="$(arg robot_name)"/>
+    <rosparam command="load" file="$(find rocon_app_manager)/param/app_manager_advertisements.yaml" />
+    <param name="name" value="$(arg robot_name)"/> <!-- <rosparam param="name" subst_value="true">$(arg robot_name)</rosparam> -->
     <param name="hub_whitelist" value="[$(arg concert_name)]"/>
     <param name="watch_loop_period" value="$(arg gateway_watch_loop_period)" />
+    <rosparam param="firewall">true</rosparam> <!-- Nothing comes in! -->
   </node>
 
   <node pkg="rocon_app_manager" type="rapp_manager.py" name="appmanager" output="screen">
-    <rosparam command="load" file="$(find rocon_app_manager)/param/default.yaml" />
+    <rosparam command="load" file="$(find rocon_app_manager)/param/app_manager_defaults.yaml" />
     <!--  I would like to use args in rosparam tags : https://github.com/ros/ros_comm/pull/50/commits for alt. param list cfg -->
     <!--  <rosparam param="app_lists">[ $(find rocon_apps)/apps.list ]</rosparam> -->
     <param name="app_lists" value="$(arg app_lists)" />
