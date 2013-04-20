@@ -5,7 +5,7 @@
  -->
 <launch>
   <!-- ******************************* Arguments ******************************* -->
-  <arg name="concert_name" default="concert"/>
+  <arg name="concert_name" default="concert"/>  <!-- This becomes a gateway hub whitelist variable -->
   <arg name="robot_name" default="cybernetic_pirate"/>
   <arg name="robot_type" default="turtlebot"/>
   <arg name="app_lists" default="$(find rocon_apps)/apps/rocon.rapps"/> <!-- semi colon separated list --> 
