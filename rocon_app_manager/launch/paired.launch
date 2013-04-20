@@ -8,28 +8,23 @@
   <arg name="robot_name" default="cybernetic_pirate"/>
   <arg name="robot_type" default="turtlebot"/>
   <arg name="app_lists" default="$(find rocon_apps)/apps/rocon.rapps"/> <!-- semi colon separated list --> 
-  <arg name="zeroconf" default="true"/>
-  
+  <arg name="gateway_watch_loop_period" default="10"/> <!-- Polling period for multimaster advertising/flipping -->
+  <arg name="hub_whitelist" default=""/> <!-- semi-colon separated hub names/regex patterns -->
+
   <!-- ******************************* Zeroconf ******************************** -->
-  <group if="$(arg zeroconf)">
-    <node pkg="zeroconf_avahi" type="zeroconf" name="zeroconf_avahi" ns="zeroconf"/>
-  </group>
+  <node ns="zeroconf" pkg="zeroconf_avahi" type="zeroconf" name="zeroconf"/>
 
   <!-- ******************************** Gateway ******************************** -->
-  <include file="$(find rocon_app_manager)/launch/includes/app_manager_gateway.xml">
+  <include file="$(find rocon_app_manager)/launch/includes/_app_manager_gateway.xml">
     <arg name="gateway_name" value="$(arg robot_name)" />
+    <arg name="gateway_watch_loop_period" value="$(arg gateway_watch_loop_period)" />
+    <arg name="hub_whitelist" value="$(arg hub_whitelist)" />
   </include>
-  
+
   <!-- ****************************** App Manager ****************************** -->
-  <node pkg="rocon_app_manager" type="rapp_manager.py" name="app_manager" output="screen">
-    <rosparam command="load" file="$(find rocon_app_manager)/param/app_manager_defaults.yaml" />
-    <!--  I would like to use args in rosparam tags : https://github.com/ros/ros_comm/pull/218 for alt. param list cfg -->
-    <!--  <rosparam param="app_lists" subst_value="True">[ $(find rocon_apps)/apps.list ]</rosparam> -->
-    <!--  <rosparam param="app_lists" subst_value="True">[$(arg app_lists)]</rosparam> -->
-    <param name="app_lists" value="$(arg app_lists)" />
-    <param name="robot_name" value="$(arg robot_name)"/>
-    <param name="robot_type" value="$(arg robot_type)"/>
-    <remap from="app_manager/gateway_info" to="gateway/gateway_info"/>
-    <remap from="app_manager/flip" to="gateway/flip"/>
-  </node>
+  <include file="$(find rocon_app_manager)/launch/includes/_app_manager.xml">
+    <arg name="robot_name" value="$(arg robot_name)" />
+    <arg name="robot_type" value="$(arg robot_type)" />
+    <arg name="app_lists" value="$(arg app_lists)" />
+  </include>
 </launch>
