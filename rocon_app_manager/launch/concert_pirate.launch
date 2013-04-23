@@ -1,9 +1,0 @@
-<launch>
-  <arg name="robot_name" value="pirate"/>
-  <arg name="concert_name" value="pirate_concert"/>
-  <include file="$(find rocon_app_manager)/launch/concert_client.launch">
-    <arg name="robot_name" value="$(arg robot_name)"/>
-    <arg name="robot_type" value="pc"/>
-    <arg name="concert_name" value="$(arg concert_name)"/>
-  </include>
-</launch>

@@ -1,0 +1,34 @@
+##############################################################################
+# Default pulls into the public master environment
+##############################################################################
+#
+# Note that we can use .* for the gateway here as the only gateway
+# that the public gateway will ever see is the internal gateway via the
+# hidden internal hub. 
+
+default_pulls:
+    - gateway: .*
+      rule:  
+        name: .*platform_info
+        node: None
+        type: service
+    - gateway: .*
+      rule:  
+        name: .*invite
+        node: None
+        type: service
+    - gateway: .*
+      rule:  
+        name: .*list_apps
+        node: None
+        type: service
+    - gateway: .*
+      rule:  
+        name: .*status
+        node: None
+        type: service
+    - gateway: .*
+      rule:  
+        name: .*platform_info
+        node: None
+        type: service

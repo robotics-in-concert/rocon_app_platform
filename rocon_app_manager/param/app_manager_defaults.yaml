@@ -1,4 +1,4 @@
-robot_name: 'kobuki'
+robot_name: 'cybernetic_pirate'
 # This goes to making up part of the platform_info triple.
 robot_type: 'turtlebot'
 

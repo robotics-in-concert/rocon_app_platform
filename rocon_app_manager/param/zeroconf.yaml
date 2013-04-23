@@ -1,0 +1,9 @@
+# Publishes the ros master service on avahi.
+
+services:
+  - 
+     name: "Cybernetic Pirate"
+     type: _ros-master._tcp
+     domain: local
+     port: 11312
+     description: "public ros master for pairing mode connections."

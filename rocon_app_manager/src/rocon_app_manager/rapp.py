@@ -13,9 +13,8 @@ from roslib.packages import InvalidROSPkgException
 import rospy
 import roslaunch.parent
 import traceback
-import time
 import tempfile
-
+import rocon_utilities
 import utils
 from .exceptions import AppException, InvalidRappException
 
@@ -150,7 +149,7 @@ class Rapp(object):
           @type list of rocon_app_manager_msgs.msg.Remapping values.
         '''
         data = self.data
-        rospy.loginfo("Launching: " + (data['name']) + " as " + application_namespace)
+        rospy.loginfo("App Manager : launching: " + (data['name']) + " undernath /" + application_namespace)
 
         # Starts rapp
         try:
@@ -177,10 +176,15 @@ class Rapp(object):
                 for t in data['interface'][connection_type]:
                     # Now we push the rapp launcher down into the prefixed
                     # namespace, so just use it directly
-                    remapped_name = t
                     indices = [i for i, x in enumerate(remap_from_list) if x == t]
                     if indices:
                         remapped_name = '/' + remap_to_list[indices[0]]
+                    else:
+                        # maybe should check that the rapp interface name is not absolute first
+                        if not rocon_utilities.ros.is_absolute_name(t):
+                            remapped_name = '/' + application_namespace + '/' + t
+                        else:
+                            remapped_name = t
                     self._connections[connection_type].append(remapped_name)
                     for N in self._launch.config.nodes:
                         N.remap_args.append((t, remapped_name))
