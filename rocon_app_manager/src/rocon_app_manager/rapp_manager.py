@@ -63,13 +63,13 @@ class RappManager(object):
         self._param['robot_name'] = rospy.get_param('~robot_name', 'app_manager')
         self._param['app_store_url'] = rospy.get_param('~app_store_url', '')
         self._param['platform_info'] = rospy.get_param('~platform_info', 'linux.ros.*')
-        self._param['app_lists'] = rospy.get_param('~app_lists', '').split(';')
+        self._param['rapp_lists'] = rospy.get_param('~rapp_lists', '').split(';')
         # Todo fix these up with proper whitelist/blacklists
         self._param['remote_controller_whitelist'] = rospy.get_param('~remote_controller_whitelist', [])
         self._param['remote_controller_blacklist'] = rospy.get_param('~remote_controller_blacklist', [])
 
         # If we have list parameters - https://github.com/ros/ros_comm/pull/50/commits
-        # self._param['app_lists'] = rospy.get_param('~app_lists', [])
+        # self._param['rapp_lists'] = rospy.get_param('~rapp_lists', [])
 
     def _set_platform_info(self):
         self.platform_info = rapp_manager_msgs.PlatformInfo()
@@ -146,7 +146,7 @@ class RappManager(object):
         self.apps = {}
         self.apps['pre_installed'] = {}
         # Getting apps from installed list
-        for filename in self._param['app_lists']:
+        for filename in self._param['rapp_lists']:
             # should do some exception checking here, also utilise AppListFile properly.
             app_list_file = RappListFile(filename)
             # ach, put in jihoon's format
