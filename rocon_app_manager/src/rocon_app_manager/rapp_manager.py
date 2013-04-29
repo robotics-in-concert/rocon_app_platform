@@ -116,21 +116,11 @@ class RappManager(object):
             for name in self._default_service_names:
                 self._service_names[name] = '~' + name
         try:
-            # Advertisable services
+            # Advertisable services - we advertise these by default advertisement rules for the app manager's gateway.
             self._services['platform_info'] = rospy.Service(self._service_names['platform_info'], rapp_manager_srvs.GetPlatformInfo, self._process_platform_info)
             self._services['list_apps'] = rospy.Service(self._service_names['list_apps'], rapp_manager_srvs.GetAppList, self._process_get_app_list)
             self._services['status'] = rospy.Service(self._service_names['status'], rapp_manager_srvs.Status, self._process_status)
             self._services['invite'] = rospy.Service(self._service_names['invite'], rapp_manager_srvs.Invite, self._process_invite)
-            # Actually much easier to just set default advertisement rules for the app manager's gateway, then the gateway itself doesn't have to do
-            # any of this hardwork.
-            # if self._gateway_name:
-            #     rospy.loginfo("App Manager: advertising services [%s]" % self._gateway_name)
-            #     self._advertise_services([
-            #                  self._service_names['platform_info'],
-            #                  self._service_names['list_apps'],
-            #                  self._service_names['status'],
-            #                  self._service_names['invite']
-            #                  ])
             # Flippable services
             self._services['start_app'] = rospy.Service(self._service_names['start_app'], rapp_manager_srvs.StartApp, self._process_start_app)
             self._services['stop_app'] = rospy.Service(self._service_names['stop_app'], rapp_manager_srvs.StopApp, self._process_stop_app)
