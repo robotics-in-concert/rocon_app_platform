@@ -46,7 +46,7 @@
     application namespace setting part of the process works smoothly.
   -->
   <node pkg="rocon_app_manager" type="pairing_master.py" name="pairing_master">
-    <rosparam param="auto_invite">true</rosparam>
+    <rosparam param="auto_invite">false</rosparam>
     <remap from="pairing_master/gateway_info" to="gateway/gateway_info"/>
     <remap from="pairing_master/remote_gateway_info" to="gateway/remote_gateway_info"/>
   </node>
