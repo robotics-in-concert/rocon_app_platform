@@ -44,10 +44,13 @@ class RappListFile(object):
           @param filename : file path to the .rapps file.
           @type str
         '''
-        self.filename = filename
-        self.available_apps = []
-        self._file_mtime = None
-        self.update()
+        if os.path.isfile(filename):
+            self.filename = filename
+            self.available_apps = []
+            self._file_mtime = None
+            self.update()
+        else:
+            raise IOError("rapp list file not found [%s]" % filename)
 
     def _load(self):
         available_apps = []
@@ -65,10 +68,14 @@ class RappListFile(object):
         """
         Update app list
         """
-        s = os.stat(self.filename)
-        if s.st_mtime != self._file_mtime:
-            self._load()
-            self._file_mtime = s.st_mtime
+        try:
+            s = os.stat(self.filename)
+            if s.st_mtime != self._file_mtime:
+                self._load()
+                self._file_mtime = s.st_mtime
+        except OSError as e:
+            # Should only get here if someone deleted our file
+            rospy.logerr("App Manager : tried to read a file that no longer exists [%s][%s]" % (self.filename, str(e)))
 
 
 class RappList(object):

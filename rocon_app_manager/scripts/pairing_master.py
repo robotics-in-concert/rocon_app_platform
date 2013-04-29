@@ -74,6 +74,7 @@ def platform_info(namespace):
     platform_info_service_name = '/' + namespace + '/platform_info'
     platform_info_service = rospy.ServiceProxy(platform_info_service_name, rocon_app_manager_srvs.GetPlatformInfo)
     platform_info = None
+    resp = None
     while not rospy.is_shutdown():
         try:
             rospy.wait_for_service(platform_info_service_name, timeout=0.3)
@@ -82,6 +83,7 @@ def platform_info(namespace):
         except (rospy.exceptions.ROSInterruptException, rospy.service.ServiceException):  # shutdown exception
             sys.exit(0)
         try:
+            resp = None
             resp = platform_info_service()
         except rospy.service.ServiceException:  # shutdown exception
             sys.exit(0)

@@ -138,8 +138,11 @@ class RappManager(object):
         # Getting apps from installed list
         for filename in self._param['app_lists']:
             # should do some exception checking here, also utilise AppListFile properly.
-            app_list_file = RappListFile(filename)
-            # ach, put in jihoon's format
+            try:
+                app_list_file = RappListFile(filename)
+            except IOError as e:  # if file is not found
+                rospy.logwarn("App Manager : %s" % str(e))
+                return
             for app in app_list_file.available_apps:
                 if platform_compatible(platform_tuple(self.platform_info.platform, self.platform_info.system, self.platform_info.robot), app.data['platform']):
                     self.apps['pre_installed'][app.data['name']] = app
