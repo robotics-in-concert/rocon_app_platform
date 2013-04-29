@@ -11,8 +11,8 @@
   <node pkg="rocon_app_manager" type="rapp_manager.py" name="app_manager">
     <rosparam command="load" file="$(find rocon_app_manager)/param/app_manager_defaults.yaml" />
     <!--  I would like to use args in rosparam tags : https://github.com/ros/ros_comm/pull/218 for alt. param list cfg -->
-    <!--  <rosparam param="app_lists" subst_value="True">[ $(find rocon_apps)/apps.list ]</rosparam> -->
-    <!--  <rosparam param="app_lists" subst_value="True">[$(arg rapp_lists)]</rosparam> -->
+    <!--  <rosparam param="rapp_lists" subst_value="True">[ $(find rocon_apps)/apps.list ]</rosparam> -->
+    <!--  <rosparam param="rapp_lists" subst_value="True">[$(arg rapp_lists)]</rosparam> -->
     <param name="rapp_lists" value="$(arg rapp_lists)" />
     <param name="robot_name" value="$(arg robot_name)"/>
     <param name="robot_type" value="$(arg robot_type)"/>
