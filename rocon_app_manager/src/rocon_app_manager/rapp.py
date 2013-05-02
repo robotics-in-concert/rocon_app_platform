@@ -178,7 +178,10 @@ class Rapp(object):
                     # namespace, so just use it directly
                     indices = [i for i, x in enumerate(remap_from_list) if x == t]
                     if indices:
-                        remapped_name = '/' + remap_to_list[indices[0]]
+                        if rocon_utilities.ros.is_absolute_name(remap_to_list[indices[0]]):
+                            remapped_name = remap_to_list[indices[0]]
+                        else:
+                            remapped_name = '/' + application_namespace + "/" + remap_to_list[indices[0]]
                     else:
                         # maybe should check that the rapp interface name is not absolute first
                         if not rocon_utilities.ros.is_absolute_name(t):
