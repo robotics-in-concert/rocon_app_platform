@@ -9,7 +9,7 @@
   <arg name="rapp_lists" default="$(find rocon_apps)/apps/rocon.rapps"/> <!-- semi colon separated list --> 
   
   <node pkg="rocon_app_manager" type="rapp_manager.py" name="app_manager" output="screen">
-    <rosparam command="load" file="$(find rocon_app_manager)/param/app_manager.yaml" />
+    <rosparam command="load" file="$(find rocon_app_manager)/param/app_manager_defaults.yaml" />
     <!--  I would like to use args in rosparam tags : https://github.com/ros/ros_comm/pull/50/commits for alt. param list cfg -->
     <!--  <rosparam param="rapp_lists" subst_value="True">[ $(find rocon_apps)/apps.list ]</rosparam> -->
     <!--  <rosparam param="rapp_lists" subst_value="True">[$(arg rapp_lists)]</rosparam> -->
