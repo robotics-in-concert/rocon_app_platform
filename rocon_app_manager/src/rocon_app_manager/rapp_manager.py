@@ -87,11 +87,6 @@ class RappManager(object):
         self._default_service_names['start_app'] = 'start_app'
         self._default_service_names['stop_app'] = 'stop_app'
 
-        # Other services currently only fire up when the app manager gets initialised
-        # with a remote target name later. Might be nice to fire them up by default,
-        # and then close them, restart them when re-initialised with a different remote
-        # target later.
-
     def _init_gateway_services(self):
         self._gateway_services = {}
         self._gateway_services['gateway_info'] = rocon_utilities.SubscriberProxy('~gateway_info', gateway_msgs.GatewayInfo)
