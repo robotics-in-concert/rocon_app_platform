@@ -47,6 +47,7 @@ class RappManager(object):
         self._application_namespace = None  # Push all app connections underneath this namespace
         roslaunch.pmon._init_signal_handlers()
         self._services = {}
+        self._publishers = {}
 
         self._setup_ros_parameters()
         self._set_platform_info()
@@ -55,6 +56,7 @@ class RappManager(object):
 
         self._get_pre_installed_app_list()  # It sets up an app directory and load installed app list from directory
         self._init_services()
+        self._publish_app_list()
 
     def _setup_ros_parameters(self):
         rospy.logdebug("App Manager : parsing parameters")
@@ -86,6 +88,9 @@ class RappManager(object):
         self._default_service_names['invite'] = 'invite'
         self._default_service_names['start_app'] = 'start_app'
         self._default_service_names['stop_app'] = 'stop_app'
+        # Latched publishers
+        self._default_publisher_names = {}
+        self._default_publisher_names['app_list'] = 'app_list'
 
     def _init_gateway_services(self):
         self._gateway_services = {}
@@ -96,20 +101,26 @@ class RappManager(object):
 
     def _init_services(self):
         if self._services:
-            self._services['platform_info'].shutdown()
-            self._services['list_apps'].shutdown()
-            self._services['status'].shutdown()
-            self._services['invite'].shutdown()
+            for service in self._services.values():
+                service.shutdown()
+            for publisher in self._publishers.values():
+                publisher.unregister()
             self._services = {}
+            self._publishers = {}
         self._service_names = {}
+        self._publisher_names = {}
         if self._gateway_name:
             for name in self._default_service_names:
                 self._service_names[name] = '/' + self._gateway_name + '/' + name
+            for name in self._default_publisher_names:
+                self._publisher_names[name] = '/' + self._gateway_name + '/' + name
             self._application_namespace = self._gateway_name
         else:  # It's a local standalone initialisation
             self._application_namespace = RappManager.default_application_namespace
             for name in self._default_service_names:
                 self._service_names[name] = '~' + name
+            for name in self._default_publisher_names:
+                self._publisher_names[name] = '~' + name
         try:
             # Advertisable services - we advertise these by default advertisement rules for the app manager's gateway.
             self._services['platform_info'] = rospy.Service(self._service_names['platform_info'], rapp_manager_srvs.GetPlatformInfo, self._process_platform_info)
@@ -119,9 +130,12 @@ class RappManager(object):
             # Flippable services
             self._services['start_app'] = rospy.Service(self._service_names['start_app'], rapp_manager_srvs.StartApp, self._process_start_app)
             self._services['stop_app'] = rospy.Service(self._service_names['stop_app'], rapp_manager_srvs.StopApp, self._process_stop_app)
+            # Latched publishers
+            self._publishers['app_list'] = rospy.Publisher(self._publisher_names['app_list'], rapp_manager_msgs.AppList, latch=True)
         except Exception as unused_e:
             traceback.print_exc(file=sys.stdout)
             return rapp_manager_srvs.InitResponse(False)
+        self._publish_app_list()
         return rapp_manager_srvs.InitResponse(True)
 
     def _get_pre_installed_app_list(self):
@@ -198,20 +212,23 @@ class RappManager(object):
         response.application_namespace = self._application_namespace
         return response
 
-    def _process_get_app_list(self, req):
-        apps_description = rapp_manager_srvs.GetAppListResponse()
-
+    def _get_app_list(self):
+        app_list = []
         for app_name in self.apps['pre_installed']:
             app = self.apps['pre_installed'][app_name]
-            a = rapp_manager_msgs.AppDescription()
+            a = rapp_manager_msgs.App()
             a.name = app.data['name']
             a.display = app.data['display']
             a.description = app.data['description']
             a.platform = app.data['platform']
             a.status = app.data['status']
-            apps_description.apps.append(a)
+            app_list.append(a)
+        return app_list
 
-        return apps_description
+    def _process_get_app_list(self, req):
+        response = rapp_manager_srvs.GetAppListResponse()
+        response.apps.extend(self._get_app_list())
+        return response
 
     def _process_start_app(self, req):
         resp = rapp_manager_srvs.StartAppResponse()
@@ -236,6 +253,7 @@ class RappManager(object):
             self._flip_connections(self._remote_name, action_servers, gateway_msgs.ConnectionType.ACTION_SERVER)
         if resp.started:
             self._current_rapp = rapp
+            self._publish_app_list()
             thread.start_new_thread(self._monitor_rapp, ())
         return resp
 
@@ -268,7 +286,18 @@ class RappManager(object):
             self._flip_connections(self._remote_name, action_servers, gateway_msgs.ConnectionType.ACTION_SERVER, True)
         if resp.stopped:
             self._current_rapp = None
+            self._publish_app_list()
         return resp
+
+    def _publish_app_list(self):
+        rospy.logerr("publishing app list %s" % self._get_app_list())
+        try:
+            if self._current_rapp:
+                self._publishers['app_list'].publish([self._current_rapp], self._get_app_list())
+            else:
+                self._publishers['app_list'].publish([], self._get_app_list())
+        except KeyError:
+            pass
 
     ##########################################################################
     # Utilities

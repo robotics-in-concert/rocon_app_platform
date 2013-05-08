@@ -32,3 +32,9 @@ default_pulls:
         name: .*platform_info
         node: None
         type: service
+    - gateway: .*
+      rule:  
+        name: .*app_list
+        node: None
+        type: publisher
+        

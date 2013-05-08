@@ -3,6 +3,7 @@
 	<name>rocon_app_manager</name>
 	<comment></comment>
 	<projects>
+		<project>rocon_msgs</project>
 		<project>rocon_utilities</project>
 	</projects>
 	<buildSpec>
