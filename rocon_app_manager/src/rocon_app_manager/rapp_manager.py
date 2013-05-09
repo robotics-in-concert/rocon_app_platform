@@ -290,7 +290,6 @@ class RappManager(object):
         return resp
 
     def _publish_app_list(self):
-        rospy.logerr("publishing app list %s" % self._get_app_list())
         try:
             if self._current_rapp:
                 self._publishers['app_list'].publish([self._current_rapp], self._get_app_list())
