@@ -200,7 +200,7 @@ class RappManager(object):
           - the current app status (runnning or stopped)
 
           @param req : status request object (empty)
-          @type rapp_maanger_srvs.StatusRequest
+          @type rapp_manager_srvs.StatusRequest
         '''
         response = rapp_manager_srvs.StatusResponse()
         response.app_status = rapp_manager_msgs.Constants.APP_RUNNING if self._current_rapp \
@@ -216,18 +216,16 @@ class RappManager(object):
         app_list = []
         for app_name in self.apps['pre_installed']:
             app = self.apps['pre_installed'][app_name]
-            a = rapp_manager_msgs.App()
-            a.name = app.data['name']
-            a.display = app.data['display']
-            a.description = app.data['description']
-            a.platform = app.data['platform']
-            a.status = app.data['status']
-            app_list.append(a)
+            app_list.append(app.to_msg())
         return app_list
 
     def _process_get_app_list(self, req):
         response = rapp_manager_srvs.GetAppListResponse()
-        response.apps.extend(self._get_app_list())
+        response.available_apps.extend(self._get_app_list())
+        response.running_apps = []
+        if self._current_rapp:
+            response.running_apps.append(self._current_rapp)
+        print("Response %s" % response)
         return response
 
     def _process_start_app(self, req):
@@ -290,7 +288,7 @@ class RappManager(object):
         return resp
 
     def _publish_app_list(self):
-        rospy.logerr("publishing app list %s" % self._get_app_list())
+        rospy.logerr("publishing app list\n%s" % self._get_app_list())
         try:
             if self._current_rapp:
                 self._publishers['app_list'].publish([self._current_rapp], self._get_app_list())

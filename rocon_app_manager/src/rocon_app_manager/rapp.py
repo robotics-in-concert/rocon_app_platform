@@ -17,6 +17,7 @@ import tempfile
 import rocon_utilities
 import utils
 from .exceptions import AppException, InvalidRappException
+import rocon_app_manager_msgs.msg as rapp_manager_msgs
 
 ##############################################################################
 # Class
@@ -81,27 +82,71 @@ class Rapp(object):
                     raise AppException("Invalid appfile format [" + path + "], missing required key [" + reqd + "]")
 
             data['name'] = app_name
-            data['display'] = app_data.get('display', app_name)
+            data['display_name'] = app_data.get('display', app_name)
             data['description'] = app_data.get('description', '')
             data['platform'] = app_data['platform']
-            data['launch'] = self.loadFromFile(app_data['launch'], 'launch', app_name)
-            data['interface'] = self._load_interface(self.loadFromFile(app_data['interface'], 'interface', app_name))
+            data['launch'] = self._find_rapp_resource(app_data['launch'], 'launch', app_name)
+            data['interface'] = self._load_interface(self._find_rapp_resource(app_data['interface'], 'interface', app_name))
             if 'icon' not in app_data:
                 data['icon'] = None
             else:
-                data['icon'] = self.loadFromFile(app_data['icon'], 'icon', app_name)
+                data['icon'] = self._find_rapp_resource(app_data['icon'], 'icon', app_name)
             data['status'] = 'Ready'
 
         self.data = data
 
-    def loadFromFile(self, path, log, app_name="Unknown"):
+    def to_msg(self):
+        '''
+          Converts this app definition to ros msg format.
+        '''
+        a = rapp_manager_msgs.App()
+        a.name = self.data['name']
+        a.display_name = self.data['display_name']
+        a.description = self.data['description']
+        a.platform = self.data['platform']
+        a.status = self.data['status']
+        a.icon = self._icon_to_msg(self.data['icon'])
+        return a
+
+    def _icon_to_msg(self, filename):
+        '''
+          Loads the icon with specified filename and puts in
+          ros Icon.msg format
+        '''
+        icon = rapp_manager_msgs.Icon()
+        if filename == None or filename == "":
+            return icon
+        unused_basename, extension = os.path.splitext(filename)
+        if extension.lower() == ".jpg" or extension.lower() == ".jpeg":
+            icon.format = "jpeg"
+        elif extension.lower() == ".png":
+            icon.format = "png"
+        else:
+            icon.format = ""
+            return icon
+        icon.data = open(filename, "rb").read()
+        return icon
+
+    def _find_rapp_resource(self, resource, log, app_name="Unknown"):
+        '''
+          A simple wrapper around utils.find_resource to locate rapp resources.
+
+          @param resource is a ros resource (package/name)
+          @type str
+          @param log : string used for log messages when something goes wrong (e.g. 'icon')
+          @type str
+          @param name : app name, also only used for logging purposes
+          @return full path to the resource
+          @type str
+          @raise AppException: if resource does not exist or something else went wrong.
+        '''
         try:
-            data = utils.find_resource(path)
-            if not os.path.exists(data):
-                raise AppException("Invalid appfile [%s]: %s file does not exist." % (app_name, log))
-            return data
+            path_to_resource = utils.find_resource(resource)
+            if not os.path.exists(path_to_resource):
+                raise AppException("invalid appfile [%s]: %s file does not exist." % (app_name, log))
+            return path_to_resource
         except ValueError as e:
-            raise AppException("Invalid appfile [%s]: bad %s entry: %s" % (app_name, log, e))
+            raise AppException("invalid appfile [%s]: bad %s entry: %s" % (app_name, log, e))
             """
         except NotFoundException:
             raise AppException("App file [%s] refers to %s which is not installed"%(app_name,log))
