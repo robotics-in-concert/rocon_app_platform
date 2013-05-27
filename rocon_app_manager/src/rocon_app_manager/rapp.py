@@ -13,10 +13,8 @@ from roslib.packages import InvalidROSPkgException
 import rospy
 import roslaunch.parent
 import traceback
-import time
-import thread
 import tempfile
-
+import rocon_utilities
 import utils
 from .exceptions import AppException, InvalidRappException
 
@@ -34,9 +32,13 @@ class Rapp(object):
     data = {}
 
     def __init__(self, resource_name):
+        '''
+          @param resource_name : a package/name pair for this rapp
+          @type str/str
+        '''
         self.filename = ""
         self._connections = {}
-        for connection_type in ['publishers', 'subscribers', 'services']:
+        for connection_type in ['publishers', 'subscribers', 'services', 'action_clients', 'action_servers']:
             self._connections[connection_type] = []
         self._load_from_resource_name(resource_name)
 
@@ -109,7 +111,7 @@ class Rapp(object):
 
     def _load_interface(self, data):
         d = {}
-        keys = ['subscribers', 'publishers', 'services']
+        keys = ['subscribers', 'publishers', 'services', 'action_clients', 'action_servers']
         with open(data, 'r') as f:
             y = yaml.load(f.read())
             y = y or {}
@@ -130,7 +132,7 @@ class Rapp(object):
 
         return d
 
-    def start(self, robot_name, remappings=[]):
+    def start(self, application_namespace, remappings=[]):
         '''
           Some important jobs here.
 
@@ -141,20 +143,18 @@ class Rapp(object):
 
           2) Apply remapping rules while ignoring the namespace underneath.
 
-          @param robot_name ; unique name granted indirectly via the gateways, we namespace everything under this
+          @param application_namespace ; unique name granted indirectly via the gateways, we namespace everything under this
           @type str
           @param remapping : rules for the app flips.
           @type list of rocon_app_manager_msgs.msg.Remapping values.
         '''
         data = self.data
-        rospy.loginfo("Launching: %s" % (data['name']))
+        rospy.loginfo("App Manager : launching: " + (data['name']) + " undernath /" + application_namespace)
 
-        # Starts app
+        # Starts rapp
         try:
-            prefix = robot_name
-
             temp = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
-            launch_text = '<launch>\n  <include ns="%s" file="%s"/>\n</launch>\n' % (robot_name, data['launch'])
+            launch_text = '<launch>\n  <include ns="%s" file="%s"/>\n</launch>\n' % (application_namespace, data['launch'])
             temp.write(launch_text)
             temp.close()  # unlink it later
 
@@ -171,30 +171,37 @@ class Rapp(object):
             # Prefix with robot name by default (later pass in remap argument)
             remap_from_list = [remapping.remap_from for remapping in remappings]
             remap_to_list = [remapping.remap_to for remapping in remappings]
-            for connection_type in ['publishers', 'subscribers', 'services']:
+            for connection_type in ['publishers', 'subscribers', 'services', 'action_clients', 'action_servers']:
                 self._connections[connection_type] = []
                 for t in data['interface'][connection_type]:
                     # Now we push the rapp launcher down into the prefixed
                     # namespace, so just use it directly
-                    remapped_name = t
                     indices = [i for i, x in enumerate(remap_from_list) if x == t]
                     if indices:
-                        remapped_name = '/' + remap_to_list[indices[0]]
+                        if rocon_utilities.ros.is_absolute_name(remap_to_list[indices[0]]):
+                            remapped_name = remap_to_list[indices[0]]
+                        else:
+                            remapped_name = '/' + application_namespace + "/" + remap_to_list[indices[0]]
+                    else:
+                        # maybe should check that the rapp interface name is not absolute first
+                        if not rocon_utilities.ros.is_absolute_name(t):
+                            remapped_name = '/' + application_namespace + '/' + t
+                        else:
+                            remapped_name = t
                     self._connections[connection_type].append(remapped_name)
                     for N in self._launch.config.nodes:
                         N.remap_args.append((t, remapped_name))
             self._launch.start()
 
-            thread.start_new_thread(self.app_monitor, ())
             data['status'] = 'Running'
-            return True, "Success", self._connections['subscribers'], self._connections['publishers'], self._connections['services']
+            return True, "Success", self._connections['subscribers'], self._connections['publishers'], self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
 
         except Exception as e:
             print str(e)
             traceback.print_stack()
             rospy.loginfo("Error While launching " + data['launch'])
             data['status'] = "Error While launching " + data['launch']
-            return False, "Error while launching " + data['name'], [], [], []
+            return False, "Error while launching " + data['name'], [], [], [], [], []
         finally:
             os.unlink(temp.name)
 
@@ -213,18 +220,27 @@ class Rapp(object):
             print str(e)
             rospy.loginfo("Error while stopping " + data['name'])
             data['status'] = 'Error'
-            return False, "Error while stopping " + data['name'], self._connections['subscribers'], self._connections['publishers'], self._connections['services']
+            return False, "Error while stopping " + data['name'], self._connections['subscribers'], self._connections['publishers'], self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
 
-        return True, "Success", self._connections['subscribers'], self._connections['publishers'], self._connections['services']
+        return True, "Success", self._connections['subscribers'], self._connections['publishers'], self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
 
-    def app_monitor(self):
-        while self._launch:
-            time.sleep(0.1)
-            launch = self._launch
-            if launch:
-                pm = launch.pm
-                if pm:
-                    if pm.done:
-                        time.sleep(1.0)
-                        self.stop()
-                        break
+    def is_running(self):
+        '''
+         Is the rapp both launched and currently running?
+
+         Actually three possible states 1) not launched 2) running, 3) stopped
+         Could acutally return a tertiary value, but rapp manager doesn't need
+         to make any decision making about that (for now), so just return
+         running or not.
+
+         Used by the rapp_manager.
+
+         @return True if the rapp is executing or False otherwise.
+         @type Bool
+        '''
+        if not self._launch:
+            return False
+        elif self._launch.pm and self._launch.pm.done:
+            # time.sleep(1.0)  # do we need this sleep?
+            return False
+        return True

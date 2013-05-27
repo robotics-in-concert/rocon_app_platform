@@ -1,0 +1,27 @@
+<!--
+  Configurations for launching the gateway associated with a non-standalone
+  app manager.
+  
+  We do default advertisements here (platform info etc), make sure it's
+  firewalling and set a reasonable watcher loop period.
+
+  It might be useful to set args for:
+   - a flag to disable searching for the paired mode hub, if no pairing 
+ -->
+<launch>
+  <arg name="gateway_name" default="gateway"/>
+  <!-- Polling period for multimaster advertising/flipping -->
+  <arg name="gateway_watch_loop_period" default="5"/>
+  <arg name="hub_whitelist" default=""/> <!-- semi-colon separated hub names/regex patterns -->
+
+  <node pkg="rocon_gateway" type="gateway.py" name="gateway">
+    <rosparam command="load" file="$(find rocon_gateway)/param/default.yaml" />
+    <rosparam command="load" file="$(find rocon_gateway)/param/default_blacklist.yaml" />
+    <rosparam command="load" file="$(find rocon_app_manager)/param/app_manager_advertisements.yaml" />
+    <rosparam param="hub_uri">http://localhost:6380</rosparam> <!-- The paired hub, if available -->
+    <param name="name" value="$(arg gateway_name)"/> <!-- <rosparam param="name" subst_value="true">$(arg robot_name)</rosparam> -->
+    <rosparam param="firewall">true</rosparam> <!-- Nothing comes in! -->
+    <param name="watch_loop_period" value="$(arg gateway_watch_loop_period)"/>
+    <param name="hub_whitelist" value="$(arg hub_whitelist)"/>
+  </node>
+</launch>

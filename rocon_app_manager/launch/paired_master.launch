@@ -1,0 +1,53 @@
+<!--
+  The public master for pairing connections. Externally paired
+  devices should connect to this ros master where they can
+  find the publicly exposed connections of the robot.
+ -->
+<launch>
+  <arg name="zeroconf_configuration_file" default="$(find rocon_app_manager)/param/zeroconf.yaml"/>
+
+  <!-- ********************************* Hub *********************************** -->
+  <include file="$(find rocon_hub)/launch/hub.launch">
+    <arg name="hub_name" value="Internal Hub" />
+    <arg name="hub_port" value="6380" />
+    <arg name="zeroconf" value="false" />
+  </include>
+
+  <!-- ******************************* Zeroconf ******************************** -->
+  <node pkg="zeroconf_avahi" type="zeroconf" name="zeroconf_avahi" ns="zeroconf">
+    <rosparam file="$(arg zeroconf_configuration_file)" command="load"/>
+    <!-- Instead of by file, I'd like to use the following with robot name as an $(arg), but
+           this is pending https://github.com/ros/ros_comm/pull/218 -->
+    <!-- 
+    <rosparam param="services" subst_value="true">
+      [ { name: "$(arg robot_name)", type: _ros-master._tcp, port: 11312, domain: local, description: "ros master" } ]
+    </rosparam>
+    -->
+  </node>
+
+  <!-- ******************************** Gateway ******************************** -->
+  <!--
+    The public gateway does not use zeroconf, it needs to know where it can find the internal
+    hub shared by private and public ros masters.
+   -->
+  <node pkg="rocon_gateway" type="gateway.py" name="gateway">
+    <rosparam command="load" file="$(find rocon_gateway)/param/default.yaml" />
+    <rosparam command="load" file="$(find rocon_gateway)/param/default_blacklist.yaml" />
+    <rosparam command="load" file="$(find rocon_app_manager)/param/paired_master_pulls.yaml" />
+    <rosparam param="hub_uri">http://localhost:6380</rosparam>
+    <rosparam param="name">Public Gateway</rosparam>
+    <rosparam param="watch_loop_period">5</rosparam>
+    <rosparam param="firewall">false</rosparam>
+    <rosparam param="disable_zeroconf">true</rosparam>
+  </node>
+
+  <!--
+    Manages the pairing master ecosystem, i.e. makes sure the invitation and
+    application namespace setting part of the process works smoothly.
+  -->
+  <node pkg="rocon_app_manager" type="pairing_master.py" name="pairing_master">
+    <rosparam param="auto_invite">false</rosparam>
+    <remap from="pairing_master/gateway_info" to="gateway/gateway_info"/>
+    <remap from="pairing_master/remote_gateway_info" to="gateway/remote_gateway_info"/>
+  </node>
+</launch>
