@@ -1,6 +1,6 @@
 <package>
   <name>rocon_app_manager</name>
-  <version>0.3.0</version>
+  <version>0.4.0</version>
   <description>
     The public interface and retaskable interface for a robot.
   </description>
@@ -17,6 +17,7 @@
 
   <run_depend>roslib</run_depend>
   <run_depend>rospy</run_depend>
+  <run_depend>rosmaster</run_depend>
   <run_depend>rocon_apps</run_depend>
   <run_depend>rocon_app_manager_msgs</run_depend>
   <run_depend>gateway_msgs</run_depend>

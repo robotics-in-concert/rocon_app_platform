@@ -1,4 +1,4 @@
-robot_name: 'kobuki'
+robot_name: 'cybernetic_pirate'
 # This goes to making up part of the platform_info triple.
 robot_type: 'turtlebot'
 
@@ -8,6 +8,6 @@ remote_controller_whitelist: []
 remote_controller_blacklist: []
 
 # Semi colon separated string. This is very non-portable, use launchers where you can use $(find..) instead
-# app_lists: '/home/jihoonl/ros/groovy/turtlebot/turtlebot_apps/turtlebot_core_apps/turtlebot.rapps'
+# rapp_lists: '/home/jihoonl/ros/groovy/turtlebot/turtlebot_apps/turtlebot_core_apps/turtlebot.rapps'
 
 app_store_url: []

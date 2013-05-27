@@ -1,0 +1,22 @@
+<!--
+  Default launch configuration for the app manager in paired or concert mode. 
+ -->
+<launch>
+  <!-- ******************************* Arguments ******************************* -->
+  <arg name="rapp_lists" default="$(find rocon_apps)/apps/rocon.rapps"/> <!-- semi colon separated list -->
+  <!-- These go into the advertised platform_info -->
+  <arg name="robot_name" default="cybernetic_pirate"/> 
+  <arg name="robot_type" default="turtlebot"/> 
+
+  <node pkg="rocon_app_manager" type="rapp_manager.py" name="app_manager">
+    <rosparam command="load" file="$(find rocon_app_manager)/param/app_manager_defaults.yaml" />
+    <!--  I would like to use args in rosparam tags : https://github.com/ros/ros_comm/pull/218 for alt. param list cfg -->
+    <!--  <rosparam param="rapp_lists" subst_value="True">[ $(find rocon_apps)/apps.list ]</rosparam> -->
+    <!--  <rosparam param="rapp_lists" subst_value="True">[$(arg rapp_lists)]</rosparam> -->
+    <param name="rapp_lists" value="$(arg rapp_lists)" />
+    <param name="robot_name" value="$(arg robot_name)"/>
+    <param name="robot_type" value="$(arg robot_type)"/>
+    <remap from="app_manager/gateway_info" to="gateway/gateway_info"/>
+    <remap from="app_manager/flip" to="gateway/flip"/>
+  </node>
+</launch>

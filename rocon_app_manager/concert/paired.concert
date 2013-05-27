@@ -1,0 +1,4 @@
+<concert>
+  <launch package="rocon_app_manager" name="paired.launch" port="11311"/>
+  <launch package="rocon_app_manager" name="paired_master.launch" port="11312"/>
+</concert>

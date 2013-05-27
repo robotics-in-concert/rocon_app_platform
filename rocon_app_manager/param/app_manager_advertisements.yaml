@@ -1,0 +1,17 @@
+##############################################################################
+# Default advertisements from an app manager
+##############################################################################
+
+default_advertisements: 
+    - name: .*platform_info
+      node: .*app_manager
+      type: service
+    - name: .*invite
+      node: .*app_manager
+      type: service
+    - name: .*list_apps
+      node: .*app_manager
+      type: service
+    - name: .*status
+      node: .*app_manager
+      type: service

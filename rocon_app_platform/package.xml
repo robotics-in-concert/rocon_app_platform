@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>rocon_app_platform</name>
-  <version>0.3.0</version>
+  <version>0.4.0</version>
   <description>
     Robot application platform for ros robots with a default implementation in python.
   </description>
@@ -14,6 +14,7 @@
   <author email="d.stonier@gmail.com">Daniel Stonier</author>
   <author email="jihoonlee.in@gmail.com">Jihoon Lee</author>
 
+  <buildtool_depend>catkin</buildtool_depend>
   <run_depend>rocon_app_manager</run_depend>
   <run_depend>rocon_app_manager_www</run_depend>
   <run_depend>rocon_apps</run_depend>
