@@ -15,7 +15,7 @@ install:
   - sudo rosdep init
   - rosdep update
   - mkdir -p /tmp/ws/src
-  - ln -s `pwd` /tmp/ws/src/rocon_concert
+  - ln -s `pwd` /tmp/ws/src/rocon_app_platform
   - cd /tmp/ws
   - rosdep install --from-paths src --ignore-src --rosdistro groovy -y
 
