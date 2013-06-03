@@ -7,6 +7,7 @@
 # Imports
 ##############################################################################
 
+import os
 import rospy
 import roslib.names
 import rocon_app_manager_msgs.msg as rapp_manager_msgs
@@ -94,3 +95,23 @@ def platform_compatible(first_platform_tuple, second_platform_tuple):
        platform_one.robot != platform_two.robot:
         return False
     return True
+
+
+def icon_to_msg(filename):
+    '''
+      Loads the icon with specified filename and puts in
+      ros Icon.msg format
+    '''
+    icon = rapp_manager_msgs.Icon()
+    if filename == None or filename == "":
+        return icon
+    unused_basename, extension = os.path.splitext(filename)
+    if extension.lower() == ".jpg" or extension.lower() == ".jpeg":
+        icon.format = "jpeg"
+    elif extension.lower() == ".png":
+        icon.format = "png"
+    else:
+        icon.format = ""
+        return icon
+    icon.data = open(filename, "rb").read()
+    return icon

@@ -23,6 +23,9 @@ import rocon_app_manager_msgs.srv as rapp_manager_srvs
 import gateway_msgs.msg as gateway_msgs
 import gateway_msgs.srv as gateway_srvs
 
+# local imports
+import utils
+
 ##############################################################################
 # App Manager
 ##############################################################################
@@ -63,6 +66,7 @@ class RappManager(object):
         self._param = {}
         self._param['robot_type'] = rospy.get_param('~robot_type', 'robot')
         self._param['robot_name'] = rospy.get_param('~robot_name', 'app_manager')
+        self._param['robot_icon'] = rospy.get_param('~robot_icon', '')  # image filename
         self._param['app_store_url'] = rospy.get_param('~app_store_url', '')
         self._param['platform_info'] = rospy.get_param('~platform_info', 'linux.ros.*')
         self._param['rapp_lists'] = rospy.get_param('~rapp_lists', '').split(';')
@@ -79,6 +83,7 @@ class RappManager(object):
         self.platform_info.system = rapp_manager_msgs.PlatformInfo.SYSTEM_ROS
         self.platform_info.robot = self._param['robot_type']  # TODO Validate this against rapp_manager_msgs.PlatformInfo ROBOT_XXX
         self.platform_info.name = self._param['robot_name']
+        self.platform_info.icon = utils.icon_to_msg(self._param['robot_icon'])
 
     def _init_default_service_names(self):
         self._default_service_names = {}

@@ -105,27 +105,8 @@ class Rapp(object):
         a.description = self.data['description']
         a.platform = self.data['platform']
         a.status = self.data['status']
-        a.icon = self._icon_to_msg(self.data['icon'])
+        a.icon = utils.icon_to_msg(self.data['icon'])
         return a
-
-    def _icon_to_msg(self, filename):
-        '''
-          Loads the icon with specified filename and puts in
-          ros Icon.msg format
-        '''
-        icon = rapp_manager_msgs.Icon()
-        if filename == None or filename == "":
-            return icon
-        unused_basename, extension = os.path.splitext(filename)
-        if extension.lower() == ".jpg" or extension.lower() == ".jpeg":
-            icon.format = "jpeg"
-        elif extension.lower() == ".png":
-            icon.format = "png"
-        else:
-            icon.format = ""
-            return icon
-        icon.data = open(filename, "rb").read()
-        return icon
 
     def _find_rapp_resource(self, resource, log, app_name="Unknown"):
         '''
