@@ -91,6 +91,7 @@ def platform_info(namespace):
             break
     if resp is None:  # yes, can still be none...after shutdown
         sys.exit(0)
+    
     return (resp.platform_info.platform, resp.platform_info.system, resp.platform_info.robot, resp.platform_info.name)
 
 ##############################################################################

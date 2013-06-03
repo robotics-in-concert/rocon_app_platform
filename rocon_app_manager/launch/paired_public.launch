@@ -42,7 +42,7 @@
   </node>
 
   <!--
-    Manages the pairing master ecosystem, i.e. makes sure the invitation and
+    Manages the pairing ecosystem, i.e. makes sure the invitation and
     application namespace setting part of the process works smoothly.
   -->
   <node pkg="rocon_app_manager" type="pairing_master.py" name="pairing_master">

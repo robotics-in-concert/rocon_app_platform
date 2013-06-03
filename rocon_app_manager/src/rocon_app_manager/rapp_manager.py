@@ -225,7 +225,6 @@ class RappManager(object):
         response.running_apps = []
         if self._current_rapp:
             response.running_apps.append(self._current_rapp)
-        print("Response %s" % response)
         return response
 
     def _process_start_app(self, req):
@@ -288,7 +287,6 @@ class RappManager(object):
         return resp
 
     def _publish_app_list(self):
-        rospy.logerr("publishing app list\n%s" % self._get_app_list())
         try:
             if self._current_rapp:
                 self._publishers['app_list'].publish([self._current_rapp], self._get_app_list())
