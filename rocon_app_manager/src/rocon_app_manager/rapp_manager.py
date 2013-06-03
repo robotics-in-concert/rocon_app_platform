@@ -287,11 +287,14 @@ class RappManager(object):
         return resp
 
     def _publish_app_list(self):
+        '''
+          Publishes an updated list of available and running apps (in that order).
+        '''
         try:
             if self._current_rapp:
-                self._publishers['app_list'].publish([self._current_rapp], self._get_app_list())
+                self._publishers['app_list'].publish(self._get_app_list(), [self._current_rapp.to_msg()])
             else:
-                self._publishers['app_list'].publish([], self._get_app_list())
+                self._publishers['app_list'].publish(self._get_app_list(), [])
         except KeyError:
             pass
 
