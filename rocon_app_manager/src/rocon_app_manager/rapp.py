@@ -175,7 +175,7 @@ class Rapp(object):
           @type list of rocon_app_manager_msgs.msg.Remapping values.
         '''
         data = self.data
-        rospy.loginfo("App Manager : launching: " + (data['name']) + " undernath /" + application_namespace)
+        rospy.loginfo("App Manager : launching: " + (data['name']) + " underneath /" + application_namespace)
 
         # Starts rapp
         try:

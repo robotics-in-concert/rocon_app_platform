@@ -119,7 +119,7 @@ class RappManager(object):
                 self._service_names[name] = '/' + self._gateway_name + '/' + name
             for name in self._default_publisher_names:
                 self._publisher_names[name] = '/' + self._gateway_name + '/' + name
-            self._application_namespace = self._gateway_name
+            self._application_namespace = self._gateway_name + '/' + RappManager.default_application_namespace
         else:  # It's a local standalone initialisation
             self._application_namespace = RappManager.default_application_namespace
             for name in self._default_service_names:
@@ -180,7 +180,13 @@ class RappManager(object):
     def _accept_invitation(self, req):
         #rospy.loginfo("App Manager : " + str(req))
         self._remote_name = req.remote_target_name
-        self._application_namespace = RappManager.default_application_namespace if req.application_namespace == '' else req.application_namespace
+        if req.application_namespace == '':
+            if self._gateway_name:
+                self._application_namespace = self._gateway_name + "/" + RappManager.default_application_namespace
+            else:
+                self._application_namespace = RappManager.default_application_namespace
+        else:
+            self._application_namespace = req.application_namespace
         rospy.loginfo("App Manager : accepting invitation to relay controls to remote system [%s]" % str(self._remote_name))
         try:
             self._flip_connections(self._remote_name,
