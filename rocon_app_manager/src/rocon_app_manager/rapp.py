@@ -24,11 +24,38 @@ import rocon_app_manager_msgs.msg as rapp_manager_msgs
 ##############################################################################
 
 
+class PairingClient(object):
+    '''
+      A pairing client runs an app which is one which will work in tandem with
+      this robot (rocon) app. The client is usually a smart phone or tablet.
+    '''
+    __slots__ = ['client_type', 'manager_data', 'app_data']
+
+    def __init__(self, client_type, manager_data, app_data):
+        self.client_type = client_type
+        self.manager_data = manager_data
+        self.app_data = app_data
+
+    def as_dict(self):
+        return {'client_type': self.client_type, 'manager_data': self.manager_data, 'app_data': self.app_data}
+
+    def __eq__(self, other):
+        if not isinstance(other, PairingClient):
+            return False
+        return self.client_type == other.client_type and \
+               self.manager_data == other.manager_data and \
+               self.app_data == other.app_data
+
+    def __repr__(self):
+        return yaml.dump(self.as_dict())
+
+
 class Rapp(object):
     '''
         Got many inspiration and imported from willow_app_manager
         implementation (Jihoon)
     '''
+    # I should add a __slots__ definition here to make it easy to read
     path = None
     data = {}
 
@@ -87,6 +114,8 @@ class Rapp(object):
             data['platform'] = app_data['platform']
             data['launch'] = self._find_rapp_resource(app_data['launch'], 'launch', app_name)
             data['interface'] = self._load_interface(self._find_rapp_resource(app_data['interface'], 'interface', app_name))
+            data['pairing_clients'] = []
+            data['pairing_clients'] = self._load_pairing_clients(app_data, path)
             if 'icon' not in app_data:
                 data['icon'] = None
             else:
@@ -106,6 +135,10 @@ class Rapp(object):
         a.platform = self.data['platform']
         a.status = self.data['status']
         a.icon = utils.icon_to_msg(self.data['icon'])
+        for pairing_client in self.data['pairing_clients']:
+            a.pairing_clients.append(PairingClient(pairing_client.client_type,
+                                       dict_to_KeyValue(pairing_client.manager_data),
+                                       dict_to_KeyValue(pairing_client.app_data)))
         return a
 
     def _find_rapp_resource(self, resource, log, app_name="Unknown"):
@@ -157,6 +190,30 @@ class Rapp(object):
                 raise AppException("Invalid interface, missing keys")
 
         return d
+
+    def _load_pairing_clients(self, app_data, appfile="UNKNOWN"):
+        '''
+          Load pairing client information from the .rapp file.
+
+          @raise InvalidRappException if the .rapp pairing clients definition was invalid.
+        '''
+        clients_data = app_data.get('pairing_clients', [])
+        clients = []
+        for c in clients_data:
+            for reqd in ['type', 'manager']:
+                if not reqd in c:
+                    raise InvalidRappException("malformed .rapp [%s], missing required key [%s]" % (appfile, reqd))
+            client_type = c['type']
+            manager_data = c['manager']
+            if not type(manager_data) == dict:
+                raise InvalidRappException("malformed .rapp [%s]: manager data must be a map" % (appfile))
+
+            app_data = c.get('app', {})
+            if not type(app_data) == dict:
+                raise InvalidRappException("malformed appfile [%s]: app data must be a map" % (appfile))
+
+            clients.append(PairingClient(client_type, manager_data, app_data))
+        return clients
 
     def start(self, application_namespace, remappings=[]):
         '''
@@ -270,3 +327,18 @@ class Rapp(object):
             # time.sleep(1.0)  # do we need this sleep?
             return False
         return True
+
+##############################################################################
+# Utilities
+##############################################################################
+
+
+def dict_to_KeyValue(d):
+    '''
+      Converts a dictionary to key value ros msg type.
+    '''
+    l = []
+    for k, v in d.iteritems():
+        l.append(rapp_manager_msgs.KeyValue(k, str(v)))
+    return l
+
