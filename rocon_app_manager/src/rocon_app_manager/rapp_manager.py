@@ -235,15 +235,28 @@ class RappManager(object):
         response.available_apps.extend(self._get_app_list())
         response.running_apps = []
         if self._current_rapp:
-            response.running_apps.append(self._current_rapp)
+            response.running_apps.append(self._current_rapp.to_msg())
         return response
+
+    def _publish_app_list(self):
+        '''
+          Publishes an updated list of available and running apps (in that order).
+        '''
+        try:
+            if self._current_rapp:
+                self._publishers['app_list'].publish(self._get_app_list(), [self._current_rapp.to_msg()])
+            else:
+                self._publishers['app_list'].publish(self._get_app_list(), [])
+        except KeyError:
+            pass
 
     def _process_start_app(self, req):
         resp = rapp_manager_srvs.StartAppResponse()
         resp.app_namespace = self._application_namespace
+        rospy.loginfo("App Manager : request received to start app [%s]" % req.name)
         if self._current_rapp:
             resp.started = False
-            resp.message = "an app is already running"
+            resp.message = "an app is already running [%s]" % self._current_rapp.data['name']
             return resp
 
         rospy.loginfo("App Manager : starting app : " + req.name)
@@ -296,18 +309,6 @@ class RappManager(object):
             self._current_rapp = None
             self._publish_app_list()
         return resp
-
-    def _publish_app_list(self):
-        '''
-          Publishes an updated list of available and running apps (in that order).
-        '''
-        try:
-            if self._current_rapp:
-                self._publishers['app_list'].publish(self._get_app_list(), [self._current_rapp.to_msg()])
-            else:
-                self._publishers['app_list'].publish(self._get_app_list(), [])
-        except KeyError:
-            pass
 
     ##########################################################################
     # Utilities
