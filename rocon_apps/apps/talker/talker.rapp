@@ -8,7 +8,7 @@ pairing_clients:
  - type: android
    manager:
      api-level: 9
-     intent-action: com.github.robotics_in_concert.rocon_android.listener.Listener
+     intent-action: com.github.ros_java.android_apps.listener.Listener
    app:
      gravityMode: 0
      base_control_topic: /cmd_vel
