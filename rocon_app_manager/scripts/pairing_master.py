@@ -63,42 +63,6 @@ def remote_gateway_name():
         sys.exit(0)
     return remote_gateway_name
 
-def platform_info(namespace):
-    '''
-      Calls the application manager's platform info service to get details
-      about the robot type that the android needs and passes it back for
-      publishing to the parameter server in the main thread.
-      
-      To be short, this is convoluted. The robot remoticon should call
-      platform info itself (see MasterChecker.java) instead of looking up
-      parameters.
-      
-      @return namespace of the app manager (matches the remote gateway name)
-      @rtype string or None : string does not yet prefix a leading '/'
-    '''
-    platform_info_service_name = '/' + namespace + '/platform_info'
-    platform_info_service = rospy.ServiceProxy(platform_info_service_name, rocon_app_manager_srvs.GetPlatformInfo)
-    platform_info = None
-    resp = None
-    while not rospy.is_shutdown():
-        try:
-            rospy.wait_for_service(platform_info_service_name, timeout=0.3)
-        except rospy.exceptions.ROSException:  # timeout exceeded
-            continue
-        except (rospy.exceptions.ROSInterruptException, rospy.service.ServiceException):  # shutdown exception
-            sys.exit(0)
-        try:
-            resp = None
-            resp = platform_info_service()
-        except rospy.service.ServiceException:  # shutdown exception
-            sys.exit(0)
-        if resp is not None:
-            break
-    if resp is None:  # yes, can still be none...after shutdown
-        sys.exit(0)
-    
-    return (resp.platform_info.platform, resp.platform_info.system, resp.platform_info.robot, resp.platform_info.name, resp.platform_info.icon)
-
 ##############################################################################
 # Main
 ##############################################################################
@@ -115,10 +79,7 @@ if __name__ == '__main__':
     rospy.loginfo("Pairing Master : local gateway name [%s]" % local_gateway_name)
     remote_gateway_name = remote_gateway_name()
     rospy.loginfo("Pairing Master : remote gateway name [%s]" % remote_gateway_name)
-    # this is how the android app chooser can find the namespace for the start_app etc. handles
-    rospy.set_param('/robot/name', remote_gateway_name)
-    unused_platform, unused_system, robot, unused_name, unused_icon = platform_info(remote_gateway_name)
-    rospy.set_param('/robot/type', robot)
+
     invite_service_name = '/' + remote_gateway_name + '/invite'
     invite_service = rospy.ServiceProxy(invite_service_name, rocon_app_manager_srvs.Invite)
     try:
