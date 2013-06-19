@@ -96,10 +96,8 @@ class RappManager(object):
 
     def _init_services(self):
         if self._services:
-            self._services['platform_info'].shutdown()
-            self._services['list_apps'].shutdown()
-            self._services['status'].shutdown()
-            self._services['invite'].shutdown()
+            for service in self._services.values():
+                service.shutdown()
             self._services = {}
         self._service_names = {}
         if self._gateway_name:
