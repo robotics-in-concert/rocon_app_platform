@@ -63,6 +63,39 @@ def remote_gateway_name():
         sys.exit(0)
     return remote_gateway_name
 
+class InvitationHandler():
+    
+    __slots__ = ['local_gateway_name', 'remote_gateway_name', 'remote_invite_service', 'relay_invitation_server']
+    
+    def __init__(self, local_gateway_name, remote_gateway_name):
+        self.local_gateway_name = local_gateway_name
+        self.remote_gateway_name = remote_gateway_name
+        remote_invite_service_name = '/' + remote_gateway_name + '/invite'
+        self.remote_invite_service = rospy.ServiceProxy(remote_invite_service_name, rocon_app_manager_srvs.Invite)
+        rospy.loginfo("Pairing Master : waiting for invitation service [%s]" % remote_invite_service_name)
+        rospy.wait_for_service(remote_invite_service_name)
+        rospy.loginfo("Pairing Master : initialising simple client invitation service [%s]" % remote_invite_service_name)
+        self.relay_invitation_server = rospy.Service('/' + remote_gateway_name + '/pairing_mode_invite', rocon_app_manager_srvs.Invite, self.relayed_invitation)
+        
+    def relayed_invitation(self, req):
+        '''
+          Provides a relayed invitation from a client (e.g. android remocon).
+          This relay fills in the gateway name to pass on to the app manager,
+          which makes life much simpler for the clients.
+        '''
+        try:
+            rospy.loginfo("Pairing Master : inviting the private master's application manager.")
+            print("Local gateway name: %s" % local_gateway_name)
+            remote_response = self.remote_invite_service(rocon_app_manager_srvs.InviteRequest(
+                                                         remote_target_name=self.local_gateway_name,
+                                                         application_namespace='',
+                                                         cancel=req.cancel))
+        except rospy.service.ServiceException:  # service call failed
+            console.logerror("Pairing Master: remote invitation failed to connect.")
+        except rospy.exceptions.ROSInterruptException:  # shutdown exception
+            sys.exit(0)
+        return remote_response
+    
 ##############################################################################
 # Main
 ##############################################################################
@@ -75,25 +108,9 @@ if __name__ == '__main__':
     if local_gateway_name is None:
         console.logerror("Pairing Master : shutting down.")
         sys.exit(1)
-    #invite_service = rospy.Service('invite', rapp_manager_srvs.GetPlatformInfo, self._process_platform_info)
     rospy.loginfo("Pairing Master : local gateway name [%s]" % local_gateway_name)
     remote_gateway_name = remote_gateway_name()
     rospy.loginfo("Pairing Master : remote gateway name [%s]" % remote_gateway_name)
 
-    invite_service_name = '/' + remote_gateway_name + '/invite'
-    invite_service = rospy.ServiceProxy(invite_service_name, rocon_app_manager_srvs.Invite)
-    try:
-        rospy.loginfo("Pairing Master : waiting for invite service [%s]" % invite_service_name)
-        rospy.wait_for_service(invite_service_name)
-        if auto_invite:
-            rospy.loginfo("Pairing Master : automatically taking control (inviting) the application manager.")
-            invite_service(rocon_app_manager_srvs.InviteRequest(remote_target_name=local_gateway_name,
-                                                         application_namespace='',
-                                                         cancel=False))
-    except rospy.service.ServiceException:  # service call failed
-        console.logerror("Pairing Master: invite service call failed.")
-        sys.exit(1)
-    except rospy.exceptions.ROSInterruptException:  # shutdown exception
-        sys.exit(0)
-
+    invitation_handler = InvitationHandler(local_gateway_name, remote_gateway_name)
     rospy.spin()

@@ -178,8 +178,11 @@ class RappManager(object):
             return rapp_manager_srvs.InviteResponse(False)
 
     def _accept_invitation(self, req):
-        #rospy.loginfo("App Manager : " + str(req))
-        self._remote_name = req.remote_target_name
+        # Abort checks
+        if req.cancel and (req.remote_target_name != self._remote_name):
+            rospy.logwarn("App Manager : ignoring request from %s to cancel the relayed controls to remote system [%s]" % (str(req.remote_target_name), self._remote_name))
+            return False
+        # Variable setting
         if req.application_namespace == '':
             if self._gateway_name:
                 self._application_namespace = self._gateway_name + "/" + RappManager.default_application_namespace
@@ -187,9 +190,9 @@ class RappManager(object):
                 self._application_namespace = RappManager.default_application_namespace
         else:
             self._application_namespace = req.application_namespace
-        rospy.loginfo("App Manager : accepting invitation to relay controls to remote system [%s]" % str(self._remote_name))
+        # Flips/Unflips
         try:
-            self._flip_connections(self._remote_name,
+            self._flip_connections(req.remote_target_name,
                                    [self._service_names['start_app'], self._service_names['stop_app']],
                                    gateway_msgs.ConnectionType.SERVICE,
                                    req.cancel
@@ -197,6 +200,16 @@ class RappManager(object):
         except Exception as unused_e:
             traceback.print_exc(file=sys.stdout)
             return False
+        # Cleaning up and setting final state
+        if req.cancel:
+            if req.remote_target_name == self._remote_name:
+                rospy.loginfo("App Manager : cancelling the relayed controls to remote system [%s]" % str(req.remote_target_name))
+                if self._current_rapp:
+                    self._process_stop_app()
+                self._remote_name = None
+        else:
+            rospy.loginfo("App Manager : accepting invitation to relay controls to remote system [%s]" % str(req.remote_target_name))
+            self._remote_name = req.remote_target_name
         return True
 
     def _process_platform_info(self, req):
