@@ -6,7 +6,7 @@
 <launch>
   <arg name="robot_name" default="app_manager"/>
   <arg name="robot_type" default="standalone"/>
-  <arg name="rapp_lists" default="$(find rocon_apps)/apps/rocon.rapps"/> <!-- semi colon separated list --> 
+  <arg name="rapp_lists" default="rocon_apps/rocon.rapps"/> <!-- semi colon separated list of rapp list resource names --> 
   
   <node pkg="rocon_app_manager" type="rapp_manager.py" name="app_manager" output="screen">
     <rosparam command="load" file="$(find rocon_app_manager)/param/app_manager_defaults.yaml" />

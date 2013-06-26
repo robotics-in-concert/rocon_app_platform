@@ -150,8 +150,11 @@ class RappManager(object):
         self.apps = {}
         self.apps['pre_installed'] = {}
         # Getting apps from installed list
-        for filename in self._param['rapp_lists']:
+        print("%s" % self._param['rapp_lists'])
+        for resource_name in self._param['rapp_lists']:
+            print("%s" % resource_name)
             # should do some exception checking here, also utilise AppListFile properly.
+            filename = utils.find_resource(resource_name)
             try:
                 app_list_file = RappListFile(filename)
             except IOError as e:  # if file is not found
