@@ -7,7 +7,7 @@
   <!-- ************************* Public Arguments ****************************** -->
   <arg name="robot_name" default="cybernetic_pirate"/>
   <arg name="robot_type" default="cybernetic_pirate"/>
-  <arg name="robot_icon" default="$(find rocon_app_manager)/icons/cybernetic_pirate.png"/>
+  <arg name="robot_icon" default="rocon_app_manager/cybernetic_pirate.png"/>
   <arg name="rapp_lists" default="rocon_apps/rocon.rapps"/> <!-- semi colon separated list of rapp list resource names --> 
   <arg name="gateway_watch_loop_period" default="10"/> <!-- Polling period for multimaster advertising/flipping -->
   <arg name="hub_whitelist" default=""/> <!-- semi-colon separated hub names/regex patterns -->

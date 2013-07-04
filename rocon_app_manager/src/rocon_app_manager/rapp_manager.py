@@ -25,6 +25,7 @@ import gateway_msgs.srv as gateway_srvs
 
 # local imports
 import utils
+import exceptions
 
 ##############################################################################
 # App Manager
@@ -83,7 +84,15 @@ class RappManager(object):
         self.platform_info.system = rapp_manager_msgs.PlatformInfo.SYSTEM_ROS
         self.platform_info.robot = self._param['robot_type']  # TODO Validate this against rapp_manager_msgs.PlatformInfo ROBOT_XXX
         self.platform_info.name = self._param['robot_name']
-        self.platform_info.icon = utils.icon_to_msg(self._param['robot_icon'])
+        try:
+            filename = utils.find_resource(self._param['robot_icon'])
+            self.platform_info.icon = utils.icon_to_msg(filename)
+        except exceptions.NotFoundException:
+            rospy.logwarn("App Manager : icon resource not found [%s]" % self._param['robot_icon'])
+            self.platform_info.icon = rapp_manager_msgs.Icon()
+        except ValueError:
+            rospy.logwarn("App Manager : invalid resource name [%s]" % self._param['robot_icon'])
+            self.platform_info.icon = rapp_manager_msgs.Icon()
 
     def _init_default_service_names(self):
         self._default_service_names = {}
@@ -150,9 +159,7 @@ class RappManager(object):
         self.apps = {}
         self.apps['pre_installed'] = {}
         # Getting apps from installed list
-        print("%s" % self._param['rapp_lists'])
         for resource_name in self._param['rapp_lists']:
-            print("%s" % resource_name)
             # should do some exception checking here, also utilise AppListFile properly.
             filename = utils.find_resource(resource_name)
             try:

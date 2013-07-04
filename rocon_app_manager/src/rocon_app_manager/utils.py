@@ -101,6 +101,9 @@ def icon_to_msg(filename):
     '''
       Loads the icon with specified filename and puts in
       ros Icon.msg format
+
+      @param : filename to the icon resource.
+      @type : string
     '''
     icon = rapp_manager_msgs.Icon()
     if filename == None or filename == "":
