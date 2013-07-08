@@ -76,12 +76,19 @@ class InvitationHandler():
         self.remote_gateway_name = remote_gateway_name
         self.auto_invite = auto_invite
         remote_invite_service_name = '/' + remote_gateway_name + '/invite'
+        # Speed up the gateway watcher for convenience (otherwise it'll take like 5 seconds to pick up the app manager
+        gateway_watcher_period_service = rospy.ServiceProxy('~set_watcher_period', gateway_srvs.SetWatcherPeriod)
+        unused_watcher_period_response = gateway_watcher_period_service(gateway_srvs.SetWatcherPeriodRequest(0.25)) 
+        # Detect the app manager
         self.remote_invite_service = rospy.ServiceProxy(remote_invite_service_name, rocon_app_manager_srvs.Invite)
         rospy.loginfo("Pairing Master : waiting for invitation service [%s]" % remote_invite_service_name)
         try:
             rospy.wait_for_service(remote_invite_service_name)
         except rospy.exceptions.ROSInterruptException:
             sys.exit(0)  # Ros shutdown
+        # Reset the watcher period to its default.
+        unused_watcher_period_response = gateway_watcher_period_service(gateway_srvs.SetWatcherPeriodRequest(-1.0))
+        # Set up services 
         rospy.loginfo("Pairing Master : initialising simple client invitation service [%s]" % remote_invite_service_name)
         self.relay_invitation_server = rospy.Service('~invite', rocon_app_manager_srvs.Invite, self.relayed_invitation)
         self.watchdog_subscriber = rospy.Subscriber('~watchdog', std_msgs.Bool, self.watchdog_flag_cb)

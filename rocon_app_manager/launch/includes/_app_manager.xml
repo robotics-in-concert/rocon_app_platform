@@ -20,6 +20,7 @@
     <param name="robot_type" value="$(arg robot_type)"/>
     <param name="robot_icon" value="$(arg robot_icon)"/>
     <remap from="app_manager/gateway_info" to="gateway/gateway_info"/>
+    <remap from="app_manager/force_update" to="gateway/force_update"/>
     <remap from="app_manager/flip" to="gateway/flip"/>
   </node>
 </launch>

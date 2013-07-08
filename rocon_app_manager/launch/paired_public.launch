@@ -48,5 +48,6 @@
   <node pkg="rocon_app_manager" type="pairing_master.py" name="pairing_master">
     <remap from="pairing_master/gateway_info" to="gateway/gateway_info"/>
     <remap from="pairing_master/remote_gateway_info" to="gateway/remote_gateway_info"/>
+    <remap from="pairing_master/set_watcher_period" to="gateway/set_watcher_period"/>
   </node>
 </launch>

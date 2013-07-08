@@ -22,7 +22,7 @@ import rocon_app_manager_msgs.msg as rapp_manager_msgs
 import rocon_app_manager_msgs.srv as rapp_manager_srvs
 import gateway_msgs.msg as gateway_msgs
 import gateway_msgs.srv as gateway_srvs
-import rosgraph.names
+import std_msgs.msg as std_msgs
 
 # local imports
 import utils
@@ -113,6 +113,8 @@ class RappManager(object):
         self._gateway_services['flip'] = rospy.ServiceProxy('~flip', gateway_srvs.Remote)
         self._gateway_services['advertise'] = rospy.ServiceProxy('~advertise', gateway_srvs.Advertise)
         self._gateway_services['pull'] = rospy.ServiceProxy('~pull', gateway_srvs.Remote)
+        self._gateway_publishers = {}
+        self._gateway_publishers['force_update'] = rospy.Publisher("~force_update", std_msgs.Empty)
 
     def _init_services(self):
         if self._services:
@@ -147,6 +149,8 @@ class RappManager(object):
             self._services['stop_app'] = rospy.Service(self._service_names['stop_app'], rapp_manager_srvs.StopApp, self._process_stop_app)
             # Latched publishers
             self._publishers['app_list'] = rospy.Publisher(self._publisher_names['app_list'], rapp_manager_msgs.AppList, latch=True)
+            # Force an update on the gateway
+            self._gateway_publishers['force_update'].publish(std_msgs.Empty())
         except Exception as unused_e:
             traceback.print_exc(file=sys.stdout)
             return rapp_manager_srvs.InitResponse(False)

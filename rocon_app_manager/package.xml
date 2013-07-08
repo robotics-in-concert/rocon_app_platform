@@ -21,6 +21,7 @@
   <run_depend>rocon_apps</run_depend>
   <run_depend>rocon_app_manager_msgs</run_depend>
   <run_depend>gateway_msgs</run_depend>
+  <run_depend>std_msgs</run_depend>
   <run_depend>rocon_utilities</run_depend>
   <export>
     <rosdoc config="rosdoc.yaml"/>
