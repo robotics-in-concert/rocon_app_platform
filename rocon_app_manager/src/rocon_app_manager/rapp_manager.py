@@ -22,6 +22,7 @@ import rocon_app_manager_msgs.msg as rapp_manager_msgs
 import rocon_app_manager_msgs.srv as rapp_manager_srvs
 import gateway_msgs.msg as gateway_msgs
 import gateway_msgs.srv as gateway_srvs
+import rosgraph.names
 
 # local imports
 import utils
@@ -128,9 +129,9 @@ class RappManager(object):
                 self._service_names[name] = '/' + self._gateway_name + '/' + name
             for name in self._default_publisher_names:
                 self._publisher_names[name] = '/' + self._gateway_name + '/' + name
-            self._application_namespace = self._gateway_name + '/' + RappManager.default_application_namespace
+            self._application_namespace = self._gateway_name + '/' + RappManager.default_application_namespace  # ns to push apps into (see rapp.py)
         else:  # It's a local standalone initialisation
-            self._application_namespace = RappManager.default_application_namespace
+            self._application_namespace = rospy.get_name() + '/' + RappManager.default_application_namespace  # ns to push apps into (see rapp.py)
             for name in self._default_service_names:
                 self._service_names[name] = '~' + name
             for name in self._default_publisher_names:
