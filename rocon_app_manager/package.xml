@@ -1,6 +1,6 @@
 <package>
   <name>rocon_app_manager</name>
-  <version>0.5.2</version>
+  <version>0.5.3</version>
   <description>
     The public interface and retaskable interface for a robot.
   </description>
