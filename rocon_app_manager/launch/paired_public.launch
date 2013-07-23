@@ -5,6 +5,8 @@
  -->
 <launch>
   <arg name="zeroconf_configuration_file" default="$(find rocon_app_manager)/param/zeroconf.yaml"/>
+  <arg name="robot_name"  default="Hong-Gil-Dong"/>
+  <!-- Hong Gil Dong : http://en.wikipedia.org/wiki/Hong_Gildong -->
 
   <!-- ********************************* Hub *********************************** -->
   <include file="$(find rocon_hub)/launch/hub.launch">
@@ -15,14 +17,9 @@
 
   <!-- ******************************* Zeroconf ******************************** -->
   <node pkg="zeroconf_avahi" type="zeroconf" name="zeroconf_avahi" ns="zeroconf">
-    <rosparam file="$(arg zeroconf_configuration_file)" command="load"/>
-    <!-- Instead of by file, I'd like to use the following with robot name as an $(arg), but
-           this is pending https://github.com/ros/ros_comm/pull/218 -->
-    <!-- 
     <rosparam param="services" subst_value="true">
       [ { name: "$(arg robot_name)", type: _ros-master._tcp, port: 11312, domain: local, description: "ros master" } ]
     </rosparam>
-    -->
   </node>
 
   <!-- ******************************** Gateway ******************************** -->
