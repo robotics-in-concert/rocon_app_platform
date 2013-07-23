@@ -18,7 +18,7 @@
   <!-- ******************************* Zeroconf ******************************** -->
   <node pkg="zeroconf_avahi" type="zeroconf" name="zeroconf_avahi" ns="zeroconf">
     <rosparam param="services" subst_value="true">
-      [ { name: "$(arg robot_name)", type: _ros-master._tcp, port: 11312, domain: local, description: "ros master" } ]
+      [ { name: "$(arg robot_name)", type: _ros-master._tcp, port: 11311, domain: local, description: "ros master" } ]
     </rosparam>
   </node>
 
