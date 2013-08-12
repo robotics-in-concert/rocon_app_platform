@@ -1,0 +1,11 @@
+##############################################################################
+# Default flips from an app manager
+##############################################################################
+
+default_flips: 
+    # Flip diagnostics to a paired public master - used by android remocon & apps
+    - gateway: Public Gateway
+      rule:  
+        name: /diagnostics_agg
+        node: None
+        type: publisher

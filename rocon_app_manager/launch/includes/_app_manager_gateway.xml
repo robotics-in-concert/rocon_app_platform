@@ -18,6 +18,7 @@
     <rosparam command="load" file="$(find rocon_gateway)/param/default.yaml" />
     <rosparam command="load" file="$(find rocon_gateway)/param/default_blacklist.yaml" />
     <rosparam command="load" file="$(find rocon_app_manager)/param/app_manager_advertisements.yaml" />
+    <rosparam command="load" file="$(find rocon_app_manager)/param/app_manager_flips.yaml" />
     <rosparam param="hub_uri">http://localhost:6380</rosparam> <!-- The paired hub, if available -->
     <param name="name" value="$(arg gateway_name)"/> <!-- <rosparam param="name" subst_value="true">$(arg robot_name)</rosparam> -->
     <rosparam param="firewall">true</rosparam> <!-- Nothing comes in! -->
