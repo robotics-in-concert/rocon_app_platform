@@ -60,6 +60,7 @@ class RappManager(object):
         self._init_default_service_names()
 
         self._get_pre_installed_app_list()  # It sets up an app directory and load installed app list from directory
+        self._initialising_services = False
         self._init_services()
         self._publish_app_list()
 
@@ -117,6 +118,15 @@ class RappManager(object):
         self._gateway_publishers['force_update'] = rospy.Publisher("~force_update", std_msgs.Empty)
 
     def _init_services(self):
+        '''
+          This initialises all the app manager services. It depends on whether we're initialising for standalone,
+          or connected (pairing/concert) modes. This should not be activated multiply!
+        '''
+        if self._initialising_services:
+            # We could use a lock to protect this, but since the only places we call this is in the
+            # and in the spin(), then we just use a flag to protect.
+            return False
+        self._initialising_services = True
         if self._services:
             for service in self._services.values():
                 service.shutdown()
@@ -153,9 +163,11 @@ class RappManager(object):
             self._gateway_publishers['force_update'].publish(std_msgs.Empty())
         except Exception as unused_e:
             traceback.print_exc(file=sys.stdout)
-            return rapp_manager_srvs.InitResponse(False)
+            self._initialising_services = False
+            return False
         self._publish_app_list()
-        return rapp_manager_srvs.InitResponse(True)
+        self._initialising_services = False
+        return True
 
     def _get_pre_installed_app_list(self):
         '''
@@ -425,7 +437,7 @@ class RappManager(object):
             if gateway_info:
                 if gateway_info.connected:
                     self._gateway_name = gateway_info.name
-                    self._init_services()
-                    break
+                    if self._init_services():
+                        break
             # don't need a sleep since our timeout on the service call acts like this.
         rospy.spin()
