@@ -17,5 +17,5 @@
     <arg name="robot_icon" value="$(arg robot_icon)" />
     <arg name="rapp_lists" value="$(arg rapp_lists)" />
   </include>
-  
+
 </launch>
