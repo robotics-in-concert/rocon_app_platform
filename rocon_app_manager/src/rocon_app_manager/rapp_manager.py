@@ -76,6 +76,10 @@ class RappManager(object):
         # Todo fix these up with proper whitelist/blacklists
         self._param['remote_controller_whitelist'] = rospy.get_param('~remote_controller_whitelist', [])
         self._param['remote_controller_blacklist'] = rospy.get_param('~remote_controller_blacklist', [])
+        # Check if rocon is telling us to be verbose about starting apps (this comes from the
+        # rocon_launch --screen option). TODO : additionally a private parameter for the app manager so
+        # people can configure this from yaml or roslaunch instead of rocon_launch
+        self._param['app_output_to_screen'] = rospy.get_param('/rocon/screen', False)
 
         # If we have list parameters - https://github.com/ros/ros_comm/pull/50/commits
         # self._param['rapp_lists'] = rospy.get_param('~rapp_lists', [])
@@ -303,7 +307,7 @@ class RappManager(object):
 
         rapp = self.apps['pre_installed'][req.name]
         resp.started, resp.message, subscribers, publishers, services, action_clients, action_servers = \
-                        rapp.start(self._application_namespace, req.remappings)
+                        rapp.start(self._application_namespace, req.remappings, self._param['app_output_to_screen'])
 
         rospy.loginfo("App Manager : %s" % self._remote_name)
         # small pause (convenience only) to let connections to come up

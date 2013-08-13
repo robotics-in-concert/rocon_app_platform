@@ -215,7 +215,7 @@ class Rapp(object):
             clients.append(PairingClient(client_type, manager_data, app_data))
         return clients
 
-    def start(self, application_namespace, remappings=[]):
+    def start(self, application_namespace, remappings=[], force_screen=False):
         '''
           Some important jobs here.
 
@@ -230,6 +230,8 @@ class Rapp(object):
           @type str
           @param remapping : rules for the app flips.
           @type list of rocon_app_manager_msgs.msg.Remapping values.
+          @param force_screen : whether to roslaunch the app with --screen or not
+          @type boolean
         '''
         data = self.data
         rospy.loginfo("App Manager : launching: " + (data['name']) + " underneath /" + application_namespace)
@@ -245,7 +247,8 @@ class Rapp(object):
             self._launch = roslaunch.parent.ROSLaunchParent(rospy.get_param("/run_id"),
                                                             [temp.name],
                                                             is_core=False,
-                                                            process_listeners=())
+                                                            process_listeners=(),
+                                                            force_screen=force_screen)
             self._launch._load_config()
 
             #print data['interface']
