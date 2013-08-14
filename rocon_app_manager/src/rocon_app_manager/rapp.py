@@ -257,9 +257,13 @@ class Rapp(object):
             # Prefix with robot name by default (later pass in remap argument)
             remap_from_list = [remapping.remap_from for remapping in remappings]
             remap_to_list = [remapping.remap_to for remapping in remappings]
+            rospy.logwarn("App Manager : application namespace [" + application_namespace + "]")
+            rospy.logwarn("App Manager : remap from %s" % remap_from_list)
+            rospy.logwarn("App Manager : remap to %s" % remap_to_list)
             for connection_type in ['publishers', 'subscribers', 'services', 'action_clients', 'action_servers']:
                 self._connections[connection_type] = []
                 for t in data['interface'][connection_type]:
+                    remapped_name = None
                     # Now we push the rapp launcher down into the prefixed
                     # namespace, so just use it directly
                     indices = [i for i, x in enumerate(remap_from_list) if x == t]
@@ -268,15 +272,19 @@ class Rapp(object):
                             remapped_name = remap_to_list[indices[0]]
                         else:
                             remapped_name = '/' + application_namespace + "/" + remap_to_list[indices[0]]
+                        for N in self._launch.config.nodes:
+                            N.remap_args.append((t, remapped_name))
+                        self._connections[connection_type].append(remapped_name)
                     else:
-                        # maybe should check that the rapp interface name is not absolute first
-                        if not rocon_utilities.ros.is_absolute_name(t):
-                            remapped_name = '/' + application_namespace + '/' + t
+                        # don't pass these in as remapping rules - they should map fine for the node as is
+                        # just by getting pushed down the namespace.
+                        #     https://github.com/robotics-in-concert/rocon_app_platform/issues/61
+                        # we still need to pass them back to register for flipping though.
+                        if rocon_utilities.ros.is_absolute_name(t):
+                            flipped_name = t
                         else:
-                            remapped_name = t
-                    self._connections[connection_type].append(remapped_name)
-                    for N in self._launch.config.nodes:
-                        N.remap_args.append((t, remapped_name))
+                            flipped_name = '/' + application_namespace + '/' + t
+                        self._connections[connection_type].append(flipped_name)
             self._launch.start()
 
             data['status'] = 'Running'
