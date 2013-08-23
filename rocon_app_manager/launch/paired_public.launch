@@ -4,10 +4,6 @@
   find the publicly exposed connections of the robot.
  -->
 <launch>
-  <arg name="zeroconf_configuration_file" default="$(find rocon_app_manager)/param/zeroconf.yaml"/>
-  <arg name="robot_name"  default="Hong-Gil-Dong"/>
-  <!-- Hong Gil Dong : http://en.wikipedia.org/wiki/Hong_Gildong -->
-
   <!-- ********************************* Hub *********************************** -->
   <include file="$(find rocon_hub)/launch/hub.launch">
     <arg name="hub_name" value="Internal Hub" />
@@ -16,6 +12,11 @@
   </include>
 
   <!-- ******************************* Zeroconf ******************************** -->
+  <arg name="zeroconf_configuration_file" default="$(find rocon_app_manager)/param/zeroconf.yaml"/>
+  <!-- This has to match the name in paired_private for the app manager (redundancy!) -->
+  <!-- Other option would be to move the zeroconf node to the private master, but it is not -->
+  <!-- necessary there. -->
+  <arg name="robot_name"  default="cybernetic_pirate"/>
   <node pkg="zeroconf_avahi" type="zeroconf" name="zeroconf_avahi" ns="zeroconf">
     <rosparam param="services" subst_value="true">
       [ { name: "$(arg robot_name)", type: _ros-master._tcp, port: 11311, domain: local, description: "ros master" } ]
