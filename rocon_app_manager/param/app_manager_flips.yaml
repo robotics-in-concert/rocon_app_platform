@@ -4,7 +4,7 @@
 
 default_flips: 
     # Flip diagnostics to a paired public master - used by android remocon & apps
-    - gateway: Public Gateway
+    - gateway: Public Gateway.*
       rule:  
         name: /diagnostics_agg
         node: None
