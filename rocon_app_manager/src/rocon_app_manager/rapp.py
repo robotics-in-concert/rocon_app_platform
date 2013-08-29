@@ -178,11 +178,10 @@ class Rapp(object):
                 for k in keys:
                     raw_data = y.get(k, [])
 
-                    # remote / in front of topics
                     new_data = []
                     for r in raw_data:
-                        if r[0] == '/':
-                            r = r[1:len(r)]
+                        #if r[0] == '/':  # originally removed these, but we really do need to reference such sometimes
+                        #    r = r[1:len(r)]
                         new_data.append(r)
                     d[k] = new_data
 
@@ -257,9 +256,6 @@ class Rapp(object):
             # Prefix with robot name by default (later pass in remap argument)
             remap_from_list = [remapping.remap_from for remapping in remappings]
             remap_to_list = [remapping.remap_to for remapping in remappings]
-            rospy.logwarn("App Manager : application namespace [" + application_namespace + "]")
-            rospy.logwarn("App Manager : remap from %s" % remap_from_list)
-            rospy.logwarn("App Manager : remap to %s" % remap_to_list)
             for connection_type in ['publishers', 'subscribers', 'services', 'action_clients', 'action_servers']:
                 self._connections[connection_type] = []
                 for t in data['interface'][connection_type]:

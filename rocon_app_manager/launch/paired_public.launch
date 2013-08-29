@@ -4,6 +4,9 @@
   find the publicly exposed connections of the robot.
  -->
 <launch>
+  <!-- ************************* Public Arguments ****************************** -->
+  <arg name="auto_invite" default="false"/>  <!-- Take control of the private app manager automatically (should not be true if doing multi-robot) -->
+
   <!-- ********************************* Hub *********************************** -->
   <include file="$(find rocon_hub)/launch/hub.launch">
     <arg name="hub_name" value="Internal Hub" />
@@ -47,5 +50,6 @@
     <remap from="pairing_master/gateway_info" to="gateway/gateway_info"/>
     <remap from="pairing_master/remote_gateway_info" to="gateway/remote_gateway_info"/>
     <remap from="pairing_master/set_watcher_period" to="gateway/set_watcher_period"/>
+    <param name="auto_invite" value="$(arg auto_invite)"/>
   </node>
 </launch>

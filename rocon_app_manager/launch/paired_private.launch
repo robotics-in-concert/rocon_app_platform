@@ -11,6 +11,7 @@
   <arg name="rapp_lists" default="rocon_apps/rocon.rapps"/> <!-- semi colon separated list of rapp list resource names --> 
   <arg name="gateway_watch_loop_period" default="10"/> <!-- Polling period for multimaster advertising/flipping -->
   <arg name="hub_whitelist" default=""/> <!-- semi-colon separated hub names/regex patterns -->
+  <arg name="disable_uuids" default="false"/>
 
   <!-- ******************************* Zeroconf ******************************** -->
   <node ns="zeroconf" pkg="zeroconf_avahi" type="zeroconf" name="zeroconf"/>
@@ -18,6 +19,7 @@
   <!-- ******************************** Gateway ******************************** -->
   <include file="$(find rocon_app_manager)/launch/includes/_app_manager_gateway.xml">
     <arg name="gateway_name" value="$(arg robot_name)" />
+    <arg name="disable_uuids" value="true"/>
     <arg name="gateway_watch_loop_period" value="$(arg gateway_watch_loop_period)" />
     <arg name="hub_whitelist" value="$(arg hub_whitelist)" />
   </include>

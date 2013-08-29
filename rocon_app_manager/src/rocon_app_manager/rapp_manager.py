@@ -140,18 +140,12 @@ class RappManager(object):
             self._publishers = {}
         self._service_names = {}
         self._publisher_names = {}
-        if self._gateway_name:
-            for name in self._default_service_names:
-                self._service_names[name] = '/' + self._gateway_name + '/' + name
-            for name in self._default_publisher_names:
-                self._publisher_names[name] = '/' + self._gateway_name + '/' + name
-            self._application_namespace = self._gateway_name + '/' + RappManager.default_application_namespace  # ns to push apps into (see rapp.py)
-        else:  # It's a local standalone initialisation
-            self._application_namespace = rospy.get_name() + '/' + RappManager.default_application_namespace  # ns to push apps into (see rapp.py)
-            for name in self._default_service_names:
-                self._service_names[name] = '~' + name
-            for name in self._default_publisher_names:
-                self._publisher_names[name] = '~' + name
+        base_name = self._gateway_name if self._gateway_name else self._param['robot_name']  # latter option is for standalone mode 
+        for name in self._default_service_names:
+            self._service_names[name] = '/' + base_name + '/' + name
+        for name in self._default_publisher_names:
+            self._publisher_names[name] = '/' + base_name + '/' + name
+        self._application_namespace = base_name + '/' + RappManager.default_application_namespace  # ns to push apps into (see rapp.py)
         try:
             # Advertisable services - we advertise these by default advertisement rules for the app manager's gateway.
             self._services['platform_info'] = rospy.Service(self._service_names['platform_info'], rapp_manager_srvs.GetPlatformInfo, self._process_platform_info)
@@ -213,6 +207,9 @@ class RappManager(object):
         if req.cancel and (req.remote_target_name != self._remote_name):
             rospy.logwarn("App Manager : ignoring request from %s to cancel the relayed controls to remote system [%s]" % (str(req.remote_target_name), self._remote_name))
             return False
+        if not req.cancel and req.remote_target_name == self._remote_name:
+            rospy.logwarn("App Manager : bastards are sending us repeat invites, so we ignore - we are already working for them! [%s]" % self._remote_name)
+            return True
         # Variable setting
         if req.application_namespace == '':
             if self._gateway_name:
@@ -301,11 +298,19 @@ class RappManager(object):
         if self._current_rapp:
             resp.started = False
             resp.message = "an app is already running [%s]" % self._current_rapp.data['name']
+            rospy.logwarn("App Manager : %s" % resp.message)
             return resp
 
         rospy.loginfo("App Manager : starting app : " + req.name)
 
-        rapp = self.apps['pre_installed'][req.name]
+        try:
+            rapp = self.apps['pre_installed'][req.name]
+        except KeyError:
+            resp.started = False
+            resp.message = "requested rapp not found [%s]" % req.name
+            rospy.logwarn("App Manager : %s" % resp.message)
+            return resp
+
         resp.started, resp.message, subscribers, publishers, services, action_clients, action_servers = \
                         rapp.start(self._application_namespace, req.remappings, self._param['app_output_to_screen'])
 

@@ -70,7 +70,7 @@ class InvitationHandler():
     
     __slots__ = ['local_gateway_name', 'remote_gateway_name', 'remote_invite_service', 'relay_invitation_server', 'watchdog_flag'] 
     
-    def __init__(self, local_gateway_name, remote_gateway_name):
+    def __init__(self, local_gateway_name, remote_gateway_name, auto_invite):
         self.watchdog_flag = True
         self.local_gateway_name = local_gateway_name
         self.remote_gateway_name = remote_gateway_name
@@ -90,10 +90,21 @@ class InvitationHandler():
         unused_watcher_period_response = gateway_watcher_period_service(gateway_srvs.SetWatcherPeriodRequest(-1.0))
         # Set up services 
         rospy.loginfo("Pairing Master : initialising simple client invitation service [%s]" % remote_invite_service_name)
-        self.relay_invitation_server = rospy.Service('~invite', rocon_app_manager_srvs.Invite, self.relayed_invitation)
+        self.relay_invitation_server = rospy.Service('~invite', rocon_app_manager_srvs.SimpleInvite, self.relayed_invitation)
         self.watchdog_subscriber = rospy.Subscriber('~watchdog', std_msgs.Bool, self.watchdog_flag_cb)
+        
+        if self.auto_invite:
+            rospy.loginfo("Pairing Master : auto-invite mode, disabling the cleanup watchdog.")
+            self.watchdog_flag = False
+            self.relayed_invitation(rocon_app_manager_srvs.SimpleInviteRequest(False))
 
     def watchdog_flag_cb(self, incoming):
+        '''
+          Used to keep an eye on android connections. If for any reason the android app connects, and disappears
+          without releasing control of the rapp manager, then this automatically does so after a timeout.
+          
+          Just toggle a flag here that is watched in the spin() thread.   
+        '''
         self.watchdog_flag = incoming.data
         if self.watchdog_flag:
             rospy.loginfo("Pairing Master : enabling the cleanup watchdog.")
@@ -158,9 +169,11 @@ class InvitationHandler():
           This relay fills in the gateway name to pass on to the app manager,
           which makes life much simpler for the clients.
         '''
+        if self.auto_invite and req.cancel:
+            # Don't cancel, just ignore it and send back a true response (not broken).
+            return rocon_app_manager_srvs.SimpleInviteResponse(True)
         try:
             rospy.loginfo("Pairing Master : inviting the private master's application manager.")
-            print("Local gateway name: %s" % local_gateway_name)
             remote_response = self.remote_invite_service(rocon_app_manager_srvs.InviteRequest(
                                                          remote_target_name=self.local_gateway_name,
                                                          application_namespace='',
@@ -169,7 +182,7 @@ class InvitationHandler():
             console.logerror("Pairing Master: remote invitation failed to connect.")
         except rospy.exceptions.ROSInterruptException:  # shutdown exception
             sys.exit(0)
-        return remote_response
+        return rocon_app_manager_srvs.SimpleInviteResponse(remote_response.result)
     
 ##############################################################################
 # Main
@@ -186,5 +199,5 @@ if __name__ == '__main__':
     rospy.loginfo("Pairing Master : local gateway name [%s]" % local_gateway_name)
     remote_gateway_name = remote_gateway_name()
     rospy.loginfo("Pairing Master : remote gateway name [%s]" % remote_gateway_name)
-    invitation_handler = InvitationHandler(local_gateway_name, remote_gateway_name)
+    invitation_handler = InvitationHandler(local_gateway_name, remote_gateway_name, auto_invite)
     invitation_handler.spin()
