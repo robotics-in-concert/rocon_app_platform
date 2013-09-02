@@ -8,4 +8,4 @@ pairing_clients:
  - type: android
    manager:
      api-level: 10
-     intent-action: com.github.ros_java.android_apps.listener.Listener
+     intent-action: com.github.rosjava.android_apps.listener.Listener
