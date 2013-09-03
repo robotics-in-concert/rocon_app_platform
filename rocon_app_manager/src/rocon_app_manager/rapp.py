@@ -348,4 +348,3 @@ def dict_to_KeyValue(d):
     for k, v in d.iteritems():
         l.append(rapp_manager_msgs.KeyValue(k, str(v)))
     return l
-

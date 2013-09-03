@@ -255,8 +255,12 @@ class RappManager(object):
           @type rapp_manager_srvs.StatusRequest
         '''
         response = rapp_manager_srvs.StatusResponse()
-        response.app_status = rapp_manager_msgs.Constants.APP_RUNNING if self._current_rapp \
-                         else rapp_manager_msgs.Constants.APP_STOPPED
+        if self._current_rapp:
+            response.application_status = rapp_manager_msgs.Constants.APP_RUNNING
+            response.application = self._current_rapp.to_msg()
+        else:
+            response.application_status = rapp_manager_msgs.Constants.APP_STOPPED
+            response.application = rapp_manager_msgs.App()
         if self._remote_name:
             response.remote_controller = self._remote_name
         else:
