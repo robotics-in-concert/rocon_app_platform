@@ -19,7 +19,7 @@
   <!-- ******************************** Gateway ******************************** -->
   <include file="$(find rocon_app_manager)/launch/includes/_app_manager_gateway.xml">
     <arg name="gateway_name" value="$(arg robot_name)" />
-    <arg name="disable_uuids" value="true"/>
+    <arg name="disable_uuids" value="$(arg disable_uuids)"/>
     <arg name="gateway_watch_loop_period" value="$(arg gateway_watch_loop_period)" />
     <arg name="hub_whitelist" value="$(arg hub_whitelist)" />
   </include>
