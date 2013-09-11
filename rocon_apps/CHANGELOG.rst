@@ -2,6 +2,11 @@
 Changelog for package rocon_apps
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.1 (2013-09-11)
+------------------
+* don't delete listener - chatter_concert uses it.
+* android apps moved from ros_java -> rosjava
+
 0.6.0 (2013-08-30)
 ------------------
 

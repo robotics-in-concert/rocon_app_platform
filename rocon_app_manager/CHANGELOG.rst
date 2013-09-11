@@ -2,6 +2,11 @@
 Changelog for package rocon_app_manager
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.1 (2013-09-11)
+------------------
+* report details of currently running app.
+* disable uuid arg shunting was not enabled for concert clients.
+
 0.6.0 (2013-08-30)
 ------------------
 * disable uuids by default, also fire up the paired invitations by default for convenience.
