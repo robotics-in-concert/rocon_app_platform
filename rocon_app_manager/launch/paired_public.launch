@@ -15,6 +15,7 @@
   </include>
 
   <!-- ******************************* Zeroconf ******************************** -->
+  <!--  This is for android tablets so robot remocon can autodiscover the public master -->
   <arg name="zeroconf_configuration_file" default="$(find rocon_app_manager)/param/zeroconf.yaml"/>
   <!-- This has to match the name in paired_private for the app manager (redundancy!) -->
   <!-- Other option would be to move the zeroconf node to the private master, but it is not -->
