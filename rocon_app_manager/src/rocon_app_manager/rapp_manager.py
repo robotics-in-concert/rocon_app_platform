@@ -61,7 +61,6 @@ class RappManager(object):
         self._init_default_service_names()
 
         self.apps = {}
-        self.app_list = {}
         self._get_pre_installed_app_list() # It sets up an app directory and load installed app list from directory
         self._determine_runnable_apps()
         self._initialising_services = False
@@ -344,21 +343,62 @@ class RappManager(object):
         resp = rapp_manager_srvs.StartAppResponse()
         resp.app_namespace = self._application_namespace
         rospy.loginfo("App Manager : request received to start app [%s]" % req.name)
+
+        # check is the app is already running
         if self._current_rapp:
             resp.started = False
             resp.message = "an app is already running [%s]" % self._current_rapp.data['name']
             rospy.logwarn("App Manager : %s" % resp.message)
             return resp
 
-        rospy.loginfo("App Manager : starting app : " + req.name)
-
+        # check is the app is among the installed apps
         try:
             rapp = self.apps['pre_installed'][req.name]
         except KeyError:
             resp.started = False
-            resp.message = "requested rapp not found [%s]" % req.name
+            resp.message = ("The requested app '%s' is not installed." % req.name)
             rospy.logwarn("App Manager : %s" % resp.message)
             return resp
+
+        try:
+            rapp = self.apps['runnable'][req.name]
+        except KeyError:
+            resp.started = False
+            resp.message = ("The requested app '%s' is installed, but cannot be started"
+                            ", because its required capabilities are not available." % req.name)
+            rospy.logwarn("App Manager : %s" % resp.message)
+            return resp
+
+        if 'required_capabilities' in self.apps['runnable'][req.name].data:
+            rospy.loginfo("App Manager : starting required capabilities ...")
+            for cap in self.apps['runnable'][req.name].data['required_capabilities']:
+                try:
+                    start_resp = self.caps_list.start_capability(cap)
+                except rospy.ROSException as exc:
+                    resp.started = False
+                    resp.message = ("App Manager : Service for starting capabilities is not available."
+                                    + " Will not start app. Error:"
+                                    + str(exc))
+                    rospy.logerr("App Manager : %s" % resp.message)
+                    return resp
+                except IOError as exc:
+                    resp.started = False
+                    resp.message = ("App Manager : Error occurred while processing 'start_capability' service."
+                                    + " Will not start app. Error: "
+                                    + str(exc))
+                    rospy.logerr("App Manager : %s" % resp.message)
+                    return resp
+                if start_resp:
+                    rospy.loginfo("App Manager : Started required capability '" + str(cap) + "'.")
+                else:
+                    resp.started = False
+                    resp.message = ("App Manager : Starting capability '" + str(cap) + " was not successful."
+                                    " Will not start app.")
+                    rospy.logerr("App Manager : %s" % resp.message)
+                    return resp
+            rospy.loginfo("App Manager : all required capabilities have been started.")
+
+        rospy.loginfo("App Manager : starting app : " + req.name)
 
         resp.started, resp.message, subscribers, publishers, services, action_clients, action_servers = \
                         rapp.start(self._application_namespace, req.remappings, self._param['app_output_to_screen'])
@@ -387,15 +427,16 @@ class RappManager(object):
 
           @param req : variable configured when triggered from the service call.
         '''
+        rapp_name = self._current_rapp.data['name']
         resp = rapp_manager_srvs.StopAppResponse()
         if not self._current_rapp:
             resp.stopped = False
             resp.error_code = rapp_manager_msgs.ErrorCodes.RAPP_IS_NOT_RUNNING
             resp.message = "tried to stop a rapp, but no rapp found running"
-            rospy.logwarn("App Manager : received a request to stop a rapp, but no rapp found running.")
+            rospy.logwarn("App Manager : Received a request to stop a rapp, but no rapp found running.")
             return resp
 
-        rospy.loginfo("App Manager : stopping rapp : " + self._current_rapp.data['name'])
+        rospy.loginfo("App Manager : Stopping rapp '" + rapp_name + "'.")
 
         resp.stopped, resp.message, subscribers, publishers, services, action_clients, action_servers = \
                 self._current_rapp.stop()
@@ -406,9 +447,35 @@ class RappManager(object):
             self._flip_connections(self._remote_name, services, gateway_msgs.ConnectionType.SERVICE, True)
             self._flip_connections(self._remote_name, action_clients, gateway_msgs.ConnectionType.ACTION_CLIENT, True)
             self._flip_connections(self._remote_name, action_servers, gateway_msgs.ConnectionType.ACTION_SERVER, True)
+
         if resp.stopped:
             self._current_rapp = None
             self._publish_app_list()
+            if 'required_capabilities' in self.apps['runnable'][rapp_name].data:
+                rospy.loginfo("App Manager : Stopping required capabilities.")
+                for cap in self.apps['runnable'][rapp_name].data['required_capabilities']:
+                    try:
+                        start_resp = self.caps_list.stop_capability(cap)
+                    except rospy.ROSException as exc:
+                        resp.started = False
+                        resp.message = ("App Manager : Service for stopping capabilities is not available."
+                                        + " Error:" + str(exc))
+                        rospy.logerr("App Manager : %s" % resp.message)
+                        return resp
+                    except IOError as exc:
+                        resp.started = False
+                        resp.message = ("App Manager : Error occurred while processing 'stop_capability' service."
+                                        + " Error: " + str(exc))
+                        rospy.logerr("App Manager : %s" % resp.message)
+                        return resp
+                    if start_resp:
+                        rospy.loginfo("App Manager : Stopped required capability '" + str(cap) + "'.")
+                    else:
+                        resp.started = False
+                        resp.message = ("App Manager : Stopping capability '" + str(cap) + " was not successful.")
+                        rospy.logerr("App Manager : %s" % resp.message)
+                        return resp
+                rospy.loginfo("App Manager : All required capabilities have been stopped.")
         return resp
 
     ##########################################################################

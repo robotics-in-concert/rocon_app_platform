@@ -23,37 +23,10 @@ import rocon_app_manager_msgs.msg as rapp_manager_msgs
 # Class
 ##############################################################################
 
-
-class PairingClient(object):
+class Cap(object):
     '''
-      A pairing client runs an app which is one which will work in tandem with
-      this robot (rocon) app. The client is usually a smart phone or tablet.
-    '''
-    __slots__ = ['client_type', 'manager_data', 'app_data']
-
-    def __init__(self, client_type, manager_data, app_data):
-        self.client_type = client_type
-        self.manager_data = manager_data
-        self.app_data = app_data
-
-    def as_dict(self):
-        return {'client_type': self.client_type, 'manager_data': self.manager_data, 'app_data': self.app_data}
-
-    def __eq__(self, other):
-        if not isinstance(other, PairingClient):
-            return False
-        return self.client_type == other.client_type and \
-               self.manager_data == other.manager_data and \
-               self.app_data == other.app_data
-
-    def __repr__(self):
-        return yaml.dump(self.as_dict())
-
-
-class Rapp(object):
-    '''
-        Got many inspiration and imported from willow_app_manager
-        implementation (Jihoon)
+    Represents a capability as described here: http://wiki.ros.org/capabilities
+    The implementation consists of the capability specification and the provider of the capability.
     '''
     # I should add a __slots__ definition here to make it easy to read
     path = None
@@ -61,8 +34,8 @@ class Rapp(object):
 
     def __init__(self, resource_name):
         '''
-          @param resource_name : a package/name pair for this rapp
-          @type str/str
+        @param resource_name : a package/name pair for this cap
+        @type str/str
         '''
         self.filename = ""
         self._connections = {}
@@ -78,16 +51,16 @@ class Rapp(object):
 
     def _load_from_resource_name(self, name):
         '''
-          Loads from a ros resource name consisting of a package/app pair.
+        Loads from a ROS resource name consisting of a package/cap pair.
 
-          @param name : unique identifier for the app, e.g. rocon_apps/chirp.
-          @type str
+        @param name : unique identifier for the cap, e.g. kobuki_caps/DifferentialMobileBase.
+        @type str
 
-          @raise InvalidRappException if the app definition was for some reason invalid.
+        @raise InvalidRappException if the app definition was for some reason invalid.
         '''
         if not name:
-            raise InvalidRappException("app name was invalid [%s]" % name)
-        self.filename = utils.find_resource(name + '.rapp')
+            raise InvalidRappException("cap name was invalid [%s]" % name)
+        self.filename = utils.find_resource(name + '.cap')
         self._load_from_app_file(self.filename, name)
 
     def _load_from_app_file(self, path, app_name):
@@ -312,13 +285,12 @@ class Rapp(object):
                 finally:
                     self._launch = None
                     data['status'] = 'Ready'
-                rospy.loginfo("App Manager : Stopped rapp [%s]" % data['name'] + "'.")
+                rospy.loginfo("App Manager : stopped app [%s]" % data['name'])
         except Exception as e:
             print str(e)
-            error_msg = "Error while stopping rapp '" + data['name'] + "'."
-            rospy.loginfo(error_msg)
+            rospy.loginfo("Error while stopping " + data['name'])
             data['status'] = 'Error'
-            return False, error_msg, self._connections['subscribers'], self._connections['publishers'], self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
+            return False, "Error while stopping " + data['name'], self._connections['subscribers'], self._connections['publishers'], self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
 
         return True, "Success", self._connections['subscribers'], self._connections['publishers'], self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
 
