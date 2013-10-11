@@ -107,14 +107,16 @@ class RappManager(object):
     def _init_default_service_names(self):
         self._default_service_names = {}
         self._default_service_names['platform_info'] = 'platform_info'
-        self._default_service_names['list_apps'] = 'list_apps'
+        self._default_service_names['list_installed_apps'] = 'list_installed_apps'
+        self._default_service_names['list_runnable_apps'] = 'list_runnable_apps'
         self._default_service_names['status'] = 'status'
         self._default_service_names['invite'] = 'invite'
         self._default_service_names['start_app'] = 'start_app'
         self._default_service_names['stop_app'] = 'stop_app'
         # Latched publishers
         self._default_publisher_names = {}
-        self._default_publisher_names['app_list'] = 'app_list'
+        self._default_publisher_names['installed_apps_list'] = 'installed_apps_list'
+        self._default_publisher_names['runnable_apps_list'] = 'runnable_apps_list'
 
     def _init_gateway_services(self):
         self._gateway_services = {}
@@ -153,14 +155,16 @@ class RappManager(object):
         try:
             # Advertisable services - we advertise these by default advertisement rules for the app manager's gateway.
             self._services['platform_info'] = rospy.Service(self._service_names['platform_info'], rapp_manager_srvs.GetPlatformInfo, self._process_platform_info)
-            self._services['list_apps'] = rospy.Service(self._service_names['list_apps'], rapp_manager_srvs.GetAppList, self._process_get_app_list)
+            self._services['list_installed_apps'] = rospy.Service(self._service_names['list_installed_apps'], rapp_manager_srvs.GetAppList, self._process_get_installed_app_list)
+            self._services['list_runnable_apps'] = rospy.Service(self._service_names['list_runnable_apps'], rapp_manager_srvs.GetAppList, self._process_get_runnable_app_list)
             self._services['status'] = rospy.Service(self._service_names['status'], rapp_manager_srvs.Status, self._process_status)
             self._services['invite'] = rospy.Service(self._service_names['invite'], rapp_manager_srvs.Invite, self._process_invite)
             # Flippable services
             self._services['start_app'] = rospy.Service(self._service_names['start_app'], rapp_manager_srvs.StartApp, self._process_start_app)
             self._services['stop_app'] = rospy.Service(self._service_names['stop_app'], rapp_manager_srvs.StopApp, self._process_stop_app)
             # Latched publishers
-            self._publishers['app_list'] = rospy.Publisher(self._publisher_names['app_list'], rapp_manager_msgs.AppList, latch=True)
+            self._publishers['installed_apps_list'] = rospy.Publisher(self._publisher_names['installed_apps_list'], rapp_manager_msgs.AppList, latch=True)
+            self._publishers['runnable_apps_list'] = rospy.Publisher(self._publisher_names['runnable_apps_list'], rapp_manager_msgs.AppList, latch=True)
             # Force an update on the gateway
             self._gateway_publishers['force_update'].publish(std_msgs.Empty())
         except Exception as unused_e:
@@ -301,16 +305,24 @@ class RappManager(object):
         response.application_namespace = self._application_namespace
         return response
 
-    def _get_app_list(self):
+    def _get_app_list(self, apps_type):
         app_list = []
-        for app_name in self.apps['pre_installed']:
-            app = self.apps['pre_installed'][app_name]
+        for app_name in self.apps[apps_type]:
+            app = self.apps[apps_type][app_name]
             app_list.append(app.to_msg())
         return app_list
 
-    def _process_get_app_list(self, req):
+    def _process_get_installed_app_list(self, req):
         response = rapp_manager_srvs.GetAppListResponse()
-        response.available_apps.extend(self._get_app_list())
+        response.available_apps.extend(self._get_app_list('pre_installed'))
+        response.running_apps = []
+        if self._current_rapp:
+            response.running_apps.append(self._current_rapp.to_msg())
+        return response
+
+    def _process_get_runnable_app_list(self, req):
+        response = rapp_manager_srvs.GetAppListResponse()
+        response.available_apps.extend(self._get_app_list('runnable'))
         response.running_apps = []
         if self._current_rapp:
             response.running_apps.append(self._current_rapp.to_msg())
@@ -322,9 +334,9 @@ class RappManager(object):
         '''
         try:
             if self._current_rapp:
-                self._publishers['app_list'].publish(self._get_app_list(), [self._current_rapp.to_msg()])
+                self._publishers['runnable_apps_list'].publish(self._get_app_list('pre_installed'), [self._current_rapp.to_msg()])
             else:
-                self._publishers['app_list'].publish(self._get_app_list(), [])
+                self._publishers['runnable_apps_list'].publish(self._get_app_list('runnable'), [])
         except KeyError:
             pass
 
