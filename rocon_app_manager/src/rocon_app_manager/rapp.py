@@ -121,6 +121,11 @@ class Rapp(object):
             else:
                 data['icon'] = self._find_rapp_resource(app_data['icon'], 'icon', app_name)
             data['status'] = 'Ready'
+            data['required_capabilities'] = []
+            key = 'required_capabilities'
+            if key in app_data:
+                for cap in app_data[key]:
+                    data['required_capabilities'].append(cap)
 
         self.data = data
 
@@ -139,6 +144,8 @@ class Rapp(object):
             a.pairing_clients.append(PairingClient(pairing_client.client_type,
                                        dict_to_KeyValue(pairing_client.manager_data),
                                        dict_to_KeyValue(pairing_client.app_data)))
+        for cap in self.data['required_capabilities']:
+            a.required_capabilities.append(cap)
         return a
 
     def _find_rapp_resource(self, resource, log, app_name="Unknown"):

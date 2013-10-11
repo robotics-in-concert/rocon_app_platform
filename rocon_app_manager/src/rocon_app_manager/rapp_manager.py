@@ -15,7 +15,8 @@ import thread
 import traceback
 import roslaunch.pmon
 from .rapp_list import RappListFile
-from .utils import platform_compatible, platform_tuple
+from .caps_list import CapsList
+from .utils import platform_compatible, platform_tuple, caps_compatible
 import rocon_utilities
 from rocon_utilities import create_gateway_rule, create_gateway_remote_rule
 import rocon_app_manager_msgs.msg as rapp_manager_msgs
@@ -59,7 +60,10 @@ class RappManager(object):
         self._init_gateway_services()
         self._init_default_service_names()
 
-        self._get_pre_installed_app_list()  # It sets up an app directory and load installed app list from directory
+        self.apps = {}
+        self.app_list = {}
+        self._get_pre_installed_app_list() # It sets up an app directory and load installed app list from directory
+        self._determine_runnable_apps()
         self._initialising_services = False
         self._init_services()
         self._publish_app_list()
@@ -171,23 +175,52 @@ class RappManager(object):
         '''
          Retrieves app lists from yaml file.
         '''
-        self.apps = {}
         self.apps['pre_installed'] = {}
         # Getting apps from installed list
         for resource_name in self._param['rapp_lists']:
             # should do some exception checking here, also utilise AppListFile properly.
             filename = utils.find_resource(resource_name)
             try:
-                app_list_file = RappListFile(filename)
+                self.app_list_file = RappListFile(filename)
             except IOError as e:  # if file is not found
                 rospy.logwarn("App Manager : %s" % str(e))
                 return
-            for app in app_list_file.available_apps:
+            for app in self.app_list_file.available_apps:
                 if platform_compatible(platform_tuple(self.platform_info.platform, self.platform_info.system, self.platform_info.robot), app.data['platform']):
                     self.apps['pre_installed'][app.data['name']] = app
                 else:
                     rospy.logwarn('App : ' + str(app.data['name']) + ' is incompatible. App : (' + str(app.data['platform']) + ')  System : (' +
                                   str(self.platform_info.platform) + '.' + str(self.platform_info.system) + '.' + str(self.platform_info.robot) + ')')
+
+    def _determine_runnable_apps(self):
+        '''
+         Prun unsupported apps, i.e. not all required capabilities are available, and store the supported apps in
+         separate list.
+        '''
+        # First initialise the list of available capabilities
+        try:
+            self.caps_list = CapsList()
+        except IOError as e:
+            error = str(e)
+            for app in self.app_list_file.available_apps:
+                if app.data['required_capabilities']:
+                    rospy.logerr("App Manager : Could not initialise capability list"
+                                 + ", but some capabilities are required! Error: " + error)
+                    return
+            else:
+                rospy.loginfo("App Manager : Could not initialise capability list (" + error
+                              + "), but no capabilities are required. Continuing.")
+                self.apps['runnable'] = self.apps['pre_installed']
+                return
+        self.apps['runnable'] = {}
+        # Then store the runnable apps in a separate list
+        for app in self.app_list_file.available_apps:
+            try:
+                caps_compatible(app, self.caps_list)
+                self.apps['runnable'][app.data['name']] = app
+            except exceptions.MissingCapabilitiesException as e:  # app is not supported
+                rospy.logwarn("App : '" + str(app.data['name']) + "' cannot be run, since some required capabilities ("
+                              + str(e.missing_caps) + ") are not installed.")
 
     ##########################################################################
     # Ros Callbacks

@@ -45,3 +45,11 @@ class InvalidRappException(Exception):
     '''
       Raised if the app definition is invalid.
     '''
+
+class MissingCapabilitiesException(Exception):
+    '''
+      Raised if one or more required capabilities are missing.
+    '''
+    def __init__(self, missing_caps):
+        self.missing_caps = missing_caps
+
