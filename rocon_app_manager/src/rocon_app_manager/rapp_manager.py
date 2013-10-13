@@ -92,13 +92,13 @@ class RappManager(object):
         self.platform_info.name = self._param['robot_name']
         try:
             filename = utils.find_resource(self._param['robot_icon'])
-            self.platform_info.icon = utils.icon_to_msg(filename)
+            self.platform_info.icon = rocon_utilities.icon_to_msg(filename)
         except exceptions.NotFoundException:
             rospy.logwarn("App Manager : icon resource not found [%s]" % self._param['robot_icon'])
-            self.platform_info.icon = rapp_manager_msgs.Icon()
+            self.platform_info.icon = rocon_std_msgs.Icon()
         except ValueError:
             rospy.logwarn("App Manager : invalid resource name [%s]" % self._param['robot_icon'])
-            self.platform_info.icon = rapp_manager_msgs.Icon()
+            self.platform_info.icon = rocon_std_msgs.Icon()
 
     def _init_default_service_names(self):
         self._default_service_names = {}
