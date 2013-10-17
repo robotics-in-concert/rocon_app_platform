@@ -18,6 +18,7 @@ import rocon_utilities
 import utils
 from .exceptions import AppException, InvalidRappException
 import rocon_app_manager_msgs.msg as rapp_manager_msgs
+import rocon_std_msgs.msg as rocon_std_msgs
 
 ##############################################################################
 # Class
@@ -134,7 +135,7 @@ class Rapp(object):
         a.description = self.data['description']
         a.platform = self.data['platform']
         a.status = self.data['status']
-        a.icon = utils.icon_to_msg(self.data['icon'])
+        a.icon = rocon_utilities.icon_to_msg(self.data['icon'])
         for pairing_client in self.data['pairing_clients']:
             a.pairing_clients.append(PairingClient(pairing_client.client_type,
                                        dict_to_KeyValue(pairing_client.manager_data),
@@ -228,7 +229,7 @@ class Rapp(object):
           @param application_namespace ; unique name granted indirectly via the gateways, we namespace everything under this
           @type str
           @param remapping : rules for the app flips.
-          @type list of rocon_app_manager_msgs.msg.Remapping values.
+          @type list of rocon_std_msgs.msg.Remapping values.
           @param force_screen : whether to roslaunch the app with --screen or not
           @type boolean
         '''
@@ -350,5 +351,5 @@ def dict_to_KeyValue(d):
     '''
     l = []
     for k, v in d.iteritems():
-        l.append(rapp_manager_msgs.KeyValue(k, str(v)))
+        l.append(rocon_std_msgs.KeyValue(k, str(v)))
     return l
