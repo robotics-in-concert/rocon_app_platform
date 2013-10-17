@@ -32,7 +32,7 @@ def local_gateway_name():
             if gateway_info.connected:
                 gateway_name = gateway_info.name
                 break
-        rospy.sleep(1.0)
+        rospy.rostime.wallsleep(1.0)
     return gateway_name
 
 def remote_gateway_name():
@@ -132,12 +132,12 @@ class InvitationHandler():
         flagged_for_release_count = 0
         while not rospy.is_shutdown():
             if not self.watchdog_flag:
-                rospy.sleep(1.0)
+                rospy.rostime.wallsleep(1.0)
             else:
                 if flagged_for_release_count == 0:
-                    rospy.sleep(1.0)
+                    rospy.rostime.wallsleep(1.0)
                 else:
-                    rospy.sleep(0.25)
+                    rospy.rostime.wallsleep(0.25)
                 try:
                     # If not found, exceptions get thrown.
                     result = master.lookupService('/' + self.remote_gateway_name + '/start_app')
