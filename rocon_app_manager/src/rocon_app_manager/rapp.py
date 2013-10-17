@@ -238,7 +238,11 @@ class Rapp(object):
         # Starts rapp
         try:
             temp = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
-            launch_text = '<launch>\n  <include ns="%s" file="%s"/>\n</launch>\n' % (application_namespace, data['launch'])
+            launch_text = '''<launch>
+  <include ns="%s" file="%s">
+    <arg name="application_namespace" value="%s"/>
+  </include>
+</launch>\n''' % (application_namespace, data['launch'], application_namespace)
             temp.write(launch_text)
             temp.close()  # unlink it later
 
