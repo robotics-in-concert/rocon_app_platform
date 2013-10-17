@@ -316,12 +316,12 @@ class RappManager(object):
             return resp
 
         resp.started, resp.message, subscribers, publishers, services, action_clients, action_servers = \
-                        rapp.start(self._application_namespace, req.remappings, self._param['app_output_to_screen'])
+                        rapp.start(self._application_namespace, self._gateway_name, self.platform_info, req.remappings, self._param['app_output_to_screen'])
 
         rospy.loginfo("App Manager : %s" % self._remote_name)
         # small pause (convenience only) to let connections to come up
         # gateway watcher usually rolls over slowly. so this makes sure the flips get enacted on promptly
-        rospy.sleep(0.5)
+        rospy.rostime.wallsleep(0.5)
         if self._remote_name:
             self._flip_connections(self._remote_name, subscribers, gateway_msgs.ConnectionType.SUBSCRIBER)
             self._flip_connections(self._remote_name, publishers, gateway_msgs.ConnectionType.PUBLISHER)
@@ -382,7 +382,7 @@ class RappManager(object):
             if not self._current_rapp.is_running():
                 self._process_stop_app()
                 break
-            time.sleep(0.1)
+            rospy.rostime.wallsleep(0.1)
 
     def _load(self, directory, typ):
         '''
