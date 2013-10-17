@@ -215,7 +215,7 @@ class Rapp(object):
             clients.append(PairingClient(client_type, manager_data, app_data))
         return clients
 
-    def start(self, application_namespace, remappings=[], force_screen=False):
+    def start(self, application_namespace, gateway_name, platform_info, remappings=[], force_screen=False):
         '''
           Some important jobs here.
 
@@ -228,6 +228,10 @@ class Rapp(object):
 
           @param application_namespace ; unique name granted indirectly via the gateways, we namespace everything under this
           @type str
+          @param gateway_name ; unique name granted to the gateway
+          @type str
+          @param platform_info ; unique name granted to the gateway
+          @type PlatformTuple
           @param remapping : rules for the app flips.
           @type list of rocon_std_msgs.msg.Remapping values.
           @param force_screen : whether to roslaunch the app with --screen or not
