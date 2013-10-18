@@ -7,6 +7,11 @@ robot_type: 'turtlebot'
 remote_controller_whitelist: []
 remote_controller_blacklist: []
 
+# Useful for local machine tests only such as chatter_concert.
+# It is an easy way of preventing your app managers from being stolen by
+# other auto-inviting concerts.
+local_remote_controllers_only: false
+
 # Semi colon separated string. This is very non-portable, use launchers where you can use $(find..) instead
 # rapp_lists: '/home/jihoonl/ros/groovy/turtlebot/turtlebot_apps/turtlebot_core_apps/turtlebot.rapps'
 

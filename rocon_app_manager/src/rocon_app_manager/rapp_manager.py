@@ -47,6 +47,7 @@ class RappManager(object):
     def __init__(self):
         self._namespace = None  # Namespace that gets used as default namespace for rapp connections
         self._gateway_name = None  # Name of our local gateway (if available)
+        self._gateway_ip = None  # IP/Hostname of our local gateway if available
         self._remote_name = None  # Name (gateway name) for the entity that is remote controlling this app manager
         self._current_rapp = None  # App that is running, otherwise None
         self._application_namespace = None  # Push all app connections underneath this namespace
@@ -67,15 +68,17 @@ class RappManager(object):
     def _setup_ros_parameters(self):
         rospy.logdebug("App Manager : parsing parameters")
         self._param = {}
-        self._param['robot_type'] = rospy.get_param('~robot_type', 'robot')
-        self._param['robot_name'] = rospy.get_param('~robot_name', 'app_manager')
-        self._param['robot_icon'] = rospy.get_param('~robot_icon', '')  # image filename
-        self._param['app_store_url'] = rospy.get_param('~app_store_url', '')
-        self._param['platform_info'] = rospy.get_param('~platform_info', 'linux.ros.*')
-        self._param['rapp_lists'] = rospy.get_param('~rapp_lists', '').split(';')
+        self._param['robot_type']    = rospy.get_param('~robot_type', 'robot')  #@IgnorePep8
+        self._param['robot_name']    = rospy.get_param('~robot_name', 'app_manager')  #@IgnorePep8
+        self._param['robot_icon']    = rospy.get_param('~robot_icon', '')  # image filename  #@IgnorePep8
+        self._param['app_store_url'] = rospy.get_param('~app_store_url', '')  #@IgnorePep8
+        self._param['platform_info'] = rospy.get_param('~platform_info', 'linux.ros.*')  #@IgnorePep8
+        self._param['rapp_lists']    = rospy.get_param('~rapp_lists', '').split(';')  #@IgnorePep8
         # Todo fix these up with proper whitelist/blacklists
         self._param['remote_controller_whitelist'] = rospy.get_param('~remote_controller_whitelist', [])
         self._param['remote_controller_blacklist'] = rospy.get_param('~remote_controller_blacklist', [])
+        # Useful for local machine/simulation tests (e.g. chatter_concert)
+        self._param['local_remote_controllers_only'] = rospy.get_param('~local_remote_controllers_only', False)
         # Check if rocon is telling us to be verbose about starting apps (this comes from the
         # rocon_launch --screen option). TODO : additionally a private parameter for the app manager so
         # people can configure this from yaml or roslaunch instead of rocon_launch
@@ -115,6 +118,7 @@ class RappManager(object):
     def _init_gateway_services(self):
         self._gateway_services = {}
         self._gateway_services['gateway_info'] = rocon_utilities.SubscriberProxy('~gateway_info', gateway_msgs.GatewayInfo)
+        self._gateway_services['remote_gateway_info'] = rospy.ServiceProxy('~remote_gateway_info', gateway_srvs.RemoteGatewayInfo)
         self._gateway_services['flip'] = rospy.ServiceProxy('~flip', gateway_srvs.Remote)
         self._gateway_services['advertise'] = rospy.ServiceProxy('~advertise', gateway_srvs.Advertise)
         self._gateway_services['pull'] = rospy.ServiceProxy('~pull', gateway_srvs.Remote)
@@ -195,7 +199,23 @@ class RappManager(object):
 
     def _process_invite(self, req):
         # Todo : add checks for whether client is currently busy or not
-        if req.remote_target_name in self._param['remote_controller_whitelist']:
+        if self._param['local_remote_controllers_only']:
+            if self._gateway_name is None:
+                return rapp_manager_srvs.InviteResponse(False)
+            remote_gateway_info_request = gateway_srvs.RemoteGatewayInfoRequest()
+            remote_gateway_info_request.gateways = []
+            remote_gateway_info_response = self._gateway_services['remote_gateway_info'](remote_gateway_info_request)
+            remote_target_name = req.remote_target_name
+            remote_target_ip = None
+            for gateway in remote_gateway_info_response.gateways:
+                if gateway.name == remote_target_name:
+                    remote_target_ip = gateway.ip
+                    break
+            if remote_target_ip is not None and self._gateway_ip == remote_target_ip:
+                return rapp_manager_srvs.InviteResponse(self._accept_invitation(req))
+            else:
+                return rapp_manager_srvs.InviteResponse(False)
+        elif req.remote_target_name in self._param['remote_controller_whitelist']:
             return rapp_manager_srvs.InviteResponse(self._accept_invitation(req))
         elif len(self._param['remote_controller_whitelist']) == 0 and req.remote_target_name not in self._param['remote_controller_blacklist']:
             return rapp_manager_srvs.InviteResponse(self._accept_invitation(req))
@@ -450,6 +470,7 @@ class RappManager(object):
             if gateway_info:
                 if gateway_info.connected:
                     self._gateway_name = gateway_info.name
+                    self._gateway_ip = gateway_info.ip
                     if self._init_services():
                         break
             # don't need a sleep since our timeout on the service call acts like this.
