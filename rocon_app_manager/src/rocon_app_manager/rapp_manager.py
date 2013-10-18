@@ -16,7 +16,7 @@ import traceback
 import roslaunch.pmon
 from .rapp_list import RappListFile
 from .caps_list import CapsList
-from .utils import platform_compatible, platform_tuple, caps_compatible
+from .utils import platform_compatible, platform_tuple
 import rocon_utilities
 from rocon_utilities import create_gateway_rule, create_gateway_remote_rule
 import rocon_app_manager_msgs.msg as rapp_manager_msgs
@@ -61,11 +61,14 @@ class RappManager(object):
         self._init_default_service_names()
 
         self.apps = {}
+        self.app_list_file = {}
         self._get_pre_installed_app_list() # It sets up an app directory and load installed app list from directory
+        self.caps_list = {}
         self._determine_runnable_apps()
         self._initialising_services = False
         self._init_services()
         self._publish_app_list()
+        rospy.loginfo("App Manager : Ready.")
 
     def _setup_ros_parameters(self):
         rospy.logdebug("App Manager : parsing parameters")
@@ -200,30 +203,36 @@ class RappManager(object):
          Prun unsupported apps, i.e. not all required capabilities are available, and store the supported apps in
          separate list.
         '''
-        # First initialise the list of available capabilities
+        # First try initialise the list of available capabilities
+        no_caps_available = False
         try:
             self.caps_list = CapsList()
         except IOError as e:
-            error = str(e)
-            for app in self.app_list_file.available_apps:
-                if app.data['required_capabilities']:
-                    rospy.logerr("App Manager : Could not initialise capability list"
-                                 + ", but some capabilities are required! Error: " + error)
-                    return
-            else:
-                rospy.loginfo("App Manager : Could not initialise capability list (" + error
-                              + "), but no capabilities are required. Continuing.")
-                self.apps['runnable'] = self.apps['pre_installed']
-                return
+            rospy.logwarn("App Manager : Could not initialise capability list! (" + str(e) + ")")
+            rospy.logwarn("App Manager : Error message: '" + str(e) + "'")
+            rospy.logwarn("App Manager : Apps requiring capabilities won't be runnable.")
+            no_caps_available = True
+        # Then add runable apps to list
         self.apps['runnable'] = {}
-        # Then store the runnable apps in a separate list
-        for app in self.app_list_file.available_apps:
-            try:
-                caps_compatible(app, self.caps_list)
-                self.apps['runnable'][app.data['name']] = app
-            except exceptions.MissingCapabilitiesException as e:  # app is not supported
-                rospy.logwarn("App : '" + str(app.data['name']) + "' cannot be run, since some required capabilities ("
-                              + str(e.missing_caps) + ") are not installed.")
+        for app_name in self.apps['pre_installed']:
+            app = self.apps['pre_installed'][app_name]
+            if no_caps_available:
+                if 'required_capabilities' in app.data:
+                    rospy.logwarn("App : '" + str(app.data['name'])
+                                  + "' cannot be run, since capabilities are not available."
+                                  + " App will be excluded from the list of runnable apps.")
+                else:
+                    self.apps['runnable'][app.data['name']] = app
+                    rospy.loginfo("App : '" + str(app.data['name']) + "' added to the list of runnable apps.")
+            else:
+                try:
+                    self.caps_list.compatibility_check(app)
+                    self.apps['runnable'][app.data['name']] = app
+                    rospy.loginfo("App : '" + str(app.data['name']) + "' added to the list of runnable apps.")
+                except exceptions.MissingCapabilitiesException as e:
+                    rospy.logwarn("App : '" + str(app.data['name']) + "' cannot be run, since some required capabilities ("
+                                  + str(e.missing_caps)
+                                  + ") are not installed. App will be excluded from the list of runnable apps.")
 
     ##########################################################################
     # Ros Callbacks
@@ -360,6 +369,7 @@ class RappManager(object):
             rospy.logwarn("App Manager : %s" % resp.message)
             return resp
 
+        # check is the app can be run
         try:
             rapp = self.apps['runnable'][req.name]
         except KeyError:
@@ -370,10 +380,10 @@ class RappManager(object):
             return resp
 
         if 'required_capabilities' in self.apps['runnable'][req.name].data:
-            rospy.loginfo("App Manager : starting required capabilities ...")
+            rospy.loginfo("App Manager : Starting required capabilities.")
             for cap in self.apps['runnable'][req.name].data['required_capabilities']:
                 try:
-                    start_resp = self.caps_list.start_capability(cap)
+                    start_resp = self.caps_list.start_capability(cap["name"])
                 except rospy.ROSException as exc:
                     resp.started = False
                     resp.message = ("App Manager : Service for starting capabilities is not available."
@@ -389,18 +399,25 @@ class RappManager(object):
                     rospy.logerr("App Manager : %s" % resp.message)
                     return resp
                 if start_resp:
-                    rospy.loginfo("App Manager : Started required capability '" + str(cap) + "'.")
+                    rospy.loginfo("App Manager : Started required capability '" + str(cap["name"]) + "'.")
                 else:
                     resp.started = False
-                    resp.message = ("App Manager : Starting capability '" + str(cap) + " was not successful."
+                    resp.message = ("App Manager : Starting capability '" + str(cap["name"]) + " was not successful."
                                     " Will not start app.")
                     rospy.logerr("App Manager : %s" % resp.message)
                     return resp
-            rospy.loginfo("App Manager : all required capabilities have been started.")
+            rospy.loginfo("App Manager : All required capabilities have been started.")
 
-        rospy.loginfo("App Manager : starting app : " + req.name)
+        rospy.loginfo("App Manager : Starting app '" + req.name + "'.")
 
-        resp.started, resp.message, subscribers, publishers, services, action_clients, action_servers = \
+        if 'required_capabilities' in self.apps['runnable'][req.name].data:
+            resp.started, resp.message, subscribers, publishers, services, action_clients, action_servers = \
+                        rapp.start(self._application_namespace,
+                                   req.remappings,
+                                   self._param['app_output_to_screen'],
+                                   self.caps_list)
+        else:
+            resp.started, resp.message, subscribers, publishers, services, action_clients, action_servers = \
                         rapp.start(self._application_namespace, req.remappings, self._param['app_output_to_screen'])
 
         rospy.loginfo("App Manager : %s" % self._remote_name)
@@ -455,7 +472,7 @@ class RappManager(object):
                 rospy.loginfo("App Manager : Stopping required capabilities.")
                 for cap in self.apps['runnable'][rapp_name].data['required_capabilities']:
                     try:
-                        start_resp = self.caps_list.stop_capability(cap)
+                        start_resp = self.caps_list.stop_capability(cap["name"])
                     except rospy.ROSException as exc:
                         resp.started = False
                         resp.message = ("App Manager : Service for stopping capabilities is not available."
@@ -469,10 +486,11 @@ class RappManager(object):
                         rospy.logerr("App Manager : %s" % resp.message)
                         return resp
                     if start_resp:
-                        rospy.loginfo("App Manager : Stopped required capability '" + str(cap) + "'.")
+                        rospy.loginfo("App Manager : Stopped required capability '" + str(cap["name"]) + "'.")
                     else:
                         resp.started = False
-                        resp.message = ("App Manager : Stopping capability '" + str(cap) + " was not successful.")
+                        resp.message = ("App Manager : Stopping capability '" + str(cap["name"])
+                                        + " was not successful.")
                         rospy.logerr("App Manager : %s" % resp.message)
                         return resp
                 rospy.loginfo("App Manager : All required capabilities have been stopped.")

@@ -11,7 +11,7 @@ import os
 import rospy
 import roslib.names
 import rocon_app_manager_msgs.msg as rapp_manager_msgs
-from .exceptions import NotFoundException, InvalidPlatformTupleException, MissingCapabilitiesException
+from .exceptions import NotFoundException, InvalidPlatformTupleException
 
 ##############################################################################
 # Classes
@@ -96,21 +96,6 @@ def platform_compatible(first_platform_tuple, second_platform_tuple):
         return False
     return True
 
-def caps_compatible(app, caps_list):
-    '''
-    Checks if all required capabilities of an app are available
-    '''
-    all_caps_available = True
-    missing_capabilities = str()
-    key = 'required_capabilities'
-    if key in app.data:
-        for cap in app.data[key]:
-            if not cap in caps_list.available_caps:
-                if not cap in caps_list.available_semantic_caps:
-                    missing_capabilities = missing_capabilities + " " + cap
-                    all_caps_available = False
-    if not all_caps_available:
-        raise MissingCapabilitiesException(missing_capabilities)
 
 def icon_to_msg(filename):
     '''
