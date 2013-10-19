@@ -22,6 +22,7 @@
 import os
 import rospy
 import yaml
+import rospkg
 from .rapp import Rapp
 
 ##############################################################################
@@ -59,8 +60,9 @@ class RappListFile(object):
             apps_yaml = yaml.load(f)
             if not 'apps' in apps_yaml:
                 rospy.logerr("App Manager : apps file [%s] is missing required key [%s]" % (self.filename, 'apps'))
+            rospack = rospkg.RosPack()
             for app_resource_name in apps_yaml['apps']:
-                app = Rapp(app_resource_name)
+                app = Rapp(app_resource_name, rospack)
                 available_apps.append(app)
         self.available_apps = available_apps
 

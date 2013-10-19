@@ -36,13 +36,15 @@ class PlatformTuple(object):
         self.robot = platform_tuple_list[2]
 
 
-def find_resource(resource):
+def find_resource(resource, rospack=None):
     '''
       Ros style resource finder. Need to depracate this in favour
       of rocon_utilities.ros_utilities.find_resource_from_string
 
       @param resource is a ros resource (package/name)
       @type str
+      @param rospack a cache to help with repeat calls (optional)
+      @type rospkg.RosPack
       @return full path to the resource
       @type str
       @raise NotFoundException: if resource does not exist.
@@ -50,7 +52,7 @@ def find_resource(resource):
     p, a = roslib.names.package_resource_name(resource)
     if not p:
         raise NotFoundException("resource is missing package name [%s]" % (resource))
-    matches = roslib.packages.find_resource(p, a)
+    matches = roslib.packages.find_resource(p, a, rospack=rospack)
     if len(matches) == 1:
         return matches[0]
     elif not matches:
