@@ -346,7 +346,7 @@ class RappManager(object):
         rospy.loginfo("App Manager : %s" % self._remote_name)
         # small pause (convenience only) to let connections to come up
         # gateway watcher usually rolls over slowly. so this makes sure the flips get enacted on promptly
-        rospy.sleep(0.5)
+        rospy.rostime.wallsleep(0.5)
         if self._remote_name:
             self._flip_connections(self._remote_name, subscribers, gateway_msgs.ConnectionType.SUBSCRIBER)
             self._flip_connections(self._remote_name, publishers, gateway_msgs.ConnectionType.PUBLISHER)
