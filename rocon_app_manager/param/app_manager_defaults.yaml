@@ -2,6 +2,10 @@ robot_name: 'cybernetic_pirate'
 # This goes to making up part of the platform_info triple.
 robot_type: 'turtlebot'
 
+# Auto start a rapp, e.g. 'rocon_apps/chirp'.
+# This doesn't do remappings like the start_app service (yet).
+auto_start_rapp: ''
+
 # Whitelist/blacklists for who can take control of the app manager
 # These are currently lists of remote gateway names...
 remote_controller_whitelist: []

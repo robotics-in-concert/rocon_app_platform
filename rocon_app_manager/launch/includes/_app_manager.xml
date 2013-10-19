@@ -9,6 +9,7 @@
   <arg name="rapp_lists" default="rocon_apps/rocon.rapps"/> <!-- semi colon separated list of rapp list resource names --> 
   <arg name="robot_icon" default="$(find rocon_app_manager)/icons/turtlebot.png"/>
   <arg name="local_remote_controllers_only" default="false"/> <!-- allow remote control for local machine tests only -->
+  <arg name="auto_start_rapp" default=""/> <!-- autostart a rapp, e.g. rocon_apps/chirp -->
 
   <!-- **************************** App Manager ******************************** -->
   <node pkg="rocon_app_manager" type="rapp_manager.py" name="app_manager">
@@ -20,6 +21,7 @@
     <param name="robot_name" value="$(arg robot_name)"/>
     <param name="robot_type" value="$(arg robot_type)"/>
     <param name="robot_icon" value="$(arg robot_icon)"/>
+    <param name="auto_start_rapp" value="$(arg auto_start_rapp)"/>
     <param name="local_remote_controllers_only" value="$(arg local_remote_controllers_only)"/>
     <remap from="app_manager/gateway_info" to="gateway/gateway_info"/>
     <remap from="app_manager/remote_gateway_info" to="gateway/remote_gateway_info"/>

@@ -64,16 +64,21 @@ class RappManager(object):
         self._initialising_services = False
         self._init_services()
         self._publish_app_list()
+        if self._param['auto_start_rapp']:  # None and '' are both false here
+            request = rapp_manager_srvs.StartAppRequest(self._param['auto_start_rapp'], [])
+            unused_response = self._process_start_app(request)
 
     def _setup_ros_parameters(self):
         rospy.logdebug("App Manager : parsing parameters")
         self._param = {}
-        self._param['robot_type']    = rospy.get_param('~robot_type', 'robot')  #@IgnorePep8
-        self._param['robot_name']    = rospy.get_param('~robot_name', 'app_manager')  #@IgnorePep8
-        self._param['robot_icon']    = rospy.get_param('~robot_icon', '')  # image filename  #@IgnorePep8
-        self._param['app_store_url'] = rospy.get_param('~app_store_url', '')  #@IgnorePep8
-        self._param['platform_info'] = rospy.get_param('~platform_info', 'linux.ros.*')  #@IgnorePep8
-        self._param['rapp_lists']    = rospy.get_param('~rapp_lists', '').split(';')  #@IgnorePep8
+        self._param['robot_type']      = rospy.get_param('~robot_type', 'robot')  #@IgnorePep8
+        self._param['robot_name']      = rospy.get_param('~robot_name', 'app_manager')  #@IgnorePep8
+        # image filename
+        self._param['robot_icon']      = rospy.get_param('~robot_icon', '')  #  #@IgnorePep8
+        self._param['app_store_url']   = rospy.get_param('~app_store_url', '')  #@IgnorePep8
+        self._param['platform_info']   = rospy.get_param('~platform_info', 'linux.ros.*')  #@IgnorePep8
+        self._param['rapp_lists']      = rospy.get_param('~rapp_lists', '').split(';')  #@IgnorePep8
+        self._param['auto_start_rapp'] = rospy.get_param('~auto_start_rapp', None)  #@IgnorePep8
         # Todo fix these up with proper whitelist/blacklists
         self._param['remote_controller_whitelist'] = rospy.get_param('~remote_controller_whitelist', [])
         self._param['remote_controller_blacklist'] = rospy.get_param('~remote_controller_blacklist', [])
