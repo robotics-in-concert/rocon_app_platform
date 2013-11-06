@@ -130,7 +130,6 @@ class Rapp(object):
                 data[key] = []
                 for cap in app_data[key]:
                     data['required_capabilities'].append(cap)
-
         self.data = data
 
     def to_msg(self):
@@ -148,9 +147,10 @@ class Rapp(object):
             a.pairing_clients.append(PairingClient(pairing_client.client_type,
                                        dict_to_KeyValue(pairing_client.manager_data),
                                        dict_to_KeyValue(pairing_client.app_data)))
-        if 'required_capabilities' in self.data:
-            for cap in self.data['required_capabilities']:
-                a.required_capabilities.append(cap)
+        key = 'required_capabilities'
+        if key in self.data:
+            for cap in self.data[key]:
+                a.required_capabilities.append(cap['name'])
         return a
 
     def _find_rapp_resource(self, resource, log, app_name="Unknown"):
