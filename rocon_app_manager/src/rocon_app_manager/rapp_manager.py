@@ -444,7 +444,6 @@ class RappManager(object):
 
           @param req : variable configured when triggered from the service call.
         '''
-        rapp_name = self._current_rapp.data['name']
         resp = rapp_manager_srvs.StopAppResponse()
         if not self._current_rapp:
             resp.stopped = False
@@ -453,6 +452,7 @@ class RappManager(object):
             rospy.logwarn("App Manager : Received a request to stop a rapp, but no rapp found running.")
             return resp
 
+        rapp_name = self._current_rapp.data['name']
         rospy.loginfo("App Manager : Stopping rapp '" + rapp_name + "'.")
 
         resp.stopped, resp.message, subscribers, publishers, services, action_clients, action_servers = \
