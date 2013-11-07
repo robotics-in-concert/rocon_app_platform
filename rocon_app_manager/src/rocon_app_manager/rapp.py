@@ -265,8 +265,8 @@ class Rapp(object):
             self._launch._load_config() # generate configuration
 
             if 'required_capabilities' in self.data: # apply capability-specific remappings are needed
-                caps_remap_from_list = []
-                caps_remap_to_list = []
+                caps_remap_from_list = [] # contains the app's topics/services/actions to be remapped
+                caps_remap_to_list = [] # contains the new topic/service/action names
                 for cap in self.data['required_capabilities']: # get capability-specific remappings
                     rospy.loginfo("App Manager : Configuring remappings for capabilty '" + cap['name'] + "'.")
                     if caps_list:
@@ -276,15 +276,14 @@ class Rapp(object):
                             rospy.logerr("App Manager : Couldn't get cap remappings. Error: " + str(e))
                     else: # should not happen, since app would have been pruned
                         raise Exception("Capabilities required, but capability list not provided.")
-                print caps_remap_from_list
-                print caps_remap_to_list
                 for cap_remap in caps_remap_from_list: # apply cap remappings
                     remap_applied = False
                     for node in self._launch.config.nodes: # look for cap remap topic is remap topics
                         for node_remap in node.remap_args: # topic from - topic to pairs
                             if cap_remap in node_remap[0]:
                                 node_remap[1] = unicode(caps_remap_to_list[caps_remap_from_list.index(cap_remap)])
-                                rospy.loginfo("App Manager : Will remap '" + node_remap[0] + "' to '" + node_remap[1])
+                                rospy.loginfo("App Manager : Will remap '" + node_remap[0]
+                                              + "' to '" + node_remap[1] + "'.")
                                 remap_applied = True
                     if not remap_applied: # can't determine to which the remapping should be applied to
                         rospy.logwarn("App Manager : Could not determine remapping for capability topic '"
@@ -332,8 +331,8 @@ class Rapp(object):
         except Exception as e:
             print str(e)
             traceback.print_stack()
-            rospy.loginfo("App Manager : Error While launching " + data['launch'])
-            data['status'] = "Error While launching " + data['launch']
+            rospy.logerr("App Manager : Error while launching " + data['launch'])
+            data['status'] = "Error while launching " + data['launch']
             return False, "Error while launching " + data['name'], [], [], [], [], []
         finally:
             os.unlink(temp.name)
