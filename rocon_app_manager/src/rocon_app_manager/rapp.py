@@ -119,6 +119,7 @@ class Rapp(object):
             data['display_name'] = app_data.get('display', app_name)
             data['description'] = app_data.get('description', '')
             data['platform'] = app_data['platform']
+            data['share'] = app_data.get('share',1)
             data['launch'] = self._find_rapp_resource(app_data['launch'], 'launch', app_name, rospack=rospack)
             data['interface'] = self._load_interface(self._find_rapp_resource(app_data['interface'], 'interface', app_name, rospack=rospack))
             data['pairing_clients'] = []
@@ -141,6 +142,7 @@ class Rapp(object):
         a.description = self.data['description']
         a.platform = self.data['platform']
         a.status = self.data['status']
+        a.share = self.data['share']
         a.icon = rocon_utilities.icon_to_msg(self.data['icon'])
         for pairing_client in self.data['pairing_clients']:
             a.pairing_clients.append(PairingClient(pairing_client.client_type,
