@@ -97,12 +97,12 @@ class RappManager(object):
     def _set_platform_info(self):
         self.platform_info = rocon_std_msgs.PlatformInfo()
         self.platform_info.os = rocon_std_msgs.PlatformInfo.OS_LINUX
-        self.platform_info.version = rocon_std_msgs.PlatformInfo.VERSION_ANY  # don't care 
+        self.platform_info.version = rocon_std_msgs.PlatformInfo.VERSION_ANY  # don't care
         self.platform_info.platform = self._param['robot_type']
         self.platform_info.system = rocon_std_msgs.PlatformInfo.SYSTEM_ROS
         self.platform_info.name = self._param['robot_name']
         try:
-            filename = utils.find_resource(self._param['robot_icon'])
+            filename = rocon_utilities.find_resource_from_string(self._param['robot_icon'])
             self.platform_info.icon = rocon_utilities.icon_to_msg(filename)
         except exceptions.NotFoundException:
             rospy.logwarn("App Manager : icon resource not found [%s]" % self._param['robot_icon'])
@@ -188,7 +188,7 @@ class RappManager(object):
         # Getting apps from installed list
         for resource_name in self._param['rapp_lists']:
             # should do some exception checking here, also utilise AppListFile properly.
-            filename = utils.find_resource(resource_name)
+            filename = rocon_utilities.find_resource_from_string(resource_name)
             try:
                 app_list_file = RappListFile(filename)
             except IOError as e:  # if file is not found

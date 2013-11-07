@@ -92,7 +92,7 @@ class Rapp(object):
         '''
         if not name:
             raise InvalidRappException("app name was invalid [%s]" % name)
-        self.filename = utils.find_resource(name + '.rapp', rospack=rospack)
+        self.filename = rocon_utilities.find_resource_from_string(name + '.rapp', rospack=rospack)
         self._load_from_app_file(self.filename, name, rospack=rospack)
 
     def _load_from_app_file(self, path, app_name, rospack=None):
@@ -150,7 +150,7 @@ class Rapp(object):
 
     def _find_rapp_resource(self, resource, log, app_name="Unknown", rospack=None):
         '''
-          A simple wrapper around utils.find_resource to locate rapp resources.
+          A simple wrapper around rocon_utilities.find_resource_from_string to locate rapp resources.
 
           @param resource is a ros resource (package/name)
           @type str
@@ -164,7 +164,7 @@ class Rapp(object):
           @raise AppException: if resource does not exist or something else went wrong.
         '''
         try:
-            path_to_resource = utils.find_resource(resource, rospack=rospack)
+            path_to_resource = rocon_utilities.find_resource_from_string(resource, rospack=rospack)
             if not os.path.exists(path_to_resource):
                 raise AppException("invalid appfile [%s]: %s file does not exist." % (app_name, log))
             return path_to_resource
