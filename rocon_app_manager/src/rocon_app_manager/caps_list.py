@@ -28,59 +28,24 @@ class CapsList(object):
     Caps lists store the installed capabilities retrieved from the capability server
     '''
     def __init__(self):
-        self.available_caps = []
-        self.available_semantic_caps = []
-        self._get_available_interfaces()
-        self.caps_specs = None
-        self._get_capability_specifications()
-        # maybe add check to make sure specifications for all procviders are available (necessary?)
-
-    def _get_available_interfaces(self):
         '''
-        Retrieve available normal and semantic interfaces from capability server 
+        Retrieve the specifications for the available interfaces from the capability server 
         '''
-        try:
-            rospy.wait_for_service('capability_server/get_interfaces', 1.0)
-            rospy.wait_for_service('capability_server/get_semantic_interfaces', 1.0)
-        except rospy.ROSException as exc:
-            raise IOError("Service timeout: " + str (exc))
-            return
-        available_caps_srv = rospy.ServiceProxy('capability_server/get_interfaces', capabilities_srvs.GetInterfaces)
-        available_semantics_caps_srv = rospy.ServiceProxy('capability_server/get_semantic_interfaces',
-                                                          capabilities_srvs.GetSemanticInterfaces)
-        try:
-            # retrieve available capabilities 
-            resp_caps = available_caps_srv()
-            resp_semantic_caps = available_semantics_caps_srv()
-            # store capabilities in list
-            self.available_caps = resp_caps.interfaces
-            self.available_semantic_caps = resp_semantic_caps.semantic_interfaces
-        except rospy.ServiceException as exc:
-            raise IOError("Service did not process request: " + str(exc))
-        return
-
-    def _get_capability_specifications(self):
-        '''
-        Retrieve the capability specifications from capability server 
-        '''
-        self.caps_specs, errors = service_discovery.spec_index_from_service("capability_server")
+        self._spec_index, errors = service_discovery.spec_index_from_service("capability_server")
         if errors:
-            raise IOError("Couldn't get capability specifications. Error: " + str(errors))
+            raise IOError("Couldn't get specification index. Error: " + str(errors))
 
-#        try:
-#            rospy.wait_for_service('capability_server/get_capability_specs', 1.0)
-#        except rospy.ROSException as exc:
-#            raise IOError("Service timeout: " + str (exc))
-#            return
-#        cap_specs_srv = rospy.ServiceProxy('capability_server/get_capability_specs',
-#                                                capabilities_srvs.GetCapabilitySpecs)
-#        try:
-#            resp_cap_specs = cap_specs_srv()
-#            self.caps_specs = resp_cap_specs.capability_specs
-#        except rospy.ServiceException as exc:
-#            error = "Service did not process request: " + str(exc)
-#            raise IOError(error)
-#        return
+        self._available_interfaces = []
+        self._available_semantic_interfaces = []
+        self._providers = dict()
+        for interface in self._spec_index.interfaces:
+            if self._spec_index.specs[interface].default_provider:
+                self._available_interfaces.append(interface)
+                self._providers[interface] = self._spec_index.specs[interface].default_provider
+        for interface in self._spec_index.semantic_interfaces:
+            if self._spec_index.specs[interface].default_provider:
+                self._available_semantic_interfaces.append(interface)
+                self._providers[interface] = self._spec_index.specs[self._spec_index.specs[interface].default_provider]
 
     def compatibility_check(self, app):
         '''
@@ -91,8 +56,8 @@ class CapsList(object):
         key = 'required_capabilities'
         if key in app.data:
             for cap in app.data[key]:
-                if not cap["name"] in self.available_caps:
-                    if not cap["name"] in self.available_semantic_caps:
+                if not cap["name"] in self._available_interfaces:
+                    if not cap["name"] in self._available_semantic_interfaces:
                         missing_capabilities = missing_capabilities + " " + cap["name"]
                         all_caps_available = False
         if not all_caps_available:
@@ -160,37 +125,41 @@ class CapsList(object):
         '''
         Gathers the required remappings for this app, based on the provided cap data
         
+        The rapp description is expected to define all topics, services and actions required for the capability
+        interfaces the rapp is depending on. This information is added to the 'caps_remap_from_list' list.
+        
+        Next the (semantic) capability's interface specification as well as the provider specification is parsed
+        in order to determine the new topic, service and action names. Here three cases are possible:
+         * if normal interface, remap to what is specified there
+         * if semantic interface, remap to the semantic interface's remappings
+         * if the provider specifies own remappings, apply them as well
+        The final remapping is stored in 'caps_remap_to_list'.
+        
         @param cap: cap data as specified in the app description
         @type name: dict
         
-        @raise MissingCapabilitiesException: The requested cap is not available.
-        @raise Exception: Provided cap data is not sufficient.
+        @param caps_remap_from_list: topics to be remapped
+        @type name: dict
         
-        @return: remappings from the provided cap data
-        @type: boolean
+        @param caps_remap_to_list: new names for remapped topics
+        @type name: dict
+        
+        @raise MissingCapabilitiesException: The requested cap is not available.
         '''
+
         interface = None
         semantic_interface = False
-        # check if cap is available, should not be needed, since rapp would have been pruned
-        if not cap["name"] in self.available_caps:
-            semantic_interface = True
-            if not cap["name"] in self.available_semantic_caps:
+        # check if cap is available, should not be needed, since rapp should have been pruned
+        if cap["name"] in self._available_interfaces:
+            interface = self._spec_index.interfaces[cap["name"]]
+        else:
+            if cap["name"] in self._available_semantic_interfaces:
+                semantic_interface = True
+                interface = self._spec_index.semantic_interfaces[cap["name"]]
+            else:
                 raise MissingCapabilitiesException(cap["name"])
 
-        if not semantic_interface:
-            if cap["name"] in self.caps_specs.names:
-                interface = self.caps_specs.interfaces[cap["name"]]
-            else:
-                print "error" # should never happen, since the cap server does not support caps without their specs. CHECK THAT!
-                return
-        else:
-            if cap["name"] in self.caps_specs.names:
-                interface = self.caps_specs.semantic_interfaces[cap["name"]]
-            else:
-                print "error" # should never happen, since the cap server does not support caps without their specs. CHECK THAT!
-                return
-
-        # gather all required remappings or raise warnings if data is missing
+        # gather all required (semantic) interface remappings or raise warnings if data is missing
         if not semantic_interface:
             for topic in interface.required_topics:
                 if topic in cap['interface']['topics']['requires']:
@@ -205,7 +174,7 @@ class CapsList(object):
                     caps_remap_to_list.append(topic)
                 else:
                     rospy.logwarn("App Manager : Capability topic '" + topic + "' not specified in rapp description."
-                                  + " Can't apply automatic remapping for this topic.")
+                                  + " can't apply automatic remapping for this topic.")
 
             for service in interface.required_services:
                 if service in cap['interface']['services']['requires']:
@@ -258,4 +227,10 @@ class CapsList(object):
                 if not remap_found:
                     rospy.logwarn("App Manager : Semantic capability remapping '" + semantic_remap
                                   + "' not specified in rapp description. Can't apply automatic remapping for it.")
-        return caps_remap_from_list, caps_remap_to_list
+
+        # check the interface's provider for additional remappings - not yet supported
+#        if self._providers[interface.name].remappings:
+#            if 'topics' in self._providers[interface.name].remappings:
+#                for topic_remap in self._providers[interface.name].remappings['topics']:
+#                    if topic_remap.key() in caps_remap_to_list:
+#                        caps_remap_to_list[topic_remap.key()] = topic_remap.value()
