@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # License: BSD
-#   https://raw.github.com/robotics-in-concert/rocon_app_platform/hydro-devel/rocon_app_manager/LICENSE
+#   https://raw.github.com/robotics-in-concert/rocon_app_platform/license/LICENSE
 #
 ##############################################################################
 # Imports
@@ -20,6 +20,8 @@ import rocon_utilities
 from rocon_utilities import create_gateway_rule, create_gateway_remote_rule
 import rocon_app_manager_msgs.msg as rapp_manager_msgs
 import rocon_app_manager_msgs.srv as rapp_manager_srvs
+import rocon_std_msgs.msg as rocon_std_msgs
+import rocon_std_msgs.srv as rocon_std_srvs
 import gateway_msgs.msg as gateway_msgs
 import gateway_msgs.srv as gateway_srvs
 import std_msgs.msg as std_msgs
@@ -76,7 +78,7 @@ class RappManager(object):
         # image filename
         self._param['robot_icon']      = rospy.get_param('~robot_icon', '')  #  #@IgnorePep8
         self._param['app_store_url']   = rospy.get_param('~app_store_url', '')  #@IgnorePep8
-        self._param['platform_info']   = rospy.get_param('~platform_info', 'linux.ros.*')  #@IgnorePep8
+        self._param['platform_info']   = rospy.get_param('~platform_info', 'linux.*.ros.*')  #@IgnorePep8
         self._param['rapp_lists']      = rospy.get_param('~rapp_lists', '').split(';')  #@IgnorePep8
         self._param['auto_start_rapp'] = rospy.get_param('~auto_start_rapp', None)  #@IgnorePep8
         # Todo fix these up with proper whitelist/blacklists
@@ -93,10 +95,11 @@ class RappManager(object):
         # self._param['rapp_lists'] = rospy.get_param('~rapp_lists', [])
 
     def _set_platform_info(self):
-        self.platform_info = rapp_manager_msgs.PlatformInfo()
-        self.platform_info.platform = rapp_manager_msgs.PlatformInfo.PLATFORM_LINUX
-        self.platform_info.system = rapp_manager_msgs.PlatformInfo.SYSTEM_ROS
-        self.platform_info.robot = self._param['robot_type']  # TODO Validate this against rapp_manager_msgs.PlatformInfo ROBOT_XXX
+        self.platform_info = rocon_std_msgs.PlatformInfo()
+        self.platform_info.os = rocon_std_msgs.PlatformInfo.OS_LINUX
+        self.platform_info.version = rocon_std_msgs.PlatformInfo.VERSION_ANY  # don't care 
+        self.platform_info.platform = self._param['robot_type']
+        self.platform_info.system = rocon_std_msgs.PlatformInfo.SYSTEM_ROS
         self.platform_info.name = self._param['robot_name']
         try:
             filename = utils.find_resource(self._param['robot_icon'])
@@ -149,7 +152,7 @@ class RappManager(object):
             self._publishers = {}
         self._service_names = {}
         self._publisher_names = {}
-        base_name = self._gateway_name if self._gateway_name else self._param['robot_name']  # latter option is for standalone mode 
+        base_name = self._gateway_name if self._gateway_name else self._param['robot_name']  # latter option is for standalone mode
         for name in self._default_service_names:
             self._service_names[name] = '/' + base_name + '/' + name
         for name in self._default_publisher_names:
@@ -157,7 +160,7 @@ class RappManager(object):
         self._application_namespace = base_name + '/' + RappManager.default_application_namespace  # ns to push apps into (see rapp.py)
         try:
             # Advertisable services - we advertise these by default advertisement rules for the app manager's gateway.
-            self._services['platform_info'] = rospy.Service(self._service_names['platform_info'], rapp_manager_srvs.GetPlatformInfo, self._process_platform_info)
+            self._services['platform_info'] = rospy.Service(self._service_names['platform_info'], rocon_std_srvs.GetPlatformInfo, self._process_platform_info)
             self._services['list_apps'] = rospy.Service(self._service_names['list_apps'], rapp_manager_srvs.GetAppList, self._process_get_app_list)
             self._services['status'] = rospy.Service(self._service_names['status'], rapp_manager_srvs.Status, self._process_status)
             self._services['invite'] = rospy.Service(self._service_names['invite'], rapp_manager_srvs.Invite, self._process_invite)
@@ -192,11 +195,11 @@ class RappManager(object):
                 rospy.logwarn("App Manager : %s" % str(e))
                 continue
             for app in app_list_file.available_apps:
-                if platform_compatible(platform_tuple(self.platform_info.platform, self.platform_info.system, self.platform_info.robot), app.data['platform']):
+                if platform_compatible(platform_tuple(self.platform_info.os, self.platform_info.version, self.platform_info.system, self.platform_info.platform), app.data['platform']):
                     self.apps['pre_installed'][app.data['name']] = app
                 else:
-                    rospy.logwarn('App : ' + str(app.data['name']) + ' is incompatible. App : (' + str(app.data['platform']) + ')  System : (' +
-                                  str(self.platform_info.platform) + '.' + str(self.platform_info.system) + '.' + str(self.platform_info.robot) + ')')
+                    rospy.logwarn('App : ' + str(app.data['name']) + ' is incompatible. App : (' + str(app.data['platform']) + ')  App Manager : (' +
+                                  str(self.platform_info.os) + '.' + str(self.platform_info.version) + '.' + str(self.platform_info.system) + '.' + str(self.platform_info.platform) + ')')
 
     ##########################################################################
     # Ros Callbacks
@@ -266,7 +269,7 @@ class RappManager(object):
         return True
 
     def _process_platform_info(self, req):
-        return rapp_manager_srvs.GetPlatformInfoResponse(self.platform_info)
+        return rocon_std_srvs.GetPlatformInfoResponse(self.platform_info)
 
     def _process_status(self, req):
         '''
