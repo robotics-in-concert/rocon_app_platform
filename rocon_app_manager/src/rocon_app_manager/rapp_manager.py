@@ -207,9 +207,12 @@ class RappManager(object):
 
     def _process_invite(self, req):
         # Todo : add checks for whether client is currently busy or not
+        response = rapp_manager_srvs.InviteResponse(True, rapp_manager_msgs.ErrorCodes.SUCCESS, "")
         if self._param['local_remote_controllers_only']:
             if self._gateway_name is None:
-                return rapp_manager_srvs.InviteResponse(False)
+                return rapp_manager_srvs.InviteResponse(False,
+                                                        rapp_manager_msgs.ErrorCodes.NO_LOCAL_GATEWAY,
+                                                        "no gateway connection yet, invite impossible.")
             remote_gateway_info_request = gateway_srvs.RemoteGatewayInfoRequest()
             remote_gateway_info_request.gateways = []
             remote_gateway_info_response = self._gateway_services['remote_gateway_info'](remote_gateway_info_request)
@@ -220,15 +223,24 @@ class RappManager(object):
                     remote_target_ip = gateway.ip
                     break
             if remote_target_ip is not None and self._gateway_ip == remote_target_ip:
-                return rapp_manager_srvs.InviteResponse(self._accept_invitation(req))
+                response.result = self._accept_invitation(req)
+                if not response.result:
+                    response.error_code = rapp_manager_msgs.ErrorCodes.UNKNOWN  # Todo specify later
             else:
-                return rapp_manager_srvs.InviteResponse(False)
+                return rapp_manager_srvs.InviteResponse(False,
+                                 rapp_manager_msgs.ErrorCodes.LOCAL_INVITATIONS_ONLY,
+                                 "local invitations only permitted.")
         elif req.remote_target_name in self._param['remote_controller_whitelist']:
-            return rapp_manager_srvs.InviteResponse(self._accept_invitation(req))
+            response.result = self._accept_invitation(req)
+            if not response.result:
+                response.error_code = rapp_manager_msgs.ErrorCodes.UNKNOWN  # Todo specify later
         elif len(self._param['remote_controller_whitelist']) == 0 and req.remote_target_name not in self._param['remote_controller_blacklist']:
-            return rapp_manager_srvs.InviteResponse(self._accept_invitation(req))
+            response.result = self._accept_invitation(req)
+            if not response.result:
+                response.error_code = rapp_manager_msgs.ErrorCodes.UNKNOWN  # Todo specify later
         else:
-            return rapp_manager_srvs.InviteResponse(False)
+            return rapp_manager_srvs.InviteResponse(False, rapp_manager_msgs.ErrorCodes.UNKNOWN)  # Todo specify later
+        return response
 
     def _accept_invitation(self, req):
         # Abort checks
