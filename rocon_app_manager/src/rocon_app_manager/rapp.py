@@ -60,18 +60,29 @@ class Rapp(object):
     path = None
     data = {}
 
-    def __init__(self, resource_name, rospack=None):
+    def __init__(self, resource, rospack=None):
         '''
           @param rospack : a cache to help with repeat calls (optional)
           @type rospkg.RosPack
-          @param resource_name : a package/name pair for this rapp
-          @type str/str
+          @param resource : resource information. a package/name pair for this rapp. how many can share this app.
+                            resource may be a package/name pair string if it does not have share. This is for backward compatibility
+          @type {name: str/str, share: uint16} or str/str
+                
         '''
         self.filename = ""
         self._connections = {}
         for connection_type in ['publishers', 'subscribers', 'services', 'action_clients', 'action_servers']:
             self._connections[connection_type] = []
-        self._load_from_resource_name(resource_name, rospack=rospack)
+
+        # if resource is just a package/name pair string
+        if isinstance(resource, str): 
+            self._load_from_resource_name(resource, rospack=rospack)
+            self.data['share'] = 1
+        else: # if it is name, share 
+            self._load_from_resource_name(resource['name'], rospack=rospack)
+            self.data['share'] = resource.get('share',1)
+
+
 
     def __repr__(self):
         string = ""
@@ -119,7 +130,6 @@ class Rapp(object):
             data['display_name'] = app_data.get('display', app_name)
             data['description'] = app_data.get('description', '')
             data['platform'] = app_data['platform']
-            data['share'] = app_data.get('share',1)
             data['launch'] = self._find_rapp_resource(app_data['launch'], 'launch', app_name, rospack=rospack)
             data['interface'] = self._load_interface(self._find_rapp_resource(app_data['interface'], 'interface', app_name, rospack=rospack))
             data['pairing_clients'] = []
