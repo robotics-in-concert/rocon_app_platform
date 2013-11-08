@@ -27,7 +27,6 @@ import gateway_msgs.srv as gateway_srvs
 import std_msgs.msg as std_msgs
 
 # local imports
-import utils
 import exceptions
 
 ##############################################################################
@@ -484,6 +483,7 @@ class RappManager(object):
         else:
             rospy.logerr("App Manager : failed to flip [%s]" % resp.error_message)
 
+
     def spin(self):
         while not rospy.is_shutdown():
             gateway_info = self._gateway_services['gateway_info'](timeout=rospy.Duration(0.3))
@@ -495,3 +495,4 @@ class RappManager(object):
                         break
             # don't need a sleep since our timeout on the service call acts like this.
         rospy.spin()
+
