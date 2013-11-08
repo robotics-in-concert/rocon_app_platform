@@ -125,6 +125,7 @@ class Rapp(object):
             data['share'] = app_data.get('share',1)
             data['launch'] = self._find_rapp_resource(app_data['launch'], 'launch', app_name, rospack=rospack)
             data['launch_args'] = get_standard_args(data['launch'])
+            rospy.loginfo("App Manager : application requests the following standard arguments " + str(data['launch_args']))
             data['interface'] = self._load_interface(self._find_rapp_resource(app_data['interface'], 'interface', app_name, rospack=rospack))
             data['pairing_clients'] = []
             data['pairing_clients'] = self._load_pairing_clients(app_data, path)
@@ -386,7 +387,8 @@ def get_standard_args(roslaunch_file):
         loader = roslaunch.xmlloader.XmlLoader(resolve_anon=False)
         config = load_config_default([roslaunch_file], None, loader=loader, 
                                      verbose=False, assign_machines=False)
-        available_args = loader.root_context.resolve_dict['arg']
+        available_args = \
+                [str(x) for x in loader.root_context.resolve_dict['arg']]
         return [x for x in available_args if x in Rapp.standard_args]
     except RLException as e:
         rospy.logerr("App Manager : Failed to parse top-level args from rapp " +
@@ -403,7 +405,8 @@ def prepare_launch_text(launch_file, launch_args, application_namespace,
       @type str
       @param launch_args: list of standard args that should be passed to
              this launch file and are expected by it
-      @param application_namespace ; unique name granted indirectly via the gateways, we namespace everything under this
+      @param application_namespace ; unique name granted indirectly via the 
+             gateways, we namespace everything under this
       @type str
       @param gateway_name ; unique name granted to the gateway
       @type str
