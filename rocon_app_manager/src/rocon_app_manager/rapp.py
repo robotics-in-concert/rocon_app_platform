@@ -11,11 +11,12 @@ import os
 import yaml
 from roslib.packages import InvalidROSPkgException
 import rospy
+from roslaunch.config import load_config_default
+from roslaunch.core import RLException
 import roslaunch.parent
 import traceback
 import tempfile
 import rocon_utilities
-import utils
 from .exceptions import AppException, InvalidRappException
 import rocon_app_manager_msgs.msg as rapp_manager_msgs
 import rocon_std_msgs.msg as rocon_std_msgs
@@ -23,7 +24,6 @@ import rocon_std_msgs.msg as rocon_std_msgs
 ##############################################################################
 # Class
 ##############################################################################
-
 
 class PairingClient(object):
     '''
@@ -59,6 +59,9 @@ class Rapp(object):
     # I should add a __slots__ definition here to make it easy to read
     path = None
     data = {}
+    standard_args = ['gateway_name', 'application_namespace', 'platform_os'
+                     'platform_version', 'platform_system', 'platform_type'
+                     'platform_name']
 
     def __init__(self, resource_name, resource_share, rospack=None):
         '''
@@ -124,6 +127,8 @@ class Rapp(object):
             data['description'] = app_data.get('description', '')
             data['platform'] = app_data['platform']
             data['launch'] = self._find_rapp_resource(app_data['launch'], 'launch', app_name, rospack=rospack)
+            data['launch_args'] = get_standard_args(data['launch'])
+            rospy.loginfo("App Manager : application requests the following standard arguments " + str(data['launch_args']))
             data['interface'] = self._load_interface(self._find_rapp_resource(app_data['interface'], 'interface', app_name, rospack=rospack))
             data['pairing_clients'] = []
             data['pairing_clients'] = self._load_pairing_clients(app_data, path)
@@ -228,7 +233,7 @@ class Rapp(object):
             clients.append(PairingClient(client_type, manager_data, app_data))
         return clients
 
-    def start(self, application_namespace, remappings=[], force_screen=False):
+    def start(self, application_namespace, gateway_name, platform_info, remappings=[], force_screen=False):
         '''
           Some important jobs here.
 
@@ -241,6 +246,10 @@ class Rapp(object):
 
           @param application_namespace ; unique name granted indirectly via the gateways, we namespace everything under this
           @type str
+          @param gateway_name ; unique name granted to the gateway
+          @type str
+          @param platform_info ; unique name granted to the gateway
+          @type PlatformTuple
           @param remapping : rules for the app flips.
           @type list of rocon_std_msgs.msg.Remapping values.
           @param force_screen : whether to roslaunch the app with --screen or not
@@ -252,7 +261,9 @@ class Rapp(object):
         # Starts rapp
         try:
             temp = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
-            launch_text = '<launch>\n  <include ns="%s" file="%s"/>\n</launch>\n' % (application_namespace, data['launch'])
+            launch_text = prepare_launch_text(data['launch'], 
+                    data['launch_args'], application_namespace, gateway_name,
+                    platform_info)
             temp.write(launch_text)
             temp.close()  # unlink it later
 
@@ -362,3 +373,62 @@ def dict_to_KeyValue(d):
     for k, v in d.iteritems():
         l.append(rocon_std_msgs.KeyValue(k, str(v)))
     return l
+
+def get_standard_args(roslaunch_file):
+    '''
+      Given the Rapp launch file, this function parses the top-level args
+      in the file. Returns the complete list of top-level arguments that 
+      match standard args so that they can be passed to the launch file
+
+      @param roslaunch_file : rapp launch file we are parsing for arguments
+      @type str
+      @return list of top-level arguments that match standard arguments. Empty
+              list on parse failure
+      @rtype [str]
+    '''
+    try:
+        loader = roslaunch.xmlloader.XmlLoader(resolve_anon=False)
+        config = load_config_default([roslaunch_file], None, loader=loader, 
+                                     verbose=False, assign_machines=False)
+        available_args = \
+                [str(x) for x in loader.root_context.resolve_dict['arg']]
+        return [x for x in available_args if x in Rapp.standard_args]
+    except RLException as e:
+        rospy.logerr("App Manager : Failed to parse top-level args from rapp " +
+                     "launch file. Error: " + str(e))
+        return []
+
+def prepare_launch_text(launch_file, launch_args, application_namespace, 
+                        gateway_name, platform_info):
+    '''
+      Prepate the launch file text. Append some standard arguments if the
+      launch file is expecting them.
+
+      @param launch_file: fully resolved launch file path
+      @type str
+      @param launch_args: list of standard args that should be passed to
+             this launch file and are expected by it
+      @param application_namespace ; unique name granted indirectly via the 
+             gateways, we namespace everything under this
+      @type str
+      @param gateway_name ; unique name granted to the gateway
+      @type str
+      @param platform_info ; unique name granted to the gateway
+      @type PlatformTuple
+    '''
+
+    # Prepare argument mapping
+    launch_arg_mapping = {}
+    launch_arg_mapping['application_namespace'] = application_namespace
+    launch_arg_mapping['gateway_name'] = gateway_name
+    launch_arg_mapping['platform_os'] = platform_info.os
+    launch_arg_mapping['platform_version'] = platform_info.version
+    launch_arg_mapping['platform_system'] = platform_info.system
+    launch_arg_mapping['platform_type'] = platform_info.platform
+    launch_arg_mapping['platform_name'] = platform_info.name
+
+    launch_text = '<launch>\n  <include ns="%s" file="%s">\n' % (application_namespace, launch_file)
+    for arg in launch_args:
+        launch_text += '    <arg name="%s" value="%s"/>' % (arg, launch_arg_mapping[arg])
+    launch_text += '  </include>\n</launch>\n'
+    return launch_text

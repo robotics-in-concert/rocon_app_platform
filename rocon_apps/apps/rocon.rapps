@@ -1,8 +1,8 @@
+# If no share variable is specified, it defaults to 1.
+
 apps:
  - name: rocon_apps/chirp
-   share: 1
  - name: rocon_apps/talker
-   share: 1
  - name: rocon_apps/listener
    share: 2
  
