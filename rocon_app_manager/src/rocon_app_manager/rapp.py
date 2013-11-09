@@ -63,18 +63,22 @@ class Rapp(object):
                      'platform_version', 'platform_system', 'platform_type'
                      'platform_name']
 
-    def __init__(self, resource_name, rospack=None):
+    def __init__(self, resource_name, resource_share, rospack=None):
         '''
           @param rospack : a cache to help with repeat calls (optional)
           @type rospkg.RosPack
-          @param resource_name : a package/name pair for this rapp
+          @param resource_name : a package/name pair for this rapp. 
           @type str/str
+          @param resource_share : how many can share this app.
+          @type uint16
         '''
         self.filename = ""
         self._connections = {}
         for connection_type in ['publishers', 'subscribers', 'services', 'action_clients', 'action_servers']:
             self._connections[connection_type] = []
+
         self._load_from_resource_name(resource_name, rospack=rospack)
+        self.data['share'] = resource_share
 
     def __repr__(self):
         string = ""
@@ -122,7 +126,6 @@ class Rapp(object):
             data['display_name'] = app_data.get('display', app_name)
             data['description'] = app_data.get('description', '')
             data['platform'] = app_data['platform']
-            data['share'] = app_data.get('share',1)
             data['launch'] = self._find_rapp_resource(app_data['launch'], 'launch', app_name, rospack=rospack)
             data['launch_args'] = get_standard_args(data['launch'])
             rospy.loginfo("App Manager : application requests the following standard arguments " + str(data['launch_args']))
