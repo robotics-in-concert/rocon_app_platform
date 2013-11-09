@@ -67,7 +67,7 @@ class Rapp(object):
         '''
           @param rospack : a cache to help with repeat calls (optional)
           @type rospkg.RosPack
-          @param resource_name : a package/name pair for this rapp. 
+          @param resource_name : a package/name pair for this rapp.
           @type str/str
           @param resource_share : how many can share this app.
           @type uint16
@@ -128,7 +128,7 @@ class Rapp(object):
             data['platform'] = app_data['platform']
             data['launch'] = self._find_rapp_resource(app_data['launch'], 'launch', app_name, rospack=rospack)
             data['launch_args'] = get_standard_args(data['launch'])
-            rospy.loginfo("App Manager : application requests the following standard arguments " + str(data['launch_args']))
+            #rospy.loginfo("App Manager : application requests the following standard arguments " + str(data['launch_args']))
             data['interface'] = self._load_interface(self._find_rapp_resource(app_data['interface'], 'interface', app_name, rospack=rospack))
             data['pairing_clients'] = []
             data['pairing_clients'] = self._load_pairing_clients(app_data, path)
