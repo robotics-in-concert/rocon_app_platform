@@ -60,29 +60,22 @@ class Rapp(object):
     path = None
     data = {}
 
-    def __init__(self, resource, rospack=None):
+    def __init__(self, resource_name, resource_share, rospack=None):
         '''
           @param rospack : a cache to help with repeat calls (optional)
           @type rospkg.RosPack
-          @param resource : resource information. a package/name pair for this rapp. how many can share this app.
-                            resource may be a package/name pair string if it does not have share. This is for backward compatibility
-          @type {name: str/str, share: uint16} or str/str
-                
+          @param resource_name : a package/name pair for this rapp. 
+          @type str/str
+          @param resource_share : how many can share this app.
+          @type uint16
         '''
         self.filename = ""
         self._connections = {}
         for connection_type in ['publishers', 'subscribers', 'services', 'action_clients', 'action_servers']:
             self._connections[connection_type] = []
 
-        # if resource is just a package/name pair string
-        if isinstance(resource, str): 
-            self._load_from_resource_name(resource, rospack=rospack)
-            self.data['share'] = 1
-        else: # if it is name, share 
-            self._load_from_resource_name(resource['name'], rospack=rospack)
-            self.data['share'] = resource.get('share',1)
-
-
+        self._load_from_resource_name(resource_name, rospack=rospack)
+        self.data['share'] = resource_share
 
     def __repr__(self):
         string = ""
