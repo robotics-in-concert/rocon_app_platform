@@ -195,7 +195,6 @@ class RappManager(object):
                 else:
                     rospy.logwarn('App : ' + str(app.data['name']) + ' is incompatible. App : (' + str(app.data['platform']) + ')  App Manager : (' +
                                   str(self.platform_info.os) + '.' + str(self.platform_info.version) + '.' + str(self.platform_info.system) + '.' + str(self.platform_info.platform) + ')')
-        rospy.logwarn("Finished getting rap lists")
 
     ##########################################################################
     # Ros Callbacks
