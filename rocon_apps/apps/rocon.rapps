@@ -2,10 +2,7 @@
 
 apps:
  - name: rocon_apps/chirp
+   share: -1
  - name: rocon_apps/talker
  - name: rocon_apps/listener
-   share: 2
- 
-# Currently not updated.
-# - rocon_apps/turtlesim_control
-# - rocon_apps/turtlesim_viz
+   share: 5
