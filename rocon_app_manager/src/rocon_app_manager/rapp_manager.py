@@ -62,7 +62,7 @@ class RappManager(object):
 
         self.apps = {}
         self.app_list_file = {}
-        self._get_pre_installed_app_list() # It sets up an app directory and load installed app list from directory
+        self._get_pre_installed_app_list()  # It sets up an app directory and load installed app list from directory
         self.caps_list = {}
         self._determine_runnable_apps()
         self._initialising_services = False
@@ -148,7 +148,7 @@ class RappManager(object):
             self._publishers = {}
         self._service_names = {}
         self._publisher_names = {}
-        base_name = self._gateway_name if self._gateway_name else self._param['robot_name']  # latter option is for standalone mode 
+        base_name = self._gateway_name if self._gateway_name else self._param['robot_name']  # latter option is for standalone mode
         for name in self._default_service_names:
             self._service_names[name] = '/' + base_name + '/' + name
         for name in self._default_publisher_names:
@@ -379,6 +379,7 @@ class RappManager(object):
             rospy.logwarn("App Manager : %s" % resp.message)
             return resp
 
+        # check if the app requires capabilities
         if 'required_capabilities' in self.apps['runnable'][req.name].data:
             rospy.loginfo("App Manager : Starting required capabilities.")
             for cap in self.apps['runnable'][req.name].data['required_capabilities']:

@@ -243,7 +243,7 @@ class Rapp(object):
           @type list of rocon_app_manager_msgs.msg.Remapping values.
           @param force_screen : whether to roslaunch the app with --screen or not
           @type boolean
-          @param caps_list : this holds the list of available capabilities, if app needs capabilities 
+          @param caps_list : this holds the list of available capabilities, if app needs capabilities
           @type CapsList
         '''
         data = self.data
@@ -252,9 +252,10 @@ class Rapp(object):
         try:
             # Create modified roslaunch file include the application namespace (robot name + 'application')
             temp = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
-            launch_text = '<launch>\n  <include ns="%s" file="%s"/>\n</launch>\n' % (application_namespace, data['launch'])
+            launch_text = '<launch>\n  <include ns="%s" file="%s"/>\n</launch>\n'\
+                            % (application_namespace, data['launch'])
             temp.write(launch_text)
-            temp.close() # unlink it later
+            temp.close()  # unlink it later
 
             # initialise roslaunch
             self._launch = roslaunch.parent.ROSLaunchParent(rospy.get_param("/run_id"),
@@ -262,30 +263,30 @@ class Rapp(object):
                                                             is_core=False,
                                                             process_listeners=(),
                                                             force_screen=force_screen)
-            self._launch._load_config() # generate configuration
+            self._launch._load_config()  # generate configuration
 
-            if 'required_capabilities' in self.data: # apply capability-specific remappings are needed
-                caps_remap_from_list = [] # contains the app's topics/services/actions to be remapped
-                caps_remap_to_list = [] # contains the new topic/service/action names
-                for cap in self.data['required_capabilities']: # get capability-specific remappings
+            if 'required_capabilities' in self.data:  # apply capability-specific remappings needed
+                caps_remap_from_list = []  # contains the app's topics/services/actions to be remapped
+                caps_remap_to_list = []  # contains the new topic/service/action names
+                for cap in self.data['required_capabilities']:  # get capability-specific remappings
                     rospy.loginfo("App Manager : Configuring remappings for capabilty '" + cap['name'] + "'.")
                     if caps_list:
                         try:
                             caps_list.get_cap_remappings(cap, caps_remap_from_list, caps_remap_to_list)
                         except MissingCapabilitiesException as e:
                             rospy.logerr("App Manager : Couldn't get cap remappings. Error: " + str(e))
-                    else: # should not happen, since app would have been pruned
+                    else:  # should not happen, since app would have been pruned
                         raise Exception("Capabilities required, but capability list not provided.")
-                for cap_remap in caps_remap_from_list: # apply cap remappings
+                for cap_remap in caps_remap_from_list:  # apply cap remappings
                     remap_applied = False
-                    for node in self._launch.config.nodes: # look for cap remap topic is remap topics
-                        for node_remap in node.remap_args: # topic from - topic to pairs
+                    for node in self._launch.config.nodes:  # look for cap remap topic is remap topics
+                        for node_remap in node.remap_args:  # topic from - topic to pairs
                             if cap_remap in node_remap[0]:
                                 node_remap[1] = unicode(caps_remap_to_list[caps_remap_from_list.index(cap_remap)])
                                 rospy.loginfo("App Manager : Will remap '" + node_remap[0]
                                               + "' to '" + node_remap[1] + "'.")
                                 remap_applied = True
-                    if not remap_applied: # can't determine to which the remapping should be applied to
+                    if not remap_applied:  # can't determine to which the remapping should be applied to
                         rospy.logwarn("App Manager : Could not determine remapping for capability topic '"
                                       + cap_remap + "'.")
                         rospy.logwarn("App Manager : App might not function correctly."
@@ -326,7 +327,8 @@ class Rapp(object):
             self._launch.start()
 
             data['status'] = 'Running'
-            return True, "Success", self._connections['subscribers'], self._connections['publishers'], self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
+            return True, "Success", self._connections['subscribers'], self._connections['publishers'], \
+                self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
 
         except Exception as e:
             print str(e)
@@ -353,9 +355,11 @@ class Rapp(object):
             error_msg = "Error while stopping rapp '" + data['name'] + "'."
             rospy.loginfo(error_msg)
             data['status'] = 'Error'
-            return False, error_msg, self._connections['subscribers'], self._connections['publishers'], self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
+            return False, error_msg, self._connections['subscribers'], self._connections['publishers'], \
+                self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
 
-        return True, "Success", self._connections['subscribers'], self._connections['publishers'], self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
+        return True, "Success", self._connections['subscribers'], self._connections['publishers'], \
+                self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
 
     def is_running(self):
         '''

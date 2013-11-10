@@ -23,13 +23,17 @@ from .exceptions import MissingCapabilitiesException
 # Class
 ##############################################################################
 
+
 class CapsList(object):
     '''
-    Caps lists store the installed capabilities retrieved from the capability server
+    CapsLists stores the data about the available capabilities retrieved from the capability server
     '''
     def __init__(self):
         '''
-        Retrieve the specifications for the available interfaces from the capability server 
+        Retrieve the specifications for the available interfaces and providers from the capability server
+
+        @raise IOError: Exception is raised when retrieving the capability data from the capability server returned
+                        errors.
         '''
         self._spec_index, errors = service_discovery.spec_index_from_service("capability_server")
         if errors:
@@ -41,7 +45,7 @@ class CapsList(object):
         for interface in self._spec_index.interfaces:
             if self._spec_index.specs[interface].default_provider:
                 self._available_interfaces.append(interface)
-                self._providers[interface] = self._spec_index.specs[interface].default_provider
+                self._providers[interface] = self._spec_index.specs[self._spec_index.specs[interface].default_provider]
         for interface in self._spec_index.semantic_interfaces:
             if self._spec_index.specs[interface].default_provider:
                 self._available_semantic_interfaces.append(interface)
@@ -49,8 +53,14 @@ class CapsList(object):
 
     def compatibility_check(self, app):
         '''
-        Checks if all required capabilities of an app are available
+        Checks, if all required capabilities of an app are available
+
+        @param app: app data of the app to be checked
+        @type app: Rapp
+
+        @raise MissingCapabilitiesException: Raised, if one or more required capabilities are not available.
         '''
+
         all_caps_available = True
         missing_capabilities = str()
         key = 'required_capabilities'
@@ -66,84 +76,85 @@ class CapsList(object):
     def start_capability(self, name, preferred_provider=None):
         '''
         Triggers the start of the capability via the capability server
-        
+
         @param name: name of the capability to start
         @type name: string
-        
+
         @param preferred_provider: name of the preferred provider of the capability (optional)
-        @type name: string
-        
-        @raise ROSException: raised if waiting for start_capability service times out
-        @raise ServiceException: raised if an error occurs while the service is processed
-        
+        @type preferred_provider: string
+
         @return: true, if the service call for starting the capability returned true,
-                 false if service call returned false or a timeout occurred while waiting for service
+                 false if service call returned false, a timeout occured or the service call returned with an error
         @type: boolean
         '''
         try:
             rospy.wait_for_service('capability_server/start_capability', 1.0)
         except rospy.ROSException as exc:
-            raise IOError("Service timeout: " + str (exc))
+            rospy.logerr("Service timeout: " + str(exc))
             return False
+
         start_cap_srv = rospy.ServiceProxy('capability_server/start_capability',
                                            capabilities_srvs.StartCapability)
         try:
             resp_start_cap = start_cap_srv(name, preferred_provider)
         except rospy.ServiceException as exc:
-            error = "Service did not process request: " + str(exc)
-            raise IOError(error)
+            rospy.logerr("Service did not process request: " + str(exc))
+            raise False
+
         return resp_start_cap.successful
 
     def stop_capability(self, name):
         '''
         Triggers the stop of the capability via the capability server
-        
+
         @param name: name of the capability to stop
         @type name: string
-        
-        @raise ServiceException: raised if an error occurs while the service is processed
-        
+
         @return: true, if the service call for stopping the capability returned true,
-                 false if service call returned false or a timeout occurred while waiting for service
+                 false if service call returned false, a timeout occured or the service call returned with an error
         @type: boolean
         '''
+
         try:
             rospy.wait_for_service('capability_server/stop_capability', 1.0)
         except rospy.ROSException as exc:
-            raise IOError("Service timeout: " + str (exc))
+            rospy.logerr("Service timeout: " + str(exc))
             return False
+
         start_cap_srv = rospy.ServiceProxy('capability_server/stop_capability',
                                            capabilities_srvs.StopCapability)
+
         try:
             resp_start_cap = start_cap_srv(name)
         except rospy.ServiceException as exc:
-            error = "Service did not process request: " + str(exc)
-            raise IOError(error)
+            rospy.logerr("Service did not process request: " + str(exc))
+            return False
+
         return resp_start_cap.successful
 
     def get_cap_remappings(self, cap, caps_remap_from_list, caps_remap_to_list):
         '''
-        Gathers the required remappings for this app, based on the provided cap data
-        
+        Gathers the required remappings for a specific capability
+
         The rapp description is expected to define all topics, services and actions required for the capability
         interfaces the rapp is depending on. This information is added to the 'caps_remap_from_list' list.
-        
+
         Next the (semantic) capability's interface specification as well as the provider specification is parsed
         in order to determine the new topic, service and action names. Here three cases are possible:
          * if normal interface, remap to what is specified there
          * if semantic interface, remap to the semantic interface's remappings
          * if the provider specifies own remappings, apply them as well
         The final remapping is stored in 'caps_remap_to_list'.
-        
-        @param cap: cap data as specified in the app description
+
+        @param cap: cap data as specified in the rapp description
         @type name: dict
-        
+
         @param caps_remap_from_list: topics to be remapped
         @type name: dict
-        
+
         @param caps_remap_to_list: new names for remapped topics
         @type name: dict
-        
+
         @raise MissingCapabilitiesException: The requested cap is not available.
         '''
 
@@ -174,21 +185,23 @@ class CapsList(object):
                     caps_remap_to_list.append(topic)
                 else:
                     rospy.logwarn("App Manager : Capability topic '" + topic + "' not specified in rapp description."
-                                  + " can't apply automatic remapping for this topic.")
+                                  + " Can't apply automatic remapping for this topic.")
 
             for service in interface.required_services:
                 if service in cap['interface']['services']['requires']:
                     caps_remap_from_list.append(cap['interface']['services']['requires'][service])
                     caps_remap_to_list.append(service)
                 else:
-                    rospy.logwarn("App Manager : Capability service '" + service + "' not specified in rapp description."
+                    rospy.logwarn("App Manager : Capability service '" + service
+                                  + "' not specified in rapp description."
                                   + " Can't apply automatic remapping for this service.")
             for service in interface.provided_services:
                 if service in cap['interface']['services']['provides']:
                     caps_remap_from_list.append(cap['interface']['services']['provides'][service])
                     caps_remap_to_list.append(service)
                 else:
-                    rospy.logwarn("App Manager : Capability service '" + service + "' not specified in rapp description."
+                    rospy.logwarn("App Manager : Capability service '" + service
+                                  + "' not specified in rapp description."
                                   + " Can't apply automatic remapping for this service.")
 
             for action in interface.required_actions:
@@ -229,8 +242,7 @@ class CapsList(object):
                                   + "' not specified in rapp description. Can't apply automatic remapping for it.")
 
         # check the interface's provider for additional remappings - not yet supported
-#        if self._providers[interface.name].remappings:
-#            if 'topics' in self._providers[interface.name].remappings:
-#                for topic_remap in self._providers[interface.name].remappings['topics']:
-#                    if topic_remap.key() in caps_remap_to_list:
-#                        caps_remap_to_list[topic_remap.key()] = topic_remap.value()
+        for remap in self._providers[interface.name].remappings:
+            if remap in caps_remap_to_list:
+                index = caps_remap_to_list.index(remap)
+                caps_remap_to_list[index] = self._providers[interface.name].remappings[remap]
