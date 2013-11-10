@@ -114,29 +114,33 @@ class Rapp(object):
         rospy.loginfo("App Manager : loading app '%s'" % app_name)  # str(path)
         self.filename = path
 
-        with open(path, 'r') as f:
-            data = {}
-            app_data = yaml.load(f.read())
+        try: 
+            with open(path, 'r') as f:
+                data = {}
+                app_data = yaml.load(f.read())
 
-            for reqd in ['launch', 'interface', 'platform']:
-                if not reqd in app_data:
-                    raise AppException("Invalid appfile format [" + path + "], missing required key [" + reqd + "]")
+                for reqd in ['launch', 'interface', 'platform']:
+                    if not reqd in app_data:
+                        raise AppException("Invalid appfile format [" + path + "], missing required key [" + reqd + "]")
 
-            data['name'] = app_name
-            data['display_name'] = app_data.get('display', app_name)
-            data['description'] = app_data.get('description', '')
-            data['platform'] = app_data['platform']
-            data['launch'] = self._find_rapp_resource(app_data['launch'], 'launch', app_name, rospack=rospack)
-            data['launch_args'] = get_standard_args(data['launch'])
-            #rospy.loginfo("App Manager : application requests the following standard arguments " + str(data['launch_args']))
-            data['interface'] = self._load_interface(self._find_rapp_resource(app_data['interface'], 'interface', app_name, rospack=rospack))
-            data['pairing_clients'] = []
-            data['pairing_clients'] = self._load_pairing_clients(app_data, path)
-            if 'icon' not in app_data:
-                data['icon'] = None
-            else:
-                data['icon'] = self._find_rapp_resource(app_data['icon'], 'icon', app_name, rospack=rospack)
-            data['status'] = 'Ready'
+                data['name'] = app_name
+                data['display_name'] = app_data.get('display', app_name)
+                data['description'] = app_data.get('description', '')
+                data['platform'] = app_data['platform']
+                data['launch'] = self._find_rapp_resource(app_data['launch'], 'launch', app_name, rospack=rospack)
+                data['launch_args'] = get_standard_args(data['launch'])
+                #rospy.loginfo("App Manager : application requests the following standard arguments " + str(data['launch_args']))
+                data['interface'] = self._load_interface(self._find_rapp_resource(app_data['interface'], 'interface', app_name, rospack=rospack))
+                data['pairing_clients'] = []
+                data['pairing_clients'] = self._load_pairing_clients(app_data, path)
+                if 'icon' not in app_data:
+                    data['icon'] = None
+                else:
+                    data['icon'] = self._find_rapp_resource(app_data['icon'], 'icon', app_name, rospack=rospack)
+                data['status'] = 'Ready'
+        except Exception as e:
+            rospy.logwarn("App Manager : Failed to load '%s' from file. Skipping.." % app_name)
+            raise Exception(e)
 
         self.data = data
 
