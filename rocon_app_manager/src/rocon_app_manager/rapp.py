@@ -25,6 +25,7 @@ import rocon_std_msgs.msg as rocon_std_msgs
 # Class
 ##############################################################################
 
+
 class PairingClient(object):
     '''
       A pairing client runs an app which is one which will work in tandem with

@@ -188,17 +188,14 @@ class RappManager(object):
         for resource_name in self._param['rapp_lists']:
             # should do some exception checking here, also utilise AppListFile properly.
             filename = rocon_utilities.find_resource_from_string(resource_name)
-            try:
-                app_list_file = RappListFile(filename)
-            except IOError as e:  # if file is not found
-                rospy.logwarn("App Manager : %s" % str(e))
-                continue
+            app_list_file = RappListFile(filename)
             for app in app_list_file.available_apps:
                 if platform_compatible(platform_tuple(self.platform_info.os, self.platform_info.version, self.platform_info.system, self.platform_info.platform), app.data['platform']):
                     self.apps['pre_installed'][app.data['name']] = app
                 else:
                     rospy.logwarn('App : ' + str(app.data['name']) + ' is incompatible. App : (' + str(app.data['platform']) + ')  App Manager : (' +
                                   str(self.platform_info.os) + '.' + str(self.platform_info.version) + '.' + str(self.platform_info.system) + '.' + str(self.platform_info.platform) + ')')
+        rospy.logwarn("Finished getting rap lists")
 
     ##########################################################################
     # Ros Callbacks
