@@ -9,6 +9,7 @@
 
 import os
 import yaml
+import rospkg
 from roslib.packages import InvalidROSPkgException
 import rospy
 from roslaunch.config import load_config_default
@@ -375,10 +376,11 @@ def dict_to_KeyValue(d):
         l.append(rocon_std_msgs.KeyValue(k, str(v)))
     return l
 
+
 def get_standard_args(roslaunch_file):
     '''
       Given the Rapp launch file, this function parses the top-level args
-      in the file. Returns the complete list of top-level arguments that 
+      in the file. Returns the complete list of top-level arguments that
       match standard args so that they can be passed to the launch file
 
       @param roslaunch_file : rapp launch file we are parsing for arguments
@@ -389,17 +391,20 @@ def get_standard_args(roslaunch_file):
     '''
     try:
         loader = roslaunch.xmlloader.XmlLoader(resolve_anon=False)
-        config = load_config_default([roslaunch_file], None, loader=loader, 
+        unused_config = load_config_default([roslaunch_file], None, loader=loader,
                                      verbose=False, assign_machines=False)
         available_args = \
                 [str(x) for x in loader.root_context.resolve_dict['arg']]
         return [x for x in available_args if x in Rapp.standard_args]
-    except RLException as e:
-        rospy.logerr("App Manager : Failed to parse top-level args from rapp " +
-                     "launch file. Error: " + str(e))
+    except (RLException, rospkg.common.ResourceNotFound) as e:
+        # The ResourceNotFound lets us catch errors when the launcher has invalid
+        # references to resources
+        rospy.logerr("App Manager : failed to parse top-level args from rapp " +
+                     "launch file [" + str(e) + "]")
         return []
 
-def prepare_launch_text(launch_file, launch_args, application_namespace, 
+
+def prepare_launch_text(launch_file, launch_args, application_namespace,
                         gateway_name, platform_info):
     '''
       Prepate the launch file text. Append some standard arguments if the
@@ -409,7 +414,7 @@ def prepare_launch_text(launch_file, launch_args, application_namespace,
       @type str
       @param launch_args: list of standard args that should be passed to
              this launch file and are expected by it
-      @param application_namespace ; unique name granted indirectly via the 
+      @param application_namespace ; unique name granted indirectly via the
              gateways, we namespace everything under this
       @type str
       @param gateway_name ; unique name granted to the gateway
