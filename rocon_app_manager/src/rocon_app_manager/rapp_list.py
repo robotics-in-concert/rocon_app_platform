@@ -63,15 +63,11 @@ class RappListFile(object):
             rospack = rospkg.RosPack()
             for app_resource in apps_yaml['apps']:
                 app = None
-                # if resource is just a package/name pair string
-                if isinstance(app_resource, str):
+                app_name = app_resource['name']
+                app_share = app_resource.get('share', 1)
+                if app_share < -1:  # -1 is reserved for App.SHAREABLE_WITH_NO_LIMIT
+                    rospy.logerr("App Manager: incorrectly configured a negative number for app shares, defaulting to 1 [%s]" % app_name)
                     app_share = 1
-                else:  # if it is name, share
-                    app_name = app_resource['name']
-                    app_share = app_resource.get('share', 1)
-                    if app_share < -1:  # -1 is reserved for App.SHAREABLE_WITH_NO_LIMIT
-                        rospy.logerr("App Manager: incorrectly configured a negative number for app shares, defaulting to 1 [%s]" % app_name)
-                        app_share = 1
                 try:
                     app = Rapp(app_name, app_share, rospack)
                     available_apps.append(app)
