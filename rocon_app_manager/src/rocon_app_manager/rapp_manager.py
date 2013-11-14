@@ -329,6 +329,8 @@ class RappManager(object):
                 self._publishers['app_list'].publish(self._get_app_list(), [])
         except KeyError:
             pass
+        except rospy.exceptions.ROSException:  # publishing to a closed topic.
+            pass
 
     def _process_start_app(self, req):
         resp = rapp_manager_srvs.StartAppResponse()
@@ -391,11 +393,11 @@ class RappManager(object):
                 self._current_rapp.stop()
 
         if self._remote_name:
-            self._flip_connections(self._remote_name, subscribers, gateway_msgs.ConnectionType.SUBSCRIBER, True)
-            self._flip_connections(self._remote_name, publishers, gateway_msgs.ConnectionType.PUBLISHER, True)
-            self._flip_connections(self._remote_name, services, gateway_msgs.ConnectionType.SERVICE, True)
-            self._flip_connections(self._remote_name, action_clients, gateway_msgs.ConnectionType.ACTION_CLIENT, True)
-            self._flip_connections(self._remote_name, action_servers, gateway_msgs.ConnectionType.ACTION_SERVER, True)
+            self._flip_connections(self._remote_name, subscribers, gateway_msgs.ConnectionType.SUBSCRIBER, cancel_flag=True)
+            self._flip_connections(self._remote_name, publishers, gateway_msgs.ConnectionType.PUBLISHER, cancel_flag=True)
+            self._flip_connections(self._remote_name, services, gateway_msgs.ConnectionType.SERVICE, cancel_flag=True)
+            self._flip_connections(self._remote_name, action_clients, gateway_msgs.ConnectionType.ACTION_CLIENT, cancel_flag=True)
+            self._flip_connections(self._remote_name, action_servers, gateway_msgs.ConnectionType.ACTION_SERVER, cancel_flag=True)
         if resp.stopped:
             self._current_rapp = None
             self._publish_app_list()
