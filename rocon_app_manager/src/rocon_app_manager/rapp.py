@@ -283,6 +283,7 @@ class Rapp(object):
             # Prefix with robot name by default (later pass in remap argument)
             remap_from_list = [remapping.remap_from for remapping in remappings]
             remap_to_list = [remapping.remap_to for remapping in remappings]
+
             for connection_type in ['publishers', 'subscribers', 'services', 'action_clients', 'action_servers']:
                 self._connections[connection_type] = []
                 for t in data['interface'][connection_type]:
@@ -308,6 +309,7 @@ class Rapp(object):
                         else:
                             flipped_name = '/' + application_namespace + '/' + t
                         self._connections[connection_type].append(flipped_name)
+            resolve_chain_remappings(self._launch.config.nodes)
             self._launch.start()
 
             data['status'] = 'Running'
@@ -438,3 +440,26 @@ def prepare_launch_text(launch_file, launch_args, application_namespace,
         launch_text += '    <arg name="%s" value="%s"/>' % (arg, launch_arg_mapping[arg])
     launch_text += '  </include>\n</launch>\n'
     return launch_text
+
+def resolve_chain_remappings(nodes):
+    """ 
+        resolve chain remapping rules contains in node remapping arguments
+        replace the node remapping argument
+
+        @param nodes: roslaunch nodes
+        @type: roslaunch.Nodes[]
+    """
+    for n in nodes:
+        new_remap_args_dict = {}
+        
+        for fr, to in n.remap_args:
+            if str(fr) in new_remap_args_dict:
+                rospy.logwarn("App Manager : Remapping rule for %s already exists. Ignoring remapping rule from %s to %s",str(fr),str(fr),str(to))
+            else:
+                # if there is a value which matches with remap_from, the value should be replaced with the new remap_to
+                keys = [k for k, v in new_remap_args_dict.items() if v == str(fr)]
+                for k in keys:
+                    new_remap_args_dict[k] = str(to)
+
+                new_remap_args_dict[str(fr)] = str(to)
+        n.remap_args = new_remap_args_dict.items()
