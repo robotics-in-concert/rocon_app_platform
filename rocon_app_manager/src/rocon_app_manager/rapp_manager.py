@@ -203,7 +203,9 @@ class RappManager(object):
     def _process_invite(self, req):
         # Todo : add checks for whether client is currently busy or not
         response = rapp_manager_srvs.InviteResponse(True, rapp_manager_msgs.ErrorCodes.SUCCESS, "")
-        if self._param['local_remote_controllers_only']:
+        if self._param['local_remote_controllers_only'] and not req.cancel:
+            # Don't run this code if cancelling - sometimes our hub will have disappeared and we
+            # just want to cancel regardless. Not the cleanest exit, but it will do.
             if self._gateway_name is None:
                 return rapp_manager_srvs.InviteResponse(False,
                                                         rapp_manager_msgs.ErrorCodes.NO_LOCAL_GATEWAY,
@@ -266,12 +268,12 @@ class RappManager(object):
         # Cleaning up and setting final state
         if req.cancel:
             if req.remote_target_name == self._remote_name:
-                rospy.loginfo("App Manager : cancelling the relayed controls to remote system [%s]" % str(req.remote_target_name))
+                rospy.loginfo("App Manager : cancelling remote control of this system [%s]" % str(req.remote_target_name))
                 if self._current_rapp:
                     self._process_stop_app()
                 self._remote_name = None
         else:
-            rospy.loginfo("App Manager : accepting invitation to relay controls to remote system [%s]" % str(req.remote_target_name))
+            rospy.loginfo("App Manager : accepting invitation to be remote controlled [%s]" % str(req.remote_target_name))
             self._remote_name = req.remote_target_name
         return True
 
@@ -479,8 +481,12 @@ class RappManager(object):
         if resp.result == 0:
             rospy.loginfo("App Manager : successfully flipped %s" % str([os.path.basename(name) for name in connection_names]))
         else:
-            rospy.logerr("App Manager : failed to flip [%s]" % resp.error_message)
-
+            if resp.result == gateway_msgs.ErrorCodes.NO_HUB_CONNECTION and cancel_flag:
+                # can often happen if a concert goes down and brings the hub down as as well
+                # so just suppress this warning if it's a request to cancel
+                rospy.logwarn("App Manager : failed to cancel flips (probably remote hub intentionally went down as well) [%s, %s]" % (resp.result, resp.error_message))
+            else:
+                rospy.logerr("App Manager : failed to flip [%s, %s]" % (resp.result, resp.error_message))
 
     def spin(self):
         while not rospy.is_shutdown():
