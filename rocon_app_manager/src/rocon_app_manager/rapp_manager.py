@@ -39,8 +39,6 @@ class RappManager(object):
         Robot App Manager ~ Rocon App Manager
     """
 
-    default_application_namespace = "application"
-
     ##########################################################################
     # Initialisation
     ##########################################################################
@@ -156,7 +154,7 @@ class RappManager(object):
             self._service_names[name] = '/' + base_name + '/' + name
         for name in self._default_publisher_names:
             self._publisher_names[name] = '/' + base_name + '/' + name
-        self._application_namespace = base_name + '/' + RappManager.default_application_namespace  # ns to push apps into (see rapp.py)
+        self._application_namespace = base_name
         try:
             # Advertisable services - we advertise these by default advertisement rules for the app manager's gateway.
             self._services['platform_info'] = rospy.Service(self._service_names['platform_info'], rocon_std_srvs.GetPlatformInfo, self._process_platform_info)
@@ -250,9 +248,9 @@ class RappManager(object):
         # Variable setting
         if req.application_namespace == '':
             if self._gateway_name:
-                self._application_namespace = self._gateway_name + "/" + RappManager.default_application_namespace
+                self._application_namespace = self._gateway_name
             else:
-                self._application_namespace = RappManager.default_application_namespace
+                self._application_namespace = ''
         else:
             self._application_namespace = req.application_namespace
         # Flips/Unflips
@@ -499,4 +497,3 @@ class RappManager(object):
                         break
             # don't need a sleep since our timeout on the service call acts like this.
         rospy.spin()
-
