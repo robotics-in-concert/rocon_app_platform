@@ -68,6 +68,8 @@ class RappManager(object):
             request = rapp_manager_srvs.StartAppRequest(self._param['auto_start_rapp'], [])
             unused_response = self._process_start_app(request)
 
+        self._debug_ignores = {}  # a remote_controller_name : timestamp of the last time we logged an ignore response
+
     def _set_platform_info(self):
         self.platform_info = rocon_std_msgs.PlatformInfo()
         self.platform_info.os = rocon_std_msgs.PlatformInfo.OS_LINUX
@@ -224,8 +226,10 @@ class RappManager(object):
                 rospy.logwarn("App Manager : bastards are sending us repeat invites, so we ignore - we are already working for them! [%s]" % self._remote_name)
                 return True
             else:
-                # better than this would be to have a timestamp so it only shows it every 2mins or so instead of every second.
-                rospy.logdebug("App Manager : ignoring invitation from %s as it is already being remote controlled by %s" % (str(req.remote_target_name), self._remote_name))
+                if (req.remote_target_name not in self._debug_ignores or
+                     ((rospy.Time.now() - self._debug_ignores[req.remote_target_name]) > rospy.Duration(120))):
+                        self._debug_ignores[req.remote_target_name] = rospy.Time.now()
+                        rospy.loginfo("App Manager : ignoring invitation from %s [already invited by %s]" % (str(req.remote_target_name), self._remote_name))
                 return False
         # Variable setting
         if req.application_namespace == '':
