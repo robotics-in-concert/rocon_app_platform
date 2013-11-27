@@ -247,7 +247,8 @@ class RappManager(object):
                 rospy.logwarn("App Manager : bastards are sending us repeat invites, so we ignore - we are already working for them! [%s]" % self._remote_name)
                 return True
             else:
-                rospy.logwarn("App Manager : ignoring invitation from %s as it is already being remote controlled by %s" % (str(req.remote_target_name), self._remote_name))
+                # better than this would be to have a timestamp so it only shows it every 2mins or so instead of every second.
+                rospy.logdebug("App Manager : ignoring invitation from %s as it is already being remote controlled by %s" % (str(req.remote_target_name), self._remote_name))
                 return False
         # Variable setting
         if req.application_namespace == '':
