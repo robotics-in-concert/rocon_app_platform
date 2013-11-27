@@ -197,40 +197,38 @@ class RappManager(object):
                     remote_target_ip = gateway.ip
                     break
             if remote_target_ip is not None and self._gateway_ip == remote_target_ip:
-                response.result = self._accept_invitation(req)
-                if not response.result:
-                    response.error_code = rapp_manager_msgs.ErrorCodes.UNKNOWN  # Todo specify later
+                response = self._accept_invitation(req)
             else:
                 return rapp_manager_srvs.InviteResponse(False,
                                  rapp_manager_msgs.ErrorCodes.LOCAL_INVITATIONS_ONLY,
                                  "local invitations only permitted.")
         elif req.remote_target_name in self._param['remote_controller_whitelist']:
-            response.result = self._accept_invitation(req)
-            if not response.result:
-                response.error_code = rapp_manager_msgs.ErrorCodes.UNKNOWN  # Todo specify later
+            response = self._accept_invitation(req)
         elif len(self._param['remote_controller_whitelist']) == 0 and req.remote_target_name not in self._param['remote_controller_blacklist']:
-            response.result = self._accept_invitation(req)
-            if not response.result:
-                response.error_code = rapp_manager_msgs.ErrorCodes.UNKNOWN  # Todo specify later
+            response = self._accept_invitation(req)
         else:
-            return rapp_manager_srvs.InviteResponse(False, rapp_manager_msgs.ErrorCodes.UNKNOWN)  # Todo specify later
+            response = rapp_manager_srvs.InviteResponse(False, rapp_manager_msgs.ErrorCodes.UNKNOWN, "unknown error")
         return response
 
     def _accept_invitation(self, req):
+        '''
+          @return response message for the invitation
+          @rtype rapp_manager_srvs.InviteResponse(result, error_code, message)
+        '''
         # Abort checks
         if req.cancel and (req.remote_target_name != self._remote_name):
-            rospy.logwarn("App Manager : ignoring request from %s to cancel the relayed controls to remote system [%s]" % (str(req.remote_target_name), self._remote_name))
-            return False
+            rospy.logwarn("App Manager : ignoring request from %s to cancel invitation as it is not the current remote controller [%s]" % (str(req.remote_target_name), self._remote_name))
+            return rapp_manager_srvs.InviteResponse(False, rapp_manager_msgs.ErrorCodes.NOT_CURRENT_REMOTE_CONTROLLER, "ignoring request from %s to cancel invitation as it is not the current remote controller [%s]")
         if not req.cancel and self._remote_name is not None:
             if req.remote_target_name == self._remote_name:
                 rospy.logwarn("App Manager : bastards are sending us repeat invites, so we ignore - we are already working for them! [%s]" % self._remote_name)
-                return True
+                return rapp_manager_srvs.InviteResponse(True, rapp_manager_msgs.ErrorCodes.SUCCESS, "you are a bastard, stop spamming us - you already invited this app manager!")
             else:
                 if (req.remote_target_name not in self._debug_ignores or
                      ((rospy.Time.now() - self._debug_ignores[req.remote_target_name]) > rospy.Duration(120))):
                         self._debug_ignores[req.remote_target_name] = rospy.Time.now()
                         rospy.loginfo("App Manager : ignoring invitation from %s [already invited by %s]" % (str(req.remote_target_name), self._remote_name))
-                return False
+                return rapp_manager_srvs.InviteResponse(False, rapp_manager_msgs.ErrorCodes.ALREADY_REMOTE_CONTROLLED, "ignoring this invitation as the app manager is already remote controlled from elsewhere [%s]")
         # Variable setting
         if req.application_namespace == '':
             if self._gateway_name:
@@ -259,7 +257,7 @@ class RappManager(object):
         else:
             rospy.loginfo("App Manager : accepting invitation to be remote controlled [%s]" % str(req.remote_target_name))
             self._remote_name = req.remote_target_name
-        return True
+        return rapp_manager_srvs.InviteResponse(True, rapp_manager_msgs.ErrorCodes.SUCCESS, "success")
 
     def _process_platform_info(self, req):
         return rocon_std_srvs.GetPlatformInfoResponse(self.platform_info)
