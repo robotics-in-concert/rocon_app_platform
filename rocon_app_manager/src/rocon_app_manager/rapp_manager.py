@@ -242,9 +242,13 @@ class RappManager(object):
         if req.cancel and (req.remote_target_name != self._remote_name):
             rospy.logwarn("App Manager : ignoring request from %s to cancel the relayed controls to remote system [%s]" % (str(req.remote_target_name), self._remote_name))
             return False
-        if not req.cancel and req.remote_target_name == self._remote_name:
-            rospy.logwarn("App Manager : bastards are sending us repeat invites, so we ignore - we are already working for them! [%s]" % self._remote_name)
-            return True
+        if not req.cancel and self._remote_name is not None:
+            if req.remote_target_name == self._remote_name:
+                rospy.logwarn("App Manager : bastards are sending us repeat invites, so we ignore - we are already working for them! [%s]" % self._remote_name)
+                return True
+            else:
+                rospy.logwarn("App Manager : ignoring invitation from %s as it is already being remote controlled by %s" % (str(req.remote_target_name), self._remote_name))
+                return False
         # Variable setting
         if req.application_namespace == '':
             if self._gateway_name:
