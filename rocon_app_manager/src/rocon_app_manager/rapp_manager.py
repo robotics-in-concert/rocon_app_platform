@@ -28,6 +28,7 @@ import std_msgs.msg as std_msgs
 
 # local imports
 import exceptions
+from ros_parameters import setup_ros_parameters
 
 ##############################################################################
 # App Manager
@@ -54,7 +55,7 @@ class RappManager(object):
         self._services = {}
         self._publishers = {}
 
-        self._setup_ros_parameters()
+        self._param = setup_ros_parameters()
         self._set_platform_info()
         self._init_gateway_services()
         self._init_default_service_names()
@@ -66,30 +67,6 @@ class RappManager(object):
         if self._param['auto_start_rapp']:  # None and '' are both false here
             request = rapp_manager_srvs.StartAppRequest(self._param['auto_start_rapp'], [])
             unused_response = self._process_start_app(request)
-
-    def _setup_ros_parameters(self):
-        rospy.logdebug("App Manager : parsing parameters")
-        self._param = {}
-        self._param['robot_type']      = rospy.get_param('~robot_type', 'robot')  #@IgnorePep8
-        self._param['robot_name']      = rospy.get_param('~robot_name', 'app_manager')  #@IgnorePep8
-        # image filename
-        self._param['robot_icon']      = rospy.get_param('~robot_icon', '')  #  #@IgnorePep8
-        self._param['app_store_url']   = rospy.get_param('~app_store_url', '')  #@IgnorePep8
-        self._param['platform_info']   = rospy.get_param('~platform_info', 'linux.*.ros.*')  #@IgnorePep8
-        self._param['rapp_lists']      = rospy.get_param('~rapp_lists', '').split(';')  #@IgnorePep8
-        self._param['auto_start_rapp'] = rospy.get_param('~auto_start_rapp', None)  #@IgnorePep8
-        # Todo fix these up with proper whitelist/blacklists
-        self._param['remote_controller_whitelist'] = rospy.get_param('~remote_controller_whitelist', [])
-        self._param['remote_controller_blacklist'] = rospy.get_param('~remote_controller_blacklist', [])
-        # Useful for local machine/simulation tests (e.g. chatter_concert)
-        self._param['local_remote_controllers_only'] = rospy.get_param('~local_remote_controllers_only', False)
-        # Check if rocon is telling us to be verbose about starting apps (this comes from the
-        # rocon_launch --screen option). TODO : additionally a private parameter for the app manager so
-        # people can configure this from yaml or roslaunch instead of rocon_launch
-        self._param['app_output_to_screen'] = rospy.get_param('/rocon/screen', False)
-
-        # If we have list parameters - https://github.com/ros/ros_comm/pull/50/commits
-        # self._param['rapp_lists'] = rospy.get_param('~rapp_lists', [])
 
     def _set_platform_info(self):
         self.platform_info = rocon_std_msgs.PlatformInfo()
