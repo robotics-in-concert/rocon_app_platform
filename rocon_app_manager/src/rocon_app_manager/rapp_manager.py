@@ -178,6 +178,12 @@ class RappManager(object):
     ##########################################################################
 
     def _process_invite(self, req):
+        '''
+          @todo This needs better arranging for logic. Currently it ignores whitelists/blacklists if the local_remote_controllers
+          only is flagged. Not an urgent use case though.
+
+          To fix, just do abort checks for local remote controllers first, then put it through the rest of the logic as well.
+        '''
         # Todo : add checks for whether client is currently busy or not
         response = rapp_manager_srvs.InviteResponse(True, rapp_manager_msgs.ErrorCodes.SUCCESS, "")
         if self._param['local_remote_controllers_only'] and not req.cancel:
@@ -207,7 +213,11 @@ class RappManager(object):
         elif len(self._param['remote_controller_whitelist']) == 0 and req.remote_target_name not in self._param['remote_controller_blacklist']:
             response = self._accept_invitation(req)
         else:
-            response = rapp_manager_srvs.InviteResponse(False, rapp_manager_msgs.ErrorCodes.UNKNOWN, "unknown error")
+            # If we get here, we are not permitted to accept, either not in the whitelist, or in the blacklist
+            if len(self._param['remote_controller_whitelist']) != 0:
+                response = rapp_manager_srvs.InviteResponse(False, rapp_manager_msgs.ErrorCodes.INVITING_CONTROLLER_NOT_WHITELISTED, "not flagged in a non-empty whitelist")
+            else:
+                response = rapp_manager_srvs.InviteResponse(False, rapp_manager_msgs.ErrorCodes.INVITING_CONTROLLER_BLACKLISTED, "this remote controller has been blacklisted")
         return response
 
     def _accept_invitation(self, req):
@@ -228,7 +238,7 @@ class RappManager(object):
                      ((rospy.Time.now() - self._debug_ignores[req.remote_target_name]) > rospy.Duration(120))):
                         self._debug_ignores[req.remote_target_name] = rospy.Time.now()
                         rospy.loginfo("App Manager : ignoring invitation from %s [already invited by %s]" % (str(req.remote_target_name), self._remote_name))
-                return rapp_manager_srvs.InviteResponse(False, rapp_manager_msgs.ErrorCodes.ALREADY_REMOTE_CONTROLLED, "ignoring this invitation as the app manager is already remote controlled from elsewhere [%s]")
+                return rapp_manager_srvs.InviteResponse(False, rapp_manager_msgs.ErrorCodes.ALREADY_REMOTE_CONTROLLED, "already remote controlled from elsewhere [%s]")
         # Variable setting
         if req.application_namespace == '':
             if self._gateway_name:
