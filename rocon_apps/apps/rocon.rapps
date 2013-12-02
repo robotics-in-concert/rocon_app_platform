@@ -5,4 +5,4 @@ apps:
    share: -1
  - name: rocon_apps/talker
  - name: rocon_apps/listener
-   share: 5
+   share: 1
