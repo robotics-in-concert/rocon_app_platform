@@ -22,6 +22,7 @@
 import os
 import rospy
 import yaml
+import rospkg
 from .rapp import Rapp
 
 ##############################################################################
@@ -59,9 +60,19 @@ class RappListFile(object):
             apps_yaml = yaml.load(f)
             if not 'apps' in apps_yaml:
                 rospy.logerr("App Manager : apps file [%s] is missing required key [%s]" % (self.filename, 'apps'))
-            for app_resource_name in apps_yaml['apps']:
-                app = Rapp(app_resource_name)
-                available_apps.append(app)
+            rospack = rospkg.RosPack()
+            for app_resource in apps_yaml['apps']:
+                app = None
+                app_name = app_resource['name']
+                app_share = app_resource.get('share', 1)
+                if app_share < -1:  # -1 is reserved for App.SHAREABLE_WITH_NO_LIMIT
+                    rospy.logerr("App Manager: incorrectly configured a negative number for app shares, defaulting to 1 [%s]" % app_name)
+                    app_share = 1
+                try:
+                    app = Rapp(app_name, app_share, rospack)
+                    available_apps.append(app)
+                except IOError as e:
+                    rospy.logwarn("App Manager : failed to load '%s' [%s]" % (app_name, str(e)))
         self.available_apps = available_apps
 
     def update(self):

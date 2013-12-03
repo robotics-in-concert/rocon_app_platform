@@ -1,8 +1,8 @@
+# If no share variable is specified, it defaults to 1.
+
 apps:
- - rocon_apps/chirp
- - rocon_apps/talker
- - rocon_apps/listener
- 
-# Currently not updated.
-# - rocon_apps/turtlesim_control
-# - rocon_apps/turtlesim_viz
+ - name: rocon_apps/chirp
+   share: -1
+ - name: rocon_apps/talker
+ - name: rocon_apps/listener
+   share: 1

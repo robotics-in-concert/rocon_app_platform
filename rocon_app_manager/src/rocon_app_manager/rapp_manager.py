@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # License: BSD
-#   https://raw.github.com/robotics-in-concert/rocon_app_platform/hydro-devel/rocon_app_manager/LICENSE
+#   https://raw.github.com/robotics-in-concert/rocon_app_platform/license/LICENSE
 #
 ##############################################################################
 # Imports
@@ -21,13 +21,15 @@ import rocon_utilities
 from rocon_utilities import create_gateway_rule, create_gateway_remote_rule
 import rocon_app_manager_msgs.msg as rapp_manager_msgs
 import rocon_app_manager_msgs.srv as rapp_manager_srvs
+import rocon_std_msgs.msg as rocon_std_msgs
+import rocon_std_msgs.srv as rocon_std_srvs
 import gateway_msgs.msg as gateway_msgs
 import gateway_msgs.srv as gateway_srvs
 import std_msgs.msg as std_msgs
 
 # local imports
-import utils
 import exceptions
+from ros_parameters import setup_ros_parameters
 
 ##############################################################################
 # App Manager
@@ -39,8 +41,6 @@ class RappManager(object):
         Robot App Manager ~ Rocon App Manager
     """
 
-    default_application_namespace = "application"
-
     ##########################################################################
     # Initialisation
     ##########################################################################
@@ -48,6 +48,7 @@ class RappManager(object):
     def __init__(self):
         self._namespace = None  # Namespace that gets used as default namespace for rapp connections
         self._gateway_name = None  # Name of our local gateway (if available)
+        self._gateway_ip = None  # IP/Hostname of our local gateway if available
         self._remote_name = None  # Name (gateway name) for the entity that is remote controlling this app manager
         self._current_rapp = None  # App that is running, otherwise None
         self._application_namespace = None  # Push all app connections underneath this namespace
@@ -55,7 +56,7 @@ class RappManager(object):
         self._services = {}
         self._publishers = {}
 
-        self._setup_ros_parameters()
+        self._param = setup_ros_parameters()
         self._set_platform_info()
         self._init_gateway_services()
         self._init_default_service_names()
@@ -68,43 +69,31 @@ class RappManager(object):
         self._initialising_services = False
         self._init_services()
         self._publish_app_list()
+
+        if self._param['auto_start_rapp']:  # None and '' are both false here
+            request = rapp_manager_srvs.StartAppRequest(self._param['auto_start_rapp'], [])
+            unused_response = self._process_start_app(request)
+
+        self._debug_ignores = {}  # a remote_controller_name : timestamp of the last time we logged an ignore response
+
         rospy.loginfo("App Manager : Ready.")
 
-    def _setup_ros_parameters(self):
-        rospy.logdebug("App Manager : parsing parameters")
-        self._param = {}
-        self._param['robot_type'] = rospy.get_param('~robot_type', 'robot')
-        self._param['robot_name'] = rospy.get_param('~robot_name', 'app_manager')
-        self._param['robot_icon'] = rospy.get_param('~robot_icon', '')  # image filename
-        self._param['app_store_url'] = rospy.get_param('~app_store_url', '')
-        self._param['platform_info'] = rospy.get_param('~platform_info', 'linux.ros.*')
-        self._param['rapp_lists'] = rospy.get_param('~rapp_lists', '').split(';')
-        # Todo fix these up with proper whitelist/blacklists
-        self._param['remote_controller_whitelist'] = rospy.get_param('~remote_controller_whitelist', [])
-        self._param['remote_controller_blacklist'] = rospy.get_param('~remote_controller_blacklist', [])
-        # Check if rocon is telling us to be verbose about starting apps (this comes from the
-        # rocon_launch --screen option). TODO : additionally a private parameter for the app manager so
-        # people can configure this from yaml or roslaunch instead of rocon_launch
-        self._param['app_output_to_screen'] = rospy.get_param('/rocon/screen', False)
-
-        # If we have list parameters - https://github.com/ros/ros_comm/pull/50/commits
-        # self._param['rapp_lists'] = rospy.get_param('~rapp_lists', [])
-
     def _set_platform_info(self):
-        self.platform_info = rapp_manager_msgs.PlatformInfo()
-        self.platform_info.platform = rapp_manager_msgs.PlatformInfo.PLATFORM_LINUX
-        self.platform_info.system = rapp_manager_msgs.PlatformInfo.SYSTEM_ROS
-        self.platform_info.robot = self._param['robot_type']  # TODO Validate this against rapp_manager_msgs.PlatformInfo ROBOT_XXX
+        self.platform_info = rocon_std_msgs.PlatformInfo()
+        self.platform_info.os = rocon_std_msgs.PlatformInfo.OS_LINUX
+        self.platform_info.version = rocon_std_msgs.PlatformInfo.VERSION_ANY  # don't care
+        self.platform_info.platform = self._param['robot_type']
+        self.platform_info.system = rocon_std_msgs.PlatformInfo.SYSTEM_ROS
         self.platform_info.name = self._param['robot_name']
         try:
-            filename = utils.find_resource(self._param['robot_icon'])
-            self.platform_info.icon = utils.icon_to_msg(filename)
+            filename = rocon_utilities.find_resource_from_string(self._param['robot_icon'])
+            self.platform_info.icon = rocon_utilities.icon_to_msg(filename)
         except exceptions.NotFoundException:
             rospy.logwarn("App Manager : icon resource not found [%s]" % self._param['robot_icon'])
-            self.platform_info.icon = rapp_manager_msgs.Icon()
+            self.platform_info.icon = rocon_std_msgs.Icon()
         except ValueError:
             rospy.logwarn("App Manager : invalid resource name [%s]" % self._param['robot_icon'])
-            self.platform_info.icon = rapp_manager_msgs.Icon()
+            self.platform_info.icon = rocon_std_msgs.Icon()
 
     def _init_default_service_names(self):
         self._default_service_names = {}
@@ -123,6 +112,7 @@ class RappManager(object):
     def _init_gateway_services(self):
         self._gateway_services = {}
         self._gateway_services['gateway_info'] = rocon_utilities.SubscriberProxy('~gateway_info', gateway_msgs.GatewayInfo)
+        self._gateway_services['remote_gateway_info'] = rospy.ServiceProxy('~remote_gateway_info', gateway_srvs.RemoteGatewayInfo)
         self._gateway_services['flip'] = rospy.ServiceProxy('~flip', gateway_srvs.Remote)
         self._gateway_services['advertise'] = rospy.ServiceProxy('~advertise', gateway_srvs.Advertise)
         self._gateway_services['pull'] = rospy.ServiceProxy('~pull', gateway_srvs.Remote)
@@ -153,12 +143,12 @@ class RappManager(object):
             self._service_names[name] = '/' + base_name + '/' + name
         for name in self._default_publisher_names:
             self._publisher_names[name] = '/' + base_name + '/' + name
-        self._application_namespace = base_name + '/' + RappManager.default_application_namespace  # ns to push apps into (see rapp.py)
+        self._application_namespace = base_name
         try:
             # Advertisable services - we advertise these by default advertisement rules for the app manager's gateway.
-            self._services['platform_info'] = rospy.Service(self._service_names['platform_info'], rapp_manager_srvs.GetPlatformInfo, self._process_platform_info)
+            self._services['platform_info'] = rospy.Service(self._service_names['platform_info'], rocon_std_srvs.GetPlatformInfo, self._process_platform_info)
+            self._services['list_apps'] = rospy.Service(self._service_names['list_runnable_apps'], rapp_manager_srvs.GetAppList, self._process_get_runnable_app_list)
             self._services['list_installed_apps'] = rospy.Service(self._service_names['list_installed_apps'], rapp_manager_srvs.GetAppList, self._process_get_installed_app_list)
-            self._services['list_runnable_apps'] = rospy.Service(self._service_names['list_runnable_apps'], rapp_manager_srvs.GetAppList, self._process_get_runnable_app_list)
             self._services['status'] = rospy.Service(self._service_names['status'], rapp_manager_srvs.Status, self._process_status)
             self._services['invite'] = rospy.Service(self._service_names['invite'], rapp_manager_srvs.Invite, self._process_invite)
             # Flippable services
@@ -185,18 +175,18 @@ class RappManager(object):
         # Getting apps from installed list
         for resource_name in self._param['rapp_lists']:
             # should do some exception checking here, also utilise AppListFile properly.
-            filename = utils.find_resource(resource_name)
+            filename = rocon_utilities.find_resource_from_string(resource_name)
             try:
                 self.app_list_file = RappListFile(filename)
             except IOError as e:  # if file is not found
                 rospy.logwarn("App Manager : %s" % str(e))
                 return
             for app in self.app_list_file.available_apps:
-                if platform_compatible(platform_tuple(self.platform_info.platform, self.platform_info.system, self.platform_info.robot), app.data['platform']):
+                if platform_compatible(platform_tuple(self.platform_info.os, self.platform_info.version, self.platform_info.system, self.platform_info.platform), app.data['platform']):
                     self.apps['pre_installed'][app.data['name']] = app
                 else:
-                    rospy.logwarn('App : ' + str(app.data['name']) + ' is incompatible. App : (' + str(app.data['platform']) + ')  System : (' +
-                                  str(self.platform_info.platform) + '.' + str(self.platform_info.system) + '.' + str(self.platform_info.robot) + ')')
+                    rospy.logwarn('App : ' + str(app.data['name']) + ' is incompatible. App : (' + str(app.data['platform']) + ')  App Manager : (' +
+                                  str(self.platform_info.os) + '.' + str(self.platform_info.version) + '.' + str(self.platform_info.system) + '.' + str(self.platform_info.platform) + ')')
 
     def _determine_runnable_apps(self):
         '''
@@ -239,28 +229,73 @@ class RappManager(object):
     ##########################################################################
 
     def _process_invite(self, req):
+        '''
+          @todo This needs better arranging for logic. Currently it ignores whitelists/blacklists if the local_remote_controllers
+          only is flagged. Not an urgent use case though.
+
+          To fix, just do abort checks for local remote controllers first, then put it through the rest of the logic as well.
+        '''
         # Todo : add checks for whether client is currently busy or not
-        if req.remote_target_name in self._param['remote_controller_whitelist']:
-            return rapp_manager_srvs.InviteResponse(self._accept_invitation(req))
+        response = rapp_manager_srvs.InviteResponse(True, rapp_manager_msgs.ErrorCodes.SUCCESS, "")
+        if self._param['local_remote_controllers_only'] and not req.cancel:
+            # Don't run this code if cancelling - sometimes our hub will have disappeared and we
+            # just want to cancel regardless. Not the cleanest exit, but it will do.
+            if self._gateway_name is None:
+                return rapp_manager_srvs.InviteResponse(False,
+                                                        rapp_manager_msgs.ErrorCodes.NO_LOCAL_GATEWAY,
+                                                        "no gateway connection yet, invite impossible.")
+            remote_gateway_info_request = gateway_srvs.RemoteGatewayInfoRequest()
+            remote_gateway_info_request.gateways = []
+            remote_gateway_info_response = self._gateway_services['remote_gateway_info'](remote_gateway_info_request)
+            remote_target_name = req.remote_target_name
+            remote_target_ip = None
+            for gateway in remote_gateway_info_response.gateways:
+                if gateway.name == remote_target_name:
+                    remote_target_ip = gateway.ip
+                    break
+            if remote_target_ip is not None and self._gateway_ip == remote_target_ip:
+                response = self._accept_invitation(req)
+            else:
+                return rapp_manager_srvs.InviteResponse(False,
+                                 rapp_manager_msgs.ErrorCodes.LOCAL_INVITATIONS_ONLY,
+                                 "local invitations only permitted.")
+        elif req.remote_target_name in self._param['remote_controller_whitelist']:
+            response = self._accept_invitation(req)
         elif len(self._param['remote_controller_whitelist']) == 0 and req.remote_target_name not in self._param['remote_controller_blacklist']:
-            return rapp_manager_srvs.InviteResponse(self._accept_invitation(req))
+            response = self._accept_invitation(req)
         else:
-            return rapp_manager_srvs.InviteResponse(False)
+            # If we get here, we are not permitted to accept, either not in the whitelist, or in the blacklist
+            if len(self._param['remote_controller_whitelist']) != 0:
+                response = rapp_manager_srvs.InviteResponse(False, rapp_manager_msgs.ErrorCodes.INVITING_CONTROLLER_NOT_WHITELISTED, "not flagged in a non-empty whitelist")
+            else:
+                response = rapp_manager_srvs.InviteResponse(False, rapp_manager_msgs.ErrorCodes.INVITING_CONTROLLER_BLACKLISTED, "this remote controller has been blacklisted")
+        return response
 
     def _accept_invitation(self, req):
+        '''
+          @return response message for the invitation
+          @rtype rapp_manager_srvs.InviteResponse(result, error_code, message)
+        '''
         # Abort checks
         if req.cancel and (req.remote_target_name != self._remote_name):
-            rospy.logwarn("App Manager : ignoring request from %s to cancel the relayed controls to remote system [%s]" % (str(req.remote_target_name), self._remote_name))
-            return False
-        if not req.cancel and req.remote_target_name == self._remote_name:
-            rospy.logwarn("App Manager : bastards are sending us repeat invites, so we ignore - we are already working for them! [%s]" % self._remote_name)
-            return True
+            rospy.logwarn("App Manager : ignoring request from %s to cancel invitation as it is not the current remote controller [%s]" % (str(req.remote_target_name), self._remote_name))
+            return rapp_manager_srvs.InviteResponse(False, rapp_manager_msgs.ErrorCodes.NOT_CURRENT_REMOTE_CONTROLLER, "ignoring request from %s to cancel invitation as it is not the current remote controller [%s]")
+        if not req.cancel and self._remote_name is not None:
+            if req.remote_target_name == self._remote_name:
+                rospy.logwarn("App Manager : bastards are sending us repeat invites, so we ignore - we are already working for them! [%s]" % self._remote_name)
+                return rapp_manager_srvs.InviteResponse(True, rapp_manager_msgs.ErrorCodes.SUCCESS, "you are a bastard, stop spamming us - you already invited this app manager!")
+            else:
+                if (req.remote_target_name not in self._debug_ignores or
+                     ((rospy.Time.now() - self._debug_ignores[req.remote_target_name]) > rospy.Duration(120))):
+                        self._debug_ignores[req.remote_target_name] = rospy.Time.now()
+                        rospy.loginfo("App Manager : ignoring invitation from %s [already invited by %s]" % (str(req.remote_target_name), self._remote_name))
+                return rapp_manager_srvs.InviteResponse(False, rapp_manager_msgs.ErrorCodes.ALREADY_REMOTE_CONTROLLED, "already remote controlled from %s" % self._remote_name)
         # Variable setting
         if req.application_namespace == '':
             if self._gateway_name:
-                self._application_namespace = self._gateway_name + "/" + RappManager.default_application_namespace
+                self._application_namespace = self._gateway_name
             else:
-                self._application_namespace = RappManager.default_application_namespace
+                self._application_namespace = ''
         else:
             self._application_namespace = req.application_namespace
         # Flips/Unflips
@@ -276,17 +311,17 @@ class RappManager(object):
         # Cleaning up and setting final state
         if req.cancel:
             if req.remote_target_name == self._remote_name:
-                rospy.loginfo("App Manager : cancelling the relayed controls to remote system [%s]" % str(req.remote_target_name))
+                rospy.loginfo("App Manager : cancelling remote control of this system [%s]" % str(req.remote_target_name))
                 if self._current_rapp:
                     self._process_stop_app()
                 self._remote_name = None
         else:
-            rospy.loginfo("App Manager : accepting invitation to relay controls to remote system [%s]" % str(req.remote_target_name))
+            rospy.loginfo("App Manager : accepting invitation to be remote controlled [%s]" % str(req.remote_target_name))
             self._remote_name = req.remote_target_name
-        return True
+        return rapp_manager_srvs.InviteResponse(True, rapp_manager_msgs.ErrorCodes.SUCCESS, "success")
 
     def _process_platform_info(self, req):
-        return rapp_manager_srvs.GetPlatformInfoResponse(self.platform_info)
+        return rocon_std_srvs.GetPlatformInfoResponse(self.platform_info)
 
     def _process_status(self, req):
         '''
@@ -346,6 +381,8 @@ class RappManager(object):
             else:
                 self._publishers['runnable_apps_list'].publish(self._get_app_list('runnable'), [])
         except KeyError:
+            pass
+        except rospy.exceptions.ROSException:  # publishing to a closed topic.
             pass
 
     def _process_start_app(self, req):
@@ -419,12 +456,12 @@ class RappManager(object):
                                    self.caps_list)
         else:
             resp.started, resp.message, subscribers, publishers, services, action_clients, action_servers = \
-                        rapp.start(self._application_namespace, req.remappings, self._param['app_output_to_screen'])
+                        rapp.start(self._application_namespace, self._gateway_name, self.platform_info, req.remappings, self._param['app_output_to_screen'])
 
         rospy.loginfo("App Manager : %s" % self._remote_name)
         # small pause (convenience only) to let connections to come up
         # gateway watcher usually rolls over slowly. so this makes sure the flips get enacted on promptly
-        rospy.sleep(0.5)
+        rospy.rostime.wallsleep(0.5)
         if self._remote_name:
             self._flip_connections(self._remote_name, subscribers, gateway_msgs.ConnectionType.SUBSCRIBER)
             self._flip_connections(self._remote_name, publishers, gateway_msgs.ConnectionType.PUBLISHER)
@@ -460,11 +497,11 @@ class RappManager(object):
                 self._current_rapp.stop()
 
         if self._remote_name:
-            self._flip_connections(self._remote_name, subscribers, gateway_msgs.ConnectionType.SUBSCRIBER, True)
-            self._flip_connections(self._remote_name, publishers, gateway_msgs.ConnectionType.PUBLISHER, True)
-            self._flip_connections(self._remote_name, services, gateway_msgs.ConnectionType.SERVICE, True)
-            self._flip_connections(self._remote_name, action_clients, gateway_msgs.ConnectionType.ACTION_CLIENT, True)
-            self._flip_connections(self._remote_name, action_servers, gateway_msgs.ConnectionType.ACTION_SERVER, True)
+            self._flip_connections(self._remote_name, subscribers, gateway_msgs.ConnectionType.SUBSCRIBER, cancel_flag=True)
+            self._flip_connections(self._remote_name, publishers, gateway_msgs.ConnectionType.PUBLISHER, cancel_flag=True)
+            self._flip_connections(self._remote_name, services, gateway_msgs.ConnectionType.SERVICE, cancel_flag=True)
+            self._flip_connections(self._remote_name, action_clients, gateway_msgs.ConnectionType.ACTION_CLIENT, cancel_flag=True)
+            self._flip_connections(self._remote_name, action_servers, gateway_msgs.ConnectionType.ACTION_SERVER, cancel_flag=True)
 
         if resp.stopped:
             self._current_rapp = None
@@ -573,7 +610,12 @@ class RappManager(object):
         if resp.result == 0:
             rospy.loginfo("App Manager : successfully flipped %s" % str([os.path.basename(name) for name in connection_names]))
         else:
-            rospy.logerr("App Manager : failed to flip [%s]" % resp.error_message)
+            if resp.result == gateway_msgs.ErrorCodes.NO_HUB_CONNECTION and cancel_flag:
+                # can often happen if a concert goes down and brings the hub down as as well
+                # so just suppress this warning if it's a request to cancel
+                rospy.logwarn("App Manager : failed to cancel flips (probably remote hub intentionally went down as well) [%s, %s]" % (resp.result, resp.error_message))
+            else:
+                rospy.logerr("App Manager : failed to flip [%s, %s]" % (resp.result, resp.error_message))
 
     def spin(self):
         while not rospy.is_shutdown():
@@ -581,6 +623,7 @@ class RappManager(object):
             if gateway_info:
                 if gateway_info.connected:
                     self._gateway_name = gateway_info.name
+                    self._gateway_ip = gateway_info.ip
                     if self._init_services():
                         break
             # don't need a sleep since our timeout on the service call acts like this.
