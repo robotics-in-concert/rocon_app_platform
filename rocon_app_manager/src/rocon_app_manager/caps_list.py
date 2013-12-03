@@ -33,8 +33,13 @@ class CapsList(object):
         Retrieve the specifications for the available interfaces and providers from the capability server
 
         @raise IOError: Exception is raised when retrieving the capability data from the capability server returned
-                        errors.
+                        errors or when waiting for the capability server's service times out.
         '''
+        try:
+            rospy.wait_for_service('capability_server/start_capability', 1.0)
+        except rospy.ROSException as exc:
+            raise IOError("Couldn't get specification index. Service timeout." + str(exc))
+
         self._spec_index, errors = service_discovery.spec_index_from_service("capability_server")
         if errors:
             raise IOError("Couldn't get specification index. Error: " + str(errors))
