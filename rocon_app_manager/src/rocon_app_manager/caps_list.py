@@ -38,7 +38,7 @@ class CapsList(object):
         try:
             rospy.wait_for_service('capability_server/start_capability', 1.0)
         except rospy.ROSException as exc:
-            raise IOError("Couldn't get specification index. Service timeout." + str(exc))
+            raise IOError("Couldn't get specification index. Service timeout: " + str(exc))
 
         self._spec_index, errors = service_discovery.spec_index_from_service("capability_server")
         if errors:

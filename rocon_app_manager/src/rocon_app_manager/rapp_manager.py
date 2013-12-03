@@ -99,15 +99,15 @@ class RappManager(object):
         self._default_service_names = {}
         self._default_service_names['platform_info'] = 'platform_info'
         self._default_service_names['list_installed_apps'] = 'list_installed_apps'
-        self._default_service_names['list_runnable_apps'] = 'list_runnable_apps'
+        self._default_service_names['list_runnable_apps'] = 'list_apps'
         self._default_service_names['status'] = 'status'
         self._default_service_names['invite'] = 'invite'
         self._default_service_names['start_app'] = 'start_app'
         self._default_service_names['stop_app'] = 'stop_app'
         # Latched publishers
         self._default_publisher_names = {}
-        self._default_publisher_names['installed_apps_list'] = 'installed_apps_list'
-        self._default_publisher_names['runnable_apps_list'] = 'runnable_apps_list'
+        self._default_publisher_names['installed_app_list'] = 'app_list'
+        self._default_publisher_names['runnable_app_list'] = 'runnable_app_list'
 
     def _init_gateway_services(self):
         self._gateway_services = {}
@@ -140,14 +140,14 @@ class RappManager(object):
         self._publisher_names = {}
         base_name = self._gateway_name if self._gateway_name else self._param['robot_name']  # latter option is for standalone mode
         for name in self._default_service_names:
-            self._service_names[name] = '/' + base_name + '/' + name
+            self._service_names[name] = '/' + base_name + '/' + self._default_service_names[name]
         for name in self._default_publisher_names:
-            self._publisher_names[name] = '/' + base_name + '/' + name
+            self._publisher_names[name] = '/' + base_name + '/' + self._default_publisher_names[name]
         self._application_namespace = base_name
         try:
             # Advertisable services - we advertise these by default advertisement rules for the app manager's gateway.
             self._services['platform_info'] = rospy.Service(self._service_names['platform_info'], rocon_std_srvs.GetPlatformInfo, self._process_platform_info)
-            self._services['list_apps'] = rospy.Service(self._service_names['list_runnable_apps'], rapp_manager_srvs.GetAppList, self._process_get_runnable_app_list)
+            self._services['list_runnable_apps'] = rospy.Service(self._service_names['list_runnable_apps'], rapp_manager_srvs.GetAppList, self._process_get_runnable_app_list)
             self._services['list_installed_apps'] = rospy.Service(self._service_names['list_installed_apps'], rapp_manager_srvs.GetAppList, self._process_get_installed_app_list)
             self._services['status'] = rospy.Service(self._service_names['status'], rapp_manager_srvs.Status, self._process_status)
             self._services['invite'] = rospy.Service(self._service_names['invite'], rapp_manager_srvs.Invite, self._process_invite)
@@ -155,8 +155,8 @@ class RappManager(object):
             self._services['start_app'] = rospy.Service(self._service_names['start_app'], rapp_manager_srvs.StartApp, self._process_start_app)
             self._services['stop_app'] = rospy.Service(self._service_names['stop_app'], rapp_manager_srvs.StopApp, self._process_stop_app)
             # Latched publishers
-            self._publishers['installed_apps_list'] = rospy.Publisher(self._publisher_names['installed_apps_list'], rapp_manager_msgs.AppList, latch=True)
-            self._publishers['runnable_apps_list'] = rospy.Publisher(self._publisher_names['runnable_apps_list'], rapp_manager_msgs.AppList, latch=True)
+            self._publishers['installed_app_list'] = rospy.Publisher(self._publisher_names['installed_app_list'], rapp_manager_msgs.AppList, latch=True)
+            self._publishers['runnable_app_list'] = rospy.Publisher(self._publisher_names['runnable_app_list'], rapp_manager_msgs.AppList, latch=True)
             # Force an update on the gateway
             self._gateway_publishers['force_update'].publish(std_msgs.Empty())
         except Exception as unused_e:
@@ -198,7 +198,7 @@ class RappManager(object):
         try:
             self.caps_list = CapsList()
         except IOError as e:
-            rospy.logwarn("App Manager : Could not initialise capability list! (" + str(e) + ")")
+            rospy.logwarn("App Manager : Could not initialise capability list!")
             rospy.logwarn("App Manager : Error message: '" + str(e) + "'")
             rospy.logwarn("App Manager : Apps requiring capabilities won't be runnable.")
             no_caps_available = True
