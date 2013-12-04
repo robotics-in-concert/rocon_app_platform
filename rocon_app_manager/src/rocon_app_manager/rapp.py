@@ -18,9 +18,14 @@ import roslaunch.parent
 import traceback
 import tempfile
 import rocon_utilities
-from .exceptions import AppException, InvalidRappException
+import utils
+from .exceptions import AppException, InvalidRappException, MissingCapabilitiesException
 import rocon_app_manager_msgs.msg as rapp_manager_msgs
 import rocon_std_msgs.msg as rocon_std_msgs
+
+import roslaunch.node_args
+import roslaunch.xmlloader
+from roslaunch.config import load_config_default
 
 ##############################################################################
 # Class
@@ -139,7 +144,11 @@ class Rapp(object):
             else:
                 data['icon'] = self._find_rapp_resource(app_data['icon'], 'icon', app_name, rospack=rospack)
             data['status'] = 'Ready'
-
+            key = 'required_capabilities'
+            if key in app_data:
+                data[key] = []
+                for cap in app_data[key]:
+                    data['required_capabilities'].append(cap)
         self.data = data
 
     def to_msg(self):
@@ -156,8 +165,12 @@ class Rapp(object):
         a.icon = rocon_utilities.icon_to_msg(self.data['icon'])
         for pairing_client in self.data['pairing_clients']:
             a.pairing_clients.append(PairingClient(pairing_client.client_type,
-                                       dict_to_KeyValue(pairing_client.manager_data),
-                                       dict_to_KeyValue(pairing_client.app_data)))
+                                     dict_to_KeyValue(pairing_client.manager_data),
+                                     dict_to_KeyValue(pairing_client.app_data)))
+        key = 'required_capabilities'
+        if key in self.data:
+            for cap in self.data[key]:
+                a.required_capabilities.append(cap['name'])
         return a
 
     def _find_rapp_resource(self, resource, log, app_name="Unknown", rospack=None):
@@ -235,7 +248,8 @@ class Rapp(object):
             clients.append(PairingClient(client_type, manager_data, app_data))
         return clients
 
-    def start(self, application_namespace, gateway_name, platform_info, remappings=[], force_screen=False):
+    def start(self, application_namespace, gateway_name, platform_info, remappings=[], force_screen=False,
+              caps_list=None):
         '''
           Some important jobs here.
 
@@ -256,28 +270,56 @@ class Rapp(object):
           @type list of rocon_std_msgs.msg.Remapping values.
           @param force_screen : whether to roslaunch the app with --screen or not
           @type boolean
+          @param caps_list : this holds the list of available capabilities, if app needs capabilities
+          @type CapsList
         '''
         data = self.data
-        rospy.loginfo("App Manager : launching: " + (data['name']) + " underneath /" + application_namespace)
+        rospy.loginfo("App Manager : Launching '" + (data['name']) + "' underneath /" + application_namespace)
 
-        # Starts rapp
         try:
+            # Create modified roslaunch file include the application namespace (robot name + 'application')
             temp = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
-            launch_text = prepare_launch_text(data['launch'], 
+            launch_text = prepare_launch_text(data['launch'],
                     data['launch_args'], application_namespace, gateway_name,
                     platform_info)
             temp.write(launch_text)
             temp.close()  # unlink it later
 
-            # Create roslaunch
+            # initialise roslaunch
             self._launch = roslaunch.parent.ROSLaunchParent(rospy.get_param("/run_id"),
                                                             [temp.name],
                                                             is_core=False,
                                                             process_listeners=(),
                                                             force_screen=force_screen)
-            self._launch._load_config()
+            self._launch._load_config()  # generate configuration
 
-            #print data['interface']
+            if 'required_capabilities' in self.data:  # apply capability-specific remappings needed
+                caps_remap_from_list = []  # contains the app's topics/services/actions to be remapped
+                caps_remap_to_list = []  # contains the new topic/service/action names
+                for cap in self.data['required_capabilities']:  # get capability-specific remappings
+                    rospy.loginfo("App Manager : Configuring remappings for capabilty '" + cap['name'] + "'.")
+                    if caps_list:
+                        try:
+                            caps_list.get_cap_remappings(cap, caps_remap_from_list, caps_remap_to_list)
+                        except MissingCapabilitiesException as e:
+                            rospy.logerr("App Manager : Couldn't get cap remappings. Error: " + str(e))
+                    else:  # should not happen, since app would have been pruned
+                        raise Exception("Capabilities required, but capability list not provided.")
+                for cap_remap in caps_remap_from_list:  # apply cap remappings
+                    remap_applied = False
+                    for node in self._launch.config.nodes:  # look for cap remap topic is remap topics
+                        for node_remap in node.remap_args:  # topic from - topic to pairs
+                            if cap_remap in node_remap[0]:
+                                node_remap[1] = unicode(caps_remap_to_list[caps_remap_from_list.index(cap_remap)])
+                                rospy.loginfo("App Manager : Will remap '" + node_remap[0]
+                                              + "' to '" + node_remap[1] + "'.")
+                                remap_applied = True
+                    if not remap_applied:  # can't determine to which the remapping should be applied to
+                        rospy.logwarn("App Manager : Could not determine remapping for capability topic '"
+                                      + cap_remap + "'.")
+                        rospy.logwarn("App Manager : App might not function correctly."
+                                   + " Add it to the remapped topics, if needed.")
+
             self._connections = {}
 
             # Prefix with robot name by default (later pass in remap argument)
@@ -313,13 +355,14 @@ class Rapp(object):
             self._launch.start()
 
             data['status'] = 'Running'
-            return True, "Success", self._connections['subscribers'], self._connections['publishers'], self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
+            return True, "Success", self._connections['subscribers'], self._connections['publishers'], \
+                self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
 
         except Exception as e:
             print str(e)
             traceback.print_stack()
-            rospy.loginfo("Error While launching " + data['launch'])
-            data['status'] = "Error While launching " + data['launch']
+            rospy.logerr("App Manager : Error while launching " + data['launch'])
+            data['status'] = "Error while launching " + data['launch']
             return False, "Error while launching " + data['name'], [], [], [], [], []
         finally:
             os.unlink(temp.name)
@@ -334,14 +377,17 @@ class Rapp(object):
                 finally:
                     self._launch = None
                     data['status'] = 'Ready'
-                rospy.loginfo("App Manager : stopped app [%s]" % data['name'])
+                rospy.loginfo("App Manager : Stopped rapp [%s]" % data['name'] + "'.")
         except Exception as e:
             print str(e)
-            rospy.loginfo("Error while stopping " + data['name'])
+            error_msg = "Error while stopping rapp '" + data['name'] + "'."
+            rospy.loginfo(error_msg)
             data['status'] = 'Error'
-            return False, "Error while stopping " + data['name'], self._connections['subscribers'], self._connections['publishers'], self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
+            return False, error_msg, self._connections['subscribers'], self._connections['publishers'], \
+                self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
 
-        return True, "Success", self._connections['subscribers'], self._connections['publishers'], self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
+        return True, "Success", self._connections['subscribers'], self._connections['publishers'], \
+                self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
 
     def is_running(self):
         '''
@@ -441,8 +487,9 @@ def prepare_launch_text(launch_file, launch_args, application_namespace,
     launch_text += '  </include>\n</launch>\n'
     return launch_text
 
+
 def resolve_chain_remappings(nodes):
-    """ 
+    """
         resolve chain remapping rules contains in node remapping arguments
         replace the node remapping argument
 
@@ -451,10 +498,10 @@ def resolve_chain_remappings(nodes):
     """
     for n in nodes:
         new_remap_args_dict = {}
-        
+
         for fr, to in n.remap_args:
             if str(fr) in new_remap_args_dict:
-                rospy.logwarn("App Manager : Remapping rule for %s already exists. Ignoring remapping rule from %s to %s",str(fr),str(fr),str(to))
+                rospy.logwarn("App Manager : Remapping rule for %s already exists. Ignoring remapping rule from %s to %s", str(fr), str(fr), str(to))
             else:
                 # if there is a value which matches with remap_from, the value should be replaced with the new remap_to
                 keys = [k for k, v in new_remap_args_dict.items() if v == str(fr)]
