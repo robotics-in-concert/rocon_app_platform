@@ -341,7 +341,6 @@ class Rapp(object):
                         for N in self._launch.config.nodes:
                             N.remap_args.append((t, remapped_name))
                         self._connections[connection_type].append(remapped_name)
-                        print "remapped '" + remap_to_list[indices[0]] + "' to '" + remapped_name + "'"
                     else:
                         # don't pass these in as remapping rules - they should map fine for the node as is
                         # just by getting pushed down the namespace.
