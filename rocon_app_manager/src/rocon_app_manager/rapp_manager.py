@@ -451,12 +451,18 @@ class RappManager(object):
         if 'required_capabilities' in self.apps['runnable'][req.name].data:
             resp.started, resp.message, subscribers, publishers, services, action_clients, action_servers = \
                         rapp.start(self._application_namespace,
+                                   self._gateway_name,
+                                   self.platform_info,
                                    req.remappings,
                                    self._param['app_output_to_screen'],
                                    self.caps_list)
         else:
             resp.started, resp.message, subscribers, publishers, services, action_clients, action_servers = \
-                        rapp.start(self._application_namespace, self._gateway_name, self.platform_info, req.remappings, self._param['app_output_to_screen'])
+                        rapp.start(self._application_namespace,
+                                   self._gateway_name,
+                                   self.platform_info,
+                                   req.remappings,
+                                   self._param['app_output_to_screen'])
 
         rospy.loginfo("App Manager : %s" % self._remote_name)
         # small pause (convenience only) to let connections to come up
