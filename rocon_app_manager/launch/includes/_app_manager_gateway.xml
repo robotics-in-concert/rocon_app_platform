@@ -26,5 +26,6 @@
     <param name="watch_loop_period" value="$(arg gateway_watch_loop_period)"/>
     <param name="hub_whitelist" value="$(arg hub_whitelist)"/>
     <param name="disable_uuids" value="$(arg disable_uuids)"/>
+    <!-- <param name="network_interface" value="eth0"/>  if you have multiple interfaces -->
   </node>
 </launch>
