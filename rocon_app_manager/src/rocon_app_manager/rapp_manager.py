@@ -8,6 +8,7 @@
 ##############################################################################
 
 import rospy
+import rosgraph
 import os
 import sys
 import time
@@ -254,6 +255,8 @@ class RappManager(object):
                     remote_target_ip = gateway.ip
                     break
             if remote_target_ip is not None and self._gateway_ip == remote_target_ip:
+                response = self._accept_invitation(req)
+            elif remote_target_ip is not None and rosgraph.network.is_local_address(remote_target_ip):
                 response = self._accept_invitation(req)
             else:
                 return rapp_manager_srvs.InviteResponse(False,
