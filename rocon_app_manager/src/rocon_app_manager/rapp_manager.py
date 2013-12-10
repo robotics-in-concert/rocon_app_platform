@@ -77,8 +77,6 @@ class RappManager(object):
 
         self._debug_ignores = {}  # a remote_controller_name : timestamp of the last time we logged an ignore response
 
-        rospy.loginfo("App Manager : Ready.")
-
     def _set_platform_info(self):
         self.platform_info = rocon_std_msgs.PlatformInfo()
         self.platform_info.os = rocon_std_msgs.PlatformInfo.OS_LINUX
@@ -199,9 +197,10 @@ class RappManager(object):
         try:
             self.caps_list = CapsList()
         except IOError as e:
-            rospy.logwarn("App Manager : Could not initialise capability list!")
-            rospy.logwarn("App Manager : Error message: '" + str(e) + "'")
-            rospy.logwarn("App Manager : Apps requiring capabilities won't be runnable.")
+            if 'timeout' in str(e):
+                rospy.loginfo("App Manager : disabling apps requiring capabilities [timed out looking for the capability server]")
+            else:
+                rospy.logwarn("App Manager : disabling apps requiring capabilities [%s]" % str(e))
             no_caps_available = True
         # Then add runable apps to list
         self.apps['runnable'] = {}
