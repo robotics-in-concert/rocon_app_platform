@@ -64,11 +64,12 @@ class RappManager(object):
 
         self.apps = {}
         self.app_list_file = {}
-        self._get_pre_installed_app_list()  # It sets up an app directory and load installed app list from directory
         self.caps_list = {}
-        self._determine_runnable_apps()
         self._initialising_services = False
         self._init_services()
+
+        preinstalled_apps = self._get_pre_installed_app_list()  # It sets up an app directory and load installed app list from directory
+        self._determine_runnable_apps(preinstalled_apps)
         self._publish_app_list()
 
         if self._param['auto_start_rapp']:  # None and '' are both false here
@@ -97,16 +98,15 @@ class RappManager(object):
     def _init_default_service_names(self):
         self._default_service_names = {}
         self._default_service_names['platform_info'] = 'platform_info'
-        self._default_service_names['list_installed_apps'] = 'list_installed_apps'
-        self._default_service_names['list_runnable_apps'] = 'list_apps'
+        self._default_service_names['list_apps'] = 'list_apps'
         self._default_service_names['status'] = 'status'
         self._default_service_names['invite'] = 'invite'
         self._default_service_names['start_app'] = 'start_app'
         self._default_service_names['stop_app'] = 'stop_app'
         # Latched publishers
         self._default_publisher_names = {}
-        self._default_publisher_names['installed_app_list'] = 'app_list'
-        self._default_publisher_names['runnable_app_list'] = 'runnable_app_list'
+        self._default_publisher_names['app_list'] = 'app_list'
+        self._default_publisher_names['incompatible_app_list'] = 'incompatible_app_list'
 
     def _init_gateway_services(self):
         self._gateway_services = {}
@@ -146,31 +146,33 @@ class RappManager(object):
         try:
             # Advertisable services - we advertise these by default advertisement rules for the app manager's gateway.
             self._services['platform_info'] = rospy.Service(self._service_names['platform_info'], rocon_std_srvs.GetPlatformInfo, self._process_platform_info)
-            self._services['list_runnable_apps'] = rospy.Service(self._service_names['list_runnable_apps'], rapp_manager_srvs.GetAppList, self._process_get_runnable_app_list)
-            self._services['list_installed_apps'] = rospy.Service(self._service_names['list_installed_apps'], rapp_manager_srvs.GetAppList, self._process_get_installed_app_list)
+            self._services['list_apps'] = rospy.Service(self._service_names['list_apps'], rapp_manager_srvs.GetAppList, self._process_get_runnable_app_list)
             self._services['status'] = rospy.Service(self._service_names['status'], rapp_manager_srvs.Status, self._process_status)
             self._services['invite'] = rospy.Service(self._service_names['invite'], rapp_manager_srvs.Invite, self._process_invite)
             # Flippable services
             self._services['start_app'] = rospy.Service(self._service_names['start_app'], rapp_manager_srvs.StartApp, self._process_start_app)
             self._services['stop_app'] = rospy.Service(self._service_names['stop_app'], rapp_manager_srvs.StopApp, self._process_stop_app)
             # Latched publishers
-            self._publishers['installed_app_list'] = rospy.Publisher(self._publisher_names['installed_app_list'], rapp_manager_msgs.AppList, latch=True)
-            self._publishers['runnable_app_list'] = rospy.Publisher(self._publisher_names['runnable_app_list'], rapp_manager_msgs.AppList, latch=True)
+
+            self._publishers['app_list'] = rospy.Publisher(self._publisher_names['app_list'], rapp_manager_msgs.AppList, latch=True)
+            self._publishers['incompatible_app_list'] = rospy.Publisher(self._publisher_names['incompatible_app_list'], rapp_manager_msgs.IncompatibleAppList, latch=True)
             # Force an update on the gateway
             self._gateway_publishers['force_update'].publish(std_msgs.Empty())
         except Exception as unused_e:
             traceback.print_exc(file=sys.stdout)
             self._initialising_services = False
             return False
-        self._publish_app_list()
         self._initialising_services = False
         return True
 
     def _get_pre_installed_app_list(self):
         '''
          Retrieves app lists from yaml file.
+
+         @return all pre-installed apps (not yet filtered)
+         @rtype dic name : Rapp
         '''
-        self.apps['pre_installed'] = {}
+        preinstalled_apps = {}
         # Getting apps from installed list
         for resource_name in self._param['rapp_lists']:
             # should do some exception checking here, also utilise AppListFile properly.
@@ -181,16 +183,16 @@ class RappManager(object):
                 rospy.logwarn("App Manager : %s" % str(e))
                 return
             for app in self.app_list_file.available_apps:
-                if platform_compatible(platform_tuple(self.platform_info.os, self.platform_info.version, self.platform_info.system, self.platform_info.platform), app.data['platform']):
-                    self.apps['pre_installed'][app.data['name']] = app
-                else:
-                    rospy.logwarn('App : ' + str(app.data['name']) + ' is incompatible. App : (' + str(app.data['platform']) + ')  App Manager : (' +
-                                  str(self.platform_info.os) + '.' + str(self.platform_info.version) + '.' + str(self.platform_info.system) + '.' + str(self.platform_info.platform) + ')')
+                preinstalled_apps[app.data['name']] = app
+        return preinstalled_apps
 
-    def _determine_runnable_apps(self):
+    def _determine_runnable_apps(self, pre_installed_apps):
         '''
          Prun unsupported apps, i.e. not all required capabilities are available, and store the supported apps in
          separate list.
+
+         @param preinstalled_apps: all pre-installed apps (not yet filtered)
+         @type dic name : Rapp
         '''
         # First try initialise the list of available capabilities
         no_caps_available = False
@@ -204,10 +206,23 @@ class RappManager(object):
             no_caps_available = True
         # Then add runable apps to list
         self.apps['runnable'] = {}
-        for app_name in self.apps['pre_installed']:
-            app = self.apps['pre_installed'][app_name]
+        platform_compatible_apps = {}
+        platform_filtered_apps = {}
+        capabilities_filtered_apps = {}
+        for app_name in pre_installed_apps:
+            app = pre_installed_apps[app_name]
+            # Platform check
+            if platform_compatible(platform_tuple(self.platform_info.os, self.platform_info.version, self.platform_info.system, self.platform_info.platform), app.data['platform']):
+                platform_compatible_apps[app.data['name']] = app
+            else:
+                platform_filtered_apps[app.data['name']] = app
+                rospy.logwarn("App : '" + str(app.data['name']) + "' is incompatible [" + str(app.data['platform']) + '][' +
+                              str(self.platform_info.os) + '.' + str(self.platform_info.version) + '.' + str(self.platform_info.system) + '.' + str(self.platform_info.platform) + ']')
+        for app_name in platform_compatible_apps:
+            app = platform_compatible_apps[app_name]
             if no_caps_available:
                 if 'required_capabilities' in app.data:
+                    capabilities_filtered_apps[app.data['name']] = app
                     rospy.logwarn("App : '" + str(app.data['name'])
                                   + "' cannot be run, since capabilities are not available."
                                   + " App will be excluded from the list of runnable apps.")
@@ -220,9 +235,11 @@ class RappManager(object):
                     self.apps['runnable'][app.data['name']] = app
                     rospy.loginfo("App : '" + str(app.data['name']) + "' added to the list of runnable apps.")
                 except exceptions.MissingCapabilitiesException as e:
+                    capabilities_filtered_apps[app.data['name']] = app
                     rospy.logwarn("App : '" + str(app.data['name']) + "' cannot be run, since some required capabilities ("
                                   + str(e.missing_caps)
                                   + ") are not installed. App will be excluded from the list of runnable apps.")
+        self._publishers['incompatible_app_list'].publish([], [], self._get_app_msg_list(platform_filtered_apps), self._get_app_msg_list(capabilities_filtered_apps))
 
     ##########################################################################
     # Ros Callbacks
@@ -350,24 +367,15 @@ class RappManager(object):
         response.application_namespace = self._application_namespace
         return response
 
-    def _get_app_list(self, apps_type):
-        app_list = []
-        for app_name in self.apps[apps_type]:
-            app = self.apps[apps_type][app_name]
-            app_list.append(app.to_msg())
-        return app_list
-
-    def _process_get_installed_app_list(self, req):
-        response = rapp_manager_srvs.GetAppListResponse()
-        response.available_apps.extend(self._get_app_list('pre_installed'))
-        response.running_apps = []
-        if self._current_rapp:
-            response.running_apps.append(self._current_rapp.to_msg())
-        return response
+    def _get_app_msg_list(self, app_list_dictionary):
+        app_msg_list = []
+        for app in app_list_dictionary.values():
+            app_msg_list.append(app.to_msg())
+        return app_msg_list
 
     def _process_get_runnable_app_list(self, req):
         response = rapp_manager_srvs.GetAppListResponse()
-        response.available_apps.extend(self._get_app_list('runnable'))
+        response.available_apps.extend(self._get_app_msg_list(self.apps['runnable']))
         response.running_apps = []
         if self._current_rapp:
             response.running_apps.append(self._current_rapp.to_msg())
@@ -379,9 +387,9 @@ class RappManager(object):
         '''
         try:
             if self._current_rapp:
-                self._publishers['runnable_apps_list'].publish(self._get_app_list('pre_installed'), [self._current_rapp.to_msg()])
+                self._publishers['app_list'].publish(self._get_app_msg_list(self.apps['runnable']), [self._current_rapp.to_msg()])
             else:
-                self._publishers['runnable_apps_list'].publish(self._get_app_list('runnable'), [])
+                self._publishers['app_list'].publish(self._get_app_msg_list(self.apps['runnable']), [])
         except KeyError:
             pass
         except rospy.exceptions.ROSException:  # publishing to a closed topic.
@@ -396,15 +404,6 @@ class RappManager(object):
         if self._current_rapp:
             resp.started = False
             resp.message = "an app is already running [%s]" % self._current_rapp.data['name']
-            rospy.logwarn("App Manager : %s" % resp.message)
-            return resp
-
-        # check is the app is among the installed apps
-        try:
-            rapp = self.apps['pre_installed'][req.name]
-        except KeyError:
-            resp.started = False
-            resp.message = ("The requested app '%s' is not installed." % req.name)
             rospy.logwarn("App Manager : %s" % resp.message)
             return resp
 
