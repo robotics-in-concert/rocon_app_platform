@@ -6,12 +6,14 @@
   </description>
   <maintainer email="d.stonier@gmail.com">Daniel Stonier</maintainer>
   <maintainer email="jihoonlee.in@gmail.com">Jihoon Lee</maintainer>
+  <maintainer email="marcus.liebhardt@yujinrobot.com">Marcus Liebhardt</maintainer>
   <license>BSD</license>
   <url type="website">http://wiki.ros.org/rocon_apps</url>
   <url type="repository">https://github.com/robotics-in-concert/rocon_app_platform</url>
   <url type="bugtracker">https://github.com/robotics-in-concert/rocon_app_platform/issues</url>
   <author email="d.stonier@gmail.com">Daniel Stonier</author> -->
   <author email="jihoonlee.in@gmail.com">Jihoon Lee</author>
+  <author email="marcus.liebhardt@yujinrobot.com">Marcus Liebhardt</author>
 
   <buildtool_depend>catkin</buildtool_depend>
 
