@@ -5,7 +5,7 @@
     The public interface and retaskable interface for a robot.
   </description>
   <maintainer email="d.stonier@gmail.com">Daniel Stonier</maintainer>
-  <maintainer email="jihoonlee.in@gmail.com">Jihoon Lee</maintainer>
+  <maintainer email="marcus.liebhardt@yujinrobot.com">Marcus Liebhardt</maintainer>
   <license>BSD</license>
   <url type="website">http://www.ros.org/wiki/rocon_app_manager</url>
   <url type="repository">https://github.com/robotics-in-concert/rocon_app_platform</url>
