@@ -66,11 +66,12 @@ class RappManager(object):
         self.app_list_file = {}
         self.caps_list = {}
         self._initialising_services = False
-        self._init_services()
 
         preinstalled_apps = self._get_pre_installed_app_list()  # It sets up an app directory and load installed app list from directory
-        self._determine_runnable_apps(preinstalled_apps)
+        (platform_filtered_apps, capabilities_filtered_apps) = self._determine_runnable_apps(preinstalled_apps)
+        self._init_services()
         self._publish_app_list()
+        self._publishers['incompatible_app_list'].publish([], [], self._get_app_msg_list(platform_filtered_apps), self._get_app_msg_list(capabilities_filtered_apps))
 
         if self._param['auto_start_rapp']:  # None and '' are both false here
             request = rapp_manager_srvs.StartAppRequest(self._param['auto_start_rapp'], [])
@@ -188,11 +189,14 @@ class RappManager(object):
 
     def _determine_runnable_apps(self, pre_installed_apps):
         '''
-         Prun unsupported apps, i.e. not all required capabilities are available, and store the supported apps in
-         separate list.
+         Prune unsupported apps due to incompatibilities in platform information or lack of
+         support for required capabilities.
 
          @param preinstalled_apps: all pre-installed apps (not yet filtered)
          @type dic name : Rapp
+
+         @return incompatible app list dictionaries for platform and capability incompatibilities respectively
+         @type 2-tuple of app list dictionaries
         '''
         # First try initialise the list of available capabilities
         no_caps_available = False
@@ -239,7 +243,7 @@ class RappManager(object):
                     rospy.logwarn("App : '" + str(app.data['name']) + "' cannot be run, since some required capabilities ("
                                   + str(e.missing_caps)
                                   + ") are not installed. App will be excluded from the list of runnable apps.")
-        self._publishers['incompatible_app_list'].publish([], [], self._get_app_msg_list(platform_filtered_apps), self._get_app_msg_list(capabilities_filtered_apps))
+        return (platform_filtered_apps, capabilities_filtered_apps)
 
     ##########################################################################
     # Ros Callbacks
