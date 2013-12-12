@@ -14,6 +14,7 @@
   <arg name="gateway_watch_loop_period" default="5"/>
   <arg name="hub_whitelist" default=""/> <!-- semi-colon separated hub names/regex patterns -->
   <arg name="disable_uuids" default="false"/> <!-- manage unique naming of multiple gateways yourself -->
+  <arg name="gateway_network_interface" default="$(optenv GATEWAY_NETWORK_INTERFACE)"/>/>  <!-- If you have multiple network interfaces and want to lock it on one (e.g. 'eth0') -->
 
   <node pkg="rocon_gateway" type="gateway.py" name="gateway">
     <rosparam command="load" file="$(find rocon_gateway)/param/default.yaml" />
@@ -26,6 +27,6 @@
     <param name="watch_loop_period" value="$(arg gateway_watch_loop_period)"/>
     <param name="hub_whitelist" value="$(arg hub_whitelist)"/>
     <param name="disable_uuids" value="$(arg disable_uuids)"/>
-    <!-- <param name="network_interface" value="eth0"/>  if you have multiple interfaces -->
+    <param name="network_interface" value="$(arg gateway_network_interface)"/>
   </node>
 </launch>
