@@ -64,8 +64,10 @@ class Rapp(object):
         implementation (Jihoon)
     '''
     # I should add a __slots__ definition here to make it easy to read
-    path = None
-    data = {}
+
+    # args that can be parsed for inside a rapp launcher, these args
+    # get passed down in the temporary launcher that gets constructed when
+    # pushing down a namespace.
     standard_args = ['gateway_name', 'application_namespace', 'platform_os'
                      'platform_version', 'platform_system', 'platform_type'
                      'platform_name']
@@ -79,12 +81,17 @@ class Rapp(object):
           @param resource_share : how many can share this app.
           @type uint16
         '''
+        # dic containing all relevant configuration variables for this rapp.
+        # Refer to load_from_rapp_file and don't forget the share variable.
+        self.data = {}
         self.filename = ""
         self._connections = {}
         for connection_type in ['publishers', 'subscribers', 'services', 'action_clients', 'action_servers']:
             self._connections[connection_type] = []
 
         self._load_from_resource_name(resource_name, rospack=rospack)
+        # Black magic here - make sure self.data is set in _load_from_resource_name first.
+        # What if it failed? Should get the above to return self.data instead.
         self.data['share'] = resource_share
 
     def __repr__(self):
