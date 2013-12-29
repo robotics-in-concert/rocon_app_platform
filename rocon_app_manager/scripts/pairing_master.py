@@ -146,7 +146,9 @@ class InvitationHandler():
                         # Don't automatically disengage as sometimes the start_app handle will appear before the android
                         # client's handle. Put it under observation
                         flagged_for_release_count += 1
-                        if flagged_for_release_count == 5:
+                        # This gives it 3-4s to release control, don't set it too low, because switching between a running app and
+                        # back to the app list can often take 2-3 seconds before the watchdog topic is re-established.
+                        if flagged_for_release_count == 20:
                             # Android client disappeared, probably crashed, so release control (uninvite)
                             rospy.loginfo("Pairing Master : android client disappeared, releasing remote control.")
                             remote_response = self.remote_invite_service(rocon_app_manager_srvs.InviteRequest(
