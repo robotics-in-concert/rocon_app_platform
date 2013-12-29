@@ -6,6 +6,7 @@
 <launch>
   <!-- ************************* Public Arguments ****************************** -->
   <arg name="auto_invite" default="false"/>  <!-- Take control of the private app manager automatically (should not be true if doing multi-robot) -->
+  <arg name="gateway_network_interface" default="$(optenv GATEWAY_NETWORK_INTERFACE)"/>  <!-- If you have multiple network interfaces and want to lock it on one (e.g. 'eth0') -->
 
   <!-- ********************************* Hub *********************************** -->
   <include file="$(find rocon_hub)/launch/hub.launch">
@@ -41,6 +42,7 @@
     <rosparam param="watch_loop_period">5</rosparam>
     <rosparam param="firewall">false</rosparam>
     <rosparam param="disable_zeroconf">true</rosparam>
+    <rosparam param="network_interface" subst_value="true">$(arg gateway_network_interface)</rosparam>
   </node>
 
   <!--

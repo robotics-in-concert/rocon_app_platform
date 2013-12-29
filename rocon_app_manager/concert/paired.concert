@@ -1,4 +1,6 @@
 <concert>
   <launch package="rocon_app_manager" name="paired_public.launch" port="11311"/>
-  <launch package="rocon_app_manager" name="paired_private.launch" port="11312"/>
+  <launch package="rocon_app_manager" name="paired_private.launch" port="11312">
+    <arg name="disable_uuids" value="true"/>
+  </launch>
 </concert>
