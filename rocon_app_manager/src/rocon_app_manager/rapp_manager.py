@@ -154,7 +154,6 @@ class RappManager(object):
             self._services['start_app'] = rospy.Service(self._service_names['start_app'], rapp_manager_srvs.StartApp, self._process_start_app)
             self._services['stop_app'] = rospy.Service(self._service_names['stop_app'], rapp_manager_srvs.StopApp, self._process_stop_app)
             # Latched publishers
-
             self._publishers['app_list'] = rospy.Publisher(self._publisher_names['app_list'], rapp_manager_msgs.AppList, latch=True)
             self._publishers['incompatible_app_list'] = rospy.Publisher(self._publisher_names['incompatible_app_list'], rapp_manager_msgs.IncompatibleAppList, latch=True)
             # Force an update on the gateway
@@ -163,6 +162,7 @@ class RappManager(object):
             traceback.print_exc(file=sys.stdout)
             self._initialising_services = False
             return False
+        self._publish_app_list()  # get the latched publisher refiring
         self._initialising_services = False
         return True
 
@@ -389,11 +389,15 @@ class RappManager(object):
         '''
           Publishes an updated list of available and running apps (in that order).
         '''
+        app_list = rapp_manager_msgs.AppList()
         try:
             if self._current_rapp:
-                self._publishers['app_list'].publish(self._get_app_msg_list(self.apps['runnable']), [self._current_rapp.to_msg()])
+                app_list.available_apps.extend(self._get_app_msg_list(self.apps['runnable']))
+                app_list.running_apps = [self._current_rapp.to_msg()]
             else:
-                self._publishers['app_list'].publish(self._get_app_msg_list(self.apps['runnable']), [])
+                app_list.available_apps.extend(self._get_app_msg_list(self.apps['runnable']))
+                app_list.running_apps = []
+            self._publishers['app_list'].publish(app_list)
         except KeyError:
             pass
         except rospy.exceptions.ROSException:  # publishing to a closed topic.
