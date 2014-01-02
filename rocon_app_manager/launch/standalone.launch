@@ -9,7 +9,8 @@
   <arg name="robot_type" default="pc"/>
   <arg name="rapp_lists" default="rocon_apps/rocon.rapps"/> <!-- semi colon separated list of rapp list resource names --> 
   <arg name="robot_icon" default="rocon_app_manager/cybernetic_pirate.png"/>
-  <arg name="auto_start_rapp" default=""/> <!-- autostart a rapp, e.g. rocon_apps/chirp -->
+  <arg name="auto_start_rapp" default="rocon_apps/talker"/> <!-- autostart a rapp, e.g. rocon_apps/chirp -->
+  <arg name="screen" default="true"/>  <!-- verbose output from running apps -->
   
   <!-- ****************************** App Manager ****************************** -->
   <include file="$(find rocon_app_manager)/launch/includes/_app_manager.xml">
@@ -18,6 +19,7 @@
     <arg name="robot_icon" value="$(arg robot_icon)" />
     <arg name="rapp_lists" value="$(arg rapp_lists)" />
     <arg name="auto_start_rapp" value="$(arg auto_start_rapp)" />
+    <arg name="screen" value="$(arg screen)" />
   </include>
 
 </launch>

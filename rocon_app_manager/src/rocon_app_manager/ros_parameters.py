@@ -32,9 +32,11 @@ def setup_ros_parameters():
     # Useful for local machine/simulation tests (e.g. chatter_concert)
     param['local_remote_controllers_only'] = rospy.get_param('~local_remote_controllers_only', False)
     # Check if rocon is telling us to be verbose about starting apps (this comes from the
-    # rocon_launch --screen option). TODO : additionally a private parameter for the app manager so
-    # people can configure this from yaml or roslaunch instead of rocon_launch
-    param['app_output_to_screen'] = rospy.get_param('/rocon/screen', False)
+    # rocon_launch --screen option).
+    rocon_screen = rospy.get_param('/rocon/screen', False)
+    # Also check if a user has privately told this app manager to start with verbose output.
+    app_manager_screen = rospy.get_param('~screen', False)
+    param['app_output_to_screen'] = rocon_screen or app_manager_screen
 
     # If we have list parameters - https://github.com/ros/ros_comm/pull/50/commits
     # param['rapp_lists'] = rospy.get_param('~rapp_lists', [])

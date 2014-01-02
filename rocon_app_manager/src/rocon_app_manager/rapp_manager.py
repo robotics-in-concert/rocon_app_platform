@@ -78,6 +78,7 @@ class RappManager(object):
             unused_response = self._process_start_app(request)
 
         self._debug_ignores = {}  # a remote_controller_name : timestamp of the last time we logged an ignore response
+        rospy.loginfo("App Manager : initialised.")
 
     def _set_platform_info(self):
         self.platform_info = rocon_std_msgs.PlatformInfo()
