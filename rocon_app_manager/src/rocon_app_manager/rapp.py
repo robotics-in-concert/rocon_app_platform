@@ -10,6 +10,7 @@
 import os
 import yaml
 import rospkg
+import roslib.names
 from roslib.packages import InvalidROSPkgException
 import rospy
 from roslaunch.config import load_config_default
@@ -341,7 +342,7 @@ class Rapp(object):
                     # namespace, so just use it directly
                     indices = [i for i, x in enumerate(remap_from_list) if x == t]
                     if indices:
-                        if rocon_utilities.ros.is_absolute_name(remap_to_list[indices[0]]):
+                        if roslib.names.is_global(remap_to_list[indices[0]]):
                             remapped_name = remap_to_list[indices[0]]
                         else:
                             remapped_name = '/' + application_namespace + "/" + remap_to_list[indices[0]]
@@ -353,7 +354,7 @@ class Rapp(object):
                         # just by getting pushed down the namespace.
                         #     https://github.com/robotics-in-concert/rocon_app_platform/issues/61
                         # we still need to pass them back to register for flipping though.
-                        if rocon_utilities.ros.is_absolute_name(t):
+                        if roslib.names.is_global(t):
                             flipped_name = t
                         else:
                             flipped_name = '/' + application_namespace + '/' + t
