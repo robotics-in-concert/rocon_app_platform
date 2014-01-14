@@ -27,6 +27,7 @@ import rocon_std_msgs.srv as rocon_std_srvs
 import gateway_msgs.msg as gateway_msgs
 import gateway_msgs.srv as gateway_srvs
 import std_msgs.msg as std_msgs
+import threading
 
 # local imports
 import exceptions
@@ -337,7 +338,8 @@ class RappManager(object):
             if req.remote_target_name == self._remote_name:
                 rospy.loginfo("App Manager : cancelling remote control of this system [%s]" % str(req.remote_target_name))
                 if self._current_rapp:
-                    self._process_stop_app()
+                    thread = threading.Thread(target=self._process_stop_app)
+                    thread.start()
                 self._remote_name = None
         else:
             rospy.loginfo("App Manager : accepting invitation to be remote controlled [%s]" % str(req.remote_target_name))
