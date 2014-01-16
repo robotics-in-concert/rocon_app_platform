@@ -8,13 +8,14 @@
 ##############################################################################
 
 import rospy
-import roslib.names
 import rocon_std_msgs.msg as rocon_std_msgs
-from .exceptions import NotFoundException, InvalidPlatformTupleException
+from .exceptions import InvalidPlatformTupleException
 
 ##############################################################################
 # Classes
 ##############################################################################
+
+# Should get these deprecated - the functionality is now in rocon_utilities.
 
 
 class PlatformTuple(object):

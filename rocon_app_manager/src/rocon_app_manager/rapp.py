@@ -11,7 +11,6 @@ import os
 import yaml
 import rospkg
 import roslib.names
-from roslib.packages import InvalidROSPkgException
 import rospy
 from roslaunch.config import load_config_default
 from roslaunch.core import RLException
@@ -19,14 +18,10 @@ import roslaunch.parent
 import traceback
 import tempfile
 import rocon_utilities
-import utils
 from .exceptions import AppException, InvalidRappException, MissingCapabilitiesException
 import rocon_app_manager_msgs.msg as rapp_manager_msgs
 import rocon_std_msgs.msg as rocon_std_msgs
-
-import roslaunch.node_args
 import roslaunch.xmlloader
-from roslaunch.config import load_config_default
 
 ##############################################################################
 # Class
@@ -73,91 +68,73 @@ class Rapp(object):
                      'platform_version', 'platform_system', 'platform_type'
                      'platform_name']
 
-    def __init__(self, resource_name, resource_share, rospack=None):
+    def __init__(self, package, package_relative_rapp_filename):
         '''
-          @param rospack : a cache to help with repeat calls (optional)
-          @type rospkg.RosPack
-          @param resource_name : a package/name pair for this rapp.
-          @type str/str
-          @param resource_share : how many can share this app.
-          @type uint16
+           @param package this rapp is nested in
+           @type :py:class:`catkin_pkg.package.Package`
+           @param package_relative_rapp_filename : string specified by the package export
+           @type os.path
         '''
-        # dic containing all relevant configuration variables for this rapp.
-        # Refer to load_from_rapp_file and don't forget the share variable.
-        self.data = {}
-        self.filename = ""
+        self.package_name = package.name
+        package_path = os.path.dirname(package.filename)
+        self.filename = os.path.join(package_path, package_relative_rapp_filename)
         self._connections = {}
         for connection_type in ['publishers', 'subscribers', 'services', 'action_clients', 'action_servers']:
             self._connections[connection_type] = []
+        rapp_name = os.path.splitext(os.path.basename(self.filename))[0]
+        rospy.loginfo("App Manager : loading rapp '%s/%s'" % (package.name, rapp_name))
+        with open(self.filename, 'r') as f:
+            data = {}
+            app_data = yaml.load(f.read())
+            for reqd in ['launch', 'interface', 'platform']:
+                if not reqd in app_data:
+                    raise AppException("Invalid rapp file format [" + self.filename + "], missing required key [" + reqd + "]")
+            data['name'] = package.name + "/" + rapp_name
+            data['display_name'] = app_data.get('display', rapp_name)
+            data['description'] = app_data.get('description', '')
+            data['platform'] = app_data['platform']
+            data['launch'] = self._find_rapp_resource(rapp_name, package_path, app_data['launch'])
+            data['launch_args'] = get_standard_args(data['launch'])
+            data['interface'] = self._load_interface(self._find_rapp_resource(rapp_name, package_path, app_data['interface']))
+            data['pairing_clients'] = self._load_pairing_clients(app_data, self.filename)
+            if 'icon' not in app_data:
+                data['icon'] = None
+            else:
+                data['icon'] = self._find_rapp_resource(rapp_name, package_path, app_data['icon'])
+            data['status'] = 'Ready'
+            required_capabilities = 'required_capabilities'
+            if required_capabilities in app_data:
+                data[required_capabilities] = []
+                for cap in app_data[required_capabilities]:
+                    data[required_capabilities].append(cap)
+        self.data = data
 
-        self._load_from_resource_name(resource_name, rospack=rospack)
-        # Black magic here - make sure self.data is set in _load_from_resource_name first.
-        # What if it failed? Should get the above to return self.data instead.
-        self.data['share'] = resource_share
+    def _find_rapp_resource(self, rapp_name, package_path, resource):
+        '''
+          Find a rapp resource (.launch, .interface, icon) relative to the
+          specified package path.
+
+          @param rapp_name : name of the rapp, only used for log messages.
+          @type str
+          @param package_path : the root of the package to begin the search
+          @type os.path
+          @param resource : a typical resource identifier to look for
+          @type pkg_name/file pair in str format.
+        '''
+        unused_package, name = roslib.names.package_resource_name(resource)
+        for root, dirs, files in os.walk(package_path):
+            if name in files:
+                return os.path.join(root, name)
+            to_prune = [x for x in dirs if x.startswith('.')]
+            for x in to_prune:
+                dirs.remove(x)
+        raise AppException("invalid rapp - %s does not exist [%s]" % (name, rapp_name))
 
     def __repr__(self):
         string = ""
         for d in self.data:
             string += d + " : " + str(self.data[d]) + "\n"
         return string
-
-    def _load_from_resource_name(self, name, rospack=None):
-        '''
-          Loads from a ros resource name consisting of a package/app pair.
-
-          @param name : unique identifier for the app, e.g. rocon_apps/chirp.
-          @type str
-          @param rospack : a cache to help with repeat calls (optional)
-          @type rospkg.RosPack
-
-          @raise InvalidRappException if the app definition was for some reason invalid.
-        '''
-        if not name:
-            raise InvalidRappException("app name was invalid [%s]" % name)
-        self.filename = rocon_utilities.find_resource_from_string(name + '.rapp', rospack=rospack)
-        self._load_from_app_file(self.filename, name, rospack=rospack)
-
-    def _load_from_app_file(self, path, app_name, rospack=None):
-        '''
-          Open and read directly from the app definition file (.rapp file).
-
-          @param path : full path to the .rapp file
-          @param app_name : unique name for the app (comes from the .rapp filename)
-          @param rospack : a cache to help with repeat calls (optional)
-          @type rospkg.RosPack
-        '''
-        rospy.loginfo("App Manager : loading app '%s'" % app_name)  # str(path)
-        self.filename = path
-
-        with open(path, 'r') as f:
-            data = {}
-            app_data = yaml.load(f.read())
-
-            for reqd in ['launch', 'interface', 'platform']:
-                if not reqd in app_data:
-                    raise AppException("Invalid appfile format [" + path + "], missing required key [" + reqd + "]")
-
-            data['name'] = app_name
-            data['display_name'] = app_data.get('display', app_name)
-            data['description'] = app_data.get('description', '')
-            data['platform'] = app_data['platform']
-            data['launch'] = self._find_rapp_resource(app_data['launch'], 'launch', app_name, rospack=rospack)
-            data['launch_args'] = get_standard_args(data['launch'])
-            #rospy.loginfo("App Manager : application requests the following standard arguments " + str(data['launch_args']))
-            data['interface'] = self._load_interface(self._find_rapp_resource(app_data['interface'], 'interface', app_name, rospack=rospack))
-            data['pairing_clients'] = []
-            data['pairing_clients'] = self._load_pairing_clients(app_data, path)
-            if 'icon' not in app_data:
-                data['icon'] = None
-            else:
-                data['icon'] = self._find_rapp_resource(app_data['icon'], 'icon', app_name, rospack=rospack)
-            data['status'] = 'Ready'
-            key = 'required_capabilities'
-            if key in app_data:
-                data[key] = []
-                for cap in app_data[key]:
-                    data['required_capabilities'].append(cap)
-        self.data = data
 
     def to_msg(self):
         '''
@@ -180,35 +157,6 @@ class Rapp(object):
             for cap in self.data[key]:
                 a.required_capabilities.append(cap['name'])
         return a
-
-    def _find_rapp_resource(self, resource, log, app_name="Unknown", rospack=None):
-        '''
-          A simple wrapper around rocon_utilities.find_resource_from_string to locate rapp resources.
-
-          @param resource is a ros resource (package/name)
-          @type str
-          @param log : string used for log messages when something goes wrong (e.g. 'icon')
-          @type str
-          @param name : app name, also only used for logging purposes
-          @return full path to the resource
-          @type str
-          @param rospack : a cache to help with repeat calls (optional)
-          @type rospkg.RosPack
-          @raise AppException: if resource does not exist or something else went wrong.
-        '''
-        try:
-            path_to_resource = rocon_utilities.find_resource_from_string(resource, rospack=rospack)
-            if not os.path.exists(path_to_resource):
-                raise AppException("invalid appfile [%s]: %s file does not exist." % (app_name, log))
-            return path_to_resource
-        except ValueError as e:
-            raise AppException("invalid appfile [%s]: bad %s entry: %s" % (app_name, log, e))
-            """
-        except NotFoundException:
-            raise AppException("App file [%s] refers to %s which is not installed"%(app_name,log))
-            """
-        except InvalidROSPkgException as e:
-            raise AppException("App file [%s] refers to %s which is not installed: %s" % (app_name, log, str(e)))
 
     def _load_interface(self, data):
         d = {}

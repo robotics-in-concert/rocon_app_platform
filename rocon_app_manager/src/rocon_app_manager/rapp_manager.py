@@ -32,6 +32,7 @@ import threading
 # local imports
 import exceptions
 from ros_parameters import setup_ros_parameters
+from .rapp import Rapp
 
 ##############################################################################
 # App Manager
@@ -68,8 +69,8 @@ class RappManager(object):
         self.caps_list = {}
         self._initialising_services = False
 
-        preinstalled_apps = self._get_pre_installed_app_list()  # It sets up an app directory and load installed app list from directory
-        (platform_filtered_apps, capabilities_filtered_apps) = self._determine_runnable_apps(preinstalled_apps)
+        preinstalled_apps = self._load_installed_rapps()  # parses exported rapps from the package path
+        (platform_filtered_apps, capabilities_filtered_apps) = self._determine_runnable_rapps(preinstalled_apps)
         self._init_services()
         self._publish_app_list()
         self._publishers['incompatible_app_list'].publish([], [], self._get_app_msg_list(platform_filtered_apps), self._get_app_msg_list(capabilities_filtered_apps))
@@ -168,33 +169,30 @@ class RappManager(object):
         self._initialising_services = False
         return True
 
-    def _get_pre_installed_app_list(self):
+    def _load_installed_rapps(self):
         '''
-         Retrieves app lists from yaml file.
+         Retrieves rapps found on the package path.
 
-         @return all pre-installed apps (not yet filtered)
-         @rtype dic name : Rapp
+         @return all installed rapps
+         @rtype dic rapp name : Rapp instance
         '''
-        preinstalled_apps = {}
-        # Getting apps from installed list
-        for resource_name in self._param['rapp_lists']:
-            # should do some exception checking here, also utilise AppListFile properly.
-            filename = rocon_utilities.find_resource_from_string(resource_name)
-            try:
-                self.app_list_file = RappListFile(filename)
-            except IOError as e:  # if file is not found
-                rospy.logwarn("App Manager : %s" % str(e))
-                return
-            for app in self.app_list_file.available_apps:
-                preinstalled_apps[app.data['name']] = app
-        return preinstalled_apps
+        installed_apps = {}
+        ros_package_path = os.getenv('ROS_PACKAGE_PATH', '')
+        ros_package_path = [x for x in ros_package_path.split(':') if x]
+        package_index = rocon_utilities.package_index_from_package_path(ros_package_path)
+        for package in package_index.values():
+            for export in package.exports:
+                if export.tagname == 'rocon_app':
+                    app = Rapp(package, export.content)
+                    installed_apps[app.data['name']] = app
+        return installed_apps
 
-    def _determine_runnable_apps(self, pre_installed_apps):
+    def _determine_runnable_rapps(self, rapps):
         '''
          Prune unsupported apps due to incompatibilities in platform information or lack of
          support for required capabilities.
 
-         @param preinstalled_apps: all pre-installed apps (not yet filtered)
+         @param rapps: an index of rapps to check
          @type dic name : Rapp
 
          @return incompatible app list dictionaries for platform and capability incompatibilities respectively
@@ -215,8 +213,8 @@ class RappManager(object):
         platform_compatible_apps = {}
         platform_filtered_apps = {}
         capabilities_filtered_apps = {}
-        for app_name in pre_installed_apps:
-            app = pre_installed_apps[app_name]
+        for app_name in rapps:
+            app = rapps[app_name]
             # Platform check
             if platform_compatible(platform_tuple(self.platform_info.os, self.platform_info.version, self.platform_info.system, self.platform_info.platform), app.data['platform']):
                 platform_compatible_apps[app.data['name']] = app
