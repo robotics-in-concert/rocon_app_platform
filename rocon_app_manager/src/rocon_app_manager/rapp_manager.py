@@ -317,10 +317,7 @@ class RappManager(object):
                 return rapp_manager_srvs.InviteResponse(False, rapp_manager_msgs.ErrorCodes.ALREADY_REMOTE_CONTROLLED, "already remote controlled from %s" % self._remote_name)
         # Variable setting
         if req.application_namespace == '':
-            if self._gateway_name:
-                self._application_namespace = self._gateway_name
-            else:
-                self._application_namespace = ''
+            self._application_namespace = self._gateway_name if self._gateway_name else self._param['robot_name']
         else:
             self._application_namespace = req.application_namespace
         # Flips/Unflips
