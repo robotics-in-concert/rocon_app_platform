@@ -8,12 +8,16 @@
   <arg name="robot_type" default="turtlebot"/> 
   <arg name="robot_icon" default="$(find rocon_app_manager)/icons/turtlebot.png"/>
   <arg name="local_remote_controllers_only" default="false"/> <!-- allow remote control for local machine tests only -->
+  <arg name="rapp_package_whitelist" default="[]"/>  <!-- comma separated list of package names -->
+  <arg name="rapp_package_blacklist" default="[]"/>
   <arg name="auto_start_rapp" default=""/> <!-- autostart a rapp, e.g. rocon_apps/chirp -->
   <arg name="screen" default="false"/>  <!-- verbose output from running apps -->
 
   <!-- **************************** App Manager ******************************** -->
   <node pkg="rocon_app_manager" type="rapp_manager.py" name="app_manager">
     <rosparam command="load" file="$(find rocon_app_manager)/param/app_manager_defaults.yaml" />
+    <rosparam param="rapp_package_whitelist" subst_value="True">$(arg rapp_package_whitelist)</rosparam>
+    <rosparam param="rapp_package_blacklist" subst_value="True">$(arg rapp_package_blacklist)</rosparam>
     <param name="robot_name" value="$(arg robot_name)"/>
     <param name="robot_type" value="$(arg robot_type)"/>
     <param name="robot_icon" value="$(arg robot_icon)"/>
@@ -26,3 +30,5 @@
     <remap from="app_manager/flip" to="gateway/flip"/>
   </node>
 </launch>
+
+

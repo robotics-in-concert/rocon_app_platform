@@ -1,7 +1,6 @@
-#!/usr/bin/env python
 #
 # License: BSD
-#   https://raw.github.com/robotics-in-concert/rocon_app_platform/master/rocon_app_manager/LICENSE
+#   https://raw.github.com/robotics-in-concert/rocon_app_platform/license/LICENSE
 #
 ##############################################################################
 # Imports
@@ -146,7 +145,6 @@ class Rapp(object):
         a.description = self.data['description']
         a.platform = self.data['platform']
         a.status = self.data['status']
-        a.share = self.data['share']
         a.icon = rocon_utilities.icon_to_msg(self.data['icon'])
         for pairing_client in self.data['pairing_clients']:
             a.pairing_clients.append(PairingClient(pairing_client.client_type,
@@ -230,7 +228,7 @@ class Rapp(object):
           @type CapsList
         '''
         data = self.data
-        rospy.loginfo("App Manager : Launching '" + (data['name']) + "' underneath /" + application_namespace)
+        rospy.loginfo("App Manager : launching '" + (data['name']) + "' underneath /" + application_namespace)
 
         try:
             # Create modified roslaunch file include the application namespace (robot name + 'application')

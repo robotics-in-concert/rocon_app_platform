@@ -8,7 +8,9 @@
   <arg name="robot_name" default="app_manager"/>
   <arg name="robot_type" default="pc"/>
   <arg name="robot_icon" default="rocon_app_manager/cybernetic_pirate.png"/>
-  <arg name="auto_start_rapp" default="rocon_apps/talker"/> <!-- autostart a rapp, e.g. rocon_apps/chirp -->
+  <arg name="auto_start_rapp" default="rocon_apps/talker"/>   <!-- autostart a rapp, e.g. rocon_apps/chirp -->
+  <arg name="rapp_package_whitelist" default="[rocon_apps]"/> <!-- comma separated list of package names -->
+  <arg name="rapp_package_blacklist" default="[]"/>
   <arg name="screen" default="true"/>  <!-- verbose output from running apps -->
   
   <!-- ****************************** App Manager ****************************** -->
@@ -16,6 +18,8 @@
     <arg name="robot_name" value="$(arg robot_name)" />
     <arg name="robot_type" value="$(arg robot_type)" />
     <arg name="robot_icon" value="$(arg robot_icon)" />
+    <arg name="rapp_package_whitelist" value="$(arg rapp_package_whitelist)" />
+    <arg name="rapp_package_blacklist" value="$(arg rapp_package_blacklist)" />
     <arg name="auto_start_rapp" value="$(arg auto_start_rapp)" />
     <arg name="screen" value="$(arg screen)" />
   </include>

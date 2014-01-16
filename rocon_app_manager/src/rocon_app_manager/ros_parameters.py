@@ -25,6 +25,8 @@ def setup_ros_parameters():
     param['app_store_url']   = rospy.get_param('~app_store_url', '')  #@IgnorePep8
     param['platform_info']   = rospy.get_param('~platform_info', 'linux.*.ros.*')  #@IgnorePep8
     param['auto_start_rapp'] = rospy.get_param('~auto_start_rapp', None)  #@IgnorePep8
+    param['rapp_package_whitelist'] = rospy.get_param('~rapp_package_whitelist', [])
+    param['rapp_package_blacklist'] = rospy.get_param('~rapp_package_blacklist', [])
     # Todo fix these up with proper whitelist/blacklists
     param['remote_controller_whitelist'] = rospy.get_param('~remote_controller_whitelist', [])
     param['remote_controller_blacklist'] = rospy.get_param('~remote_controller_blacklist', [])

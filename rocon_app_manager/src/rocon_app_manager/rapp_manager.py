@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #
 # License: BSD
 #   https://raw.github.com/robotics-in-concert/rocon_app_platform/license/LICENSE
@@ -15,7 +14,6 @@ import time
 import thread
 import traceback
 import roslaunch.pmon
-from .rapp_list import RappListFile
 from .caps_list import CapsList
 from .utils import platform_compatible, platform_tuple
 import rocon_utilities
@@ -181,6 +179,12 @@ class RappManager(object):
         ros_package_path = [x for x in ros_package_path.split(':') if x]
         package_index = rocon_utilities.package_index_from_package_path(ros_package_path)
         for package in package_index.values():
+            # whitelist/blacklist filter
+            if self._param['rapp_package_whitelist']:
+                if package.name not in self._param['rapp_package_whitelist']:
+                    continue
+            elif package.name in self._param['rapp_package_blacklist']:
+                continue
             for export in package.exports:
                 if export.tagname == 'rocon_app':
                     app = Rapp(package, export.content)
@@ -425,35 +429,35 @@ class RappManager(object):
 
         # check if the app requires capabilities
         if 'required_capabilities' in self.apps['runnable'][req.name].data:
-            rospy.loginfo("App Manager : Starting required capabilities.")
+            rospy.loginfo("App Manager : starting required capabilities.")
             for cap in self.apps['runnable'][req.name].data['required_capabilities']:
                 try:
                     start_resp = self.caps_list.start_capability(cap["name"])
                 except rospy.ROSException as exc:
                     resp.started = False
-                    resp.message = ("App Manager : Service for starting capabilities is not available."
+                    resp.message = ("App Manager : service for starting capabilities is not available."
                                     + " Will not start app. Error:"
                                     + str(exc))
                     rospy.logerr("App Manager : %s" % resp.message)
                     return resp
                 except IOError as exc:
                     resp.started = False
-                    resp.message = ("App Manager : Error occurred while processing 'start_capability' service."
+                    resp.message = ("App Manager : error occurred while processing 'start_capability' service."
                                     + " Will not start app. Error: "
                                     + str(exc))
                     rospy.logerr("App Manager : %s" % resp.message)
                     return resp
                 if start_resp:
-                    rospy.loginfo("App Manager : Started required capability '" + str(cap["name"]) + "'.")
+                    rospy.loginfo("App Manager : started required capability '" + str(cap["name"]) + "'.")
                 else:
                     resp.started = False
-                    resp.message = ("App Manager : Starting capability '" + str(cap["name"]) + " was not successful."
+                    resp.message = ("App Manager : starting capability '" + str(cap["name"]) + " was not successful."
                                     " Will not start app.")
                     rospy.logerr("App Manager : %s" % resp.message)
                     return resp
-            rospy.loginfo("App Manager : All required capabilities have been started.")
+            rospy.loginfo("App Manager : all required capabilities have been started.")
 
-        rospy.loginfo("App Manager : Starting app '" + req.name + "'.")
+        rospy.loginfo("App Manager : starting app '" + req.name + "'.")
 
         if 'required_capabilities' in self.apps['runnable'][req.name].data:
             resp.started, resp.message, subscribers, publishers, services, action_clients, action_servers = \
