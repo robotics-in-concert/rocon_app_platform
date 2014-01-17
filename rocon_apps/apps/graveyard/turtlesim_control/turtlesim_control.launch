@@ -1,3 +1,0 @@
-<launch>
-  <node pkg="turtlesim" type="turtle_teleop_key" name="turtlesim"></node>
-</launch>

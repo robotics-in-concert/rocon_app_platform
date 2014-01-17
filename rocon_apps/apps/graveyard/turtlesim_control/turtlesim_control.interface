@@ -1,3 +1,0 @@
-publishers: [/turtle1/command_velocity]
-subscribers: [/turtle1/pose]
-services: []
