@@ -17,6 +17,7 @@ import roslaunch.pmon
 from .caps_list import CapsList
 from .utils import platform_compatible, platform_tuple
 import rocon_utilities
+import rocon_python_comms
 from rocon_utilities import create_gateway_rule, create_gateway_remote_rule
 import rocon_app_manager_msgs.msg as rapp_manager_msgs
 import rocon_app_manager_msgs.srv as rapp_manager_srvs
@@ -112,7 +113,7 @@ class RappManager(object):
 
     def _init_gateway_services(self):
         self._gateway_services = {}
-        self._gateway_services['gateway_info'] = rocon_utilities.SubscriberProxy('~gateway_info', gateway_msgs.GatewayInfo)
+        self._gateway_services['gateway_info'] = rocon_python_comms.SubscriberProxy('~gateway_info', gateway_msgs.GatewayInfo)
         self._gateway_services['remote_gateway_info'] = rospy.ServiceProxy('~remote_gateway_info', gateway_srvs.RemoteGatewayInfo)
         self._gateway_services['flip'] = rospy.ServiceProxy('~flip', gateway_srvs.Remote)
         self._gateway_services['advertise'] = rospy.ServiceProxy('~advertise', gateway_srvs.Advertise)

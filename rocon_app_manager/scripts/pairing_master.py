@@ -14,8 +14,9 @@ import gateway_msgs.msg as gateway_msgs
 import gateway_msgs.srv as gateway_srvs
 import rocon_app_manager_msgs.srv as rocon_app_manager_srvs
 import rocon_app_manager_msgs.msg as rocon_app_manager_msgs
+import rocon_python_comms
 import rocon_utilities
-import rocon_utilities.console as console
+import rocon_console.console as console
 import std_msgs.msg as std_msgs
 
 ##############################################################################
@@ -25,7 +26,7 @@ import std_msgs.msg as std_msgs
 def local_gateway_name():
     
     gateway_name = None
-    gateway_info_service = rocon_utilities.SubscriberProxy('~gateway_info', gateway_msgs.GatewayInfo)
+    gateway_info_service = rocon_python_comms.SubscriberProxy('~gateway_info', gateway_msgs.GatewayInfo)
     while not rospy.is_shutdown():
         gateway_info = gateway_info_service(timeout=rospy.Duration(0.2))
         if gateway_info:
