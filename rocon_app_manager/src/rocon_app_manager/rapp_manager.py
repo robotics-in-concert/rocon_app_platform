@@ -17,7 +17,6 @@ import roslaunch.pmon
 from .caps_list import CapsList
 import rocon_python_comms
 import rocon_utilities
-from rocon_utilities import platform_tuples
 from rocon_utilities import create_gateway_rule, create_gateway_remote_rule
 import rocon_app_manager_msgs.msg as rapp_manager_msgs
 import rocon_app_manager_msgs.srv as rapp_manager_srvs
@@ -27,6 +26,7 @@ import gateway_msgs.msg as gateway_msgs
 import gateway_msgs.srv as gateway_srvs
 import std_msgs.msg as std_msgs
 import threading
+import rocon_uri
 
 # local imports
 import exceptions
@@ -59,7 +59,7 @@ class RappManager(object):
         self._publishers = {}
 
         self._param = setup_ros_parameters()
-        (self._platform_tuple, self._icon) = self._set_platform_info()
+        (self._rocon_uri, self._icon) = self._set_platform_info()
         self._init_gateway_services()
         self._init_default_service_names()
 
@@ -85,14 +85,13 @@ class RappManager(object):
         '''
           Initialises the rapp manager with the appropriate platform info.
           This is part of the __init__ process.
+
+          @todo Do some proper platform sniffing here.
         '''
-        platform_tuple = rocon_std_msgs.PlatformTuple(
-                                os=rocon_std_msgs.PlatformTuple.OS_LINUX,
-                                version=rocon_std_msgs.PlatformTuple.VERSION_ANY,
-                                system=rocon_std_msgs.PlatformTuple.SYSTEM_ROS,
-                                platform=self._param['robot_type'],
-                                name=self._param['robot_name']
-                                )
+        rocon_uri = "rocon:///" + self._param['robot_type'] + \
+                            "/" + self._param['robot_name'] + \
+                            "/" + rocon_std_msgs.Strings.APPLICATION_FRAMEWORK_HYDRO + \
+                            "/" + rocon_std_msgs.Strings.OS_PRECISE
         try:
             filename = rocon_utilities.find_resource_from_string(self._param['robot_icon'])
             icon = rocon_utilities.icon_to_msg(filename)
@@ -102,7 +101,7 @@ class RappManager(object):
         except ValueError:
             rospy.logwarn("App Manager : invalid resource name [%s]" % self._param['robot_icon'])
             icon = rocon_std_msgs.Icon()
-        return (platform_tuple, icon)
+        return (rocon_uri, icon)
 
     def _init_default_service_names(self):
         self._default_service_names = {}
@@ -227,11 +226,11 @@ class RappManager(object):
         for app_name in rapps:
             app = rapps[app_name]
             # Platform check
-            if platform_tuples.is_compatible(self._platform_tuple, app.data['platform']):
+            if rocon_uri.is_compatible(self._rocon_uri, app.data['compatibility']):
                 platform_compatible_apps[app.data['name']] = app
             else:
                 platform_filtered_apps[app.data['name']] = app
-                rospy.logwarn("App : '" + str(app.data['name']) + "' is incompatible [" + platform_tuples.to_string(app.data['platform']) + '][' + platform_tuples.to_string(self._platform_tuple) + ']')
+                rospy.logwarn("App : '" + str(app.data['name']) + "' is incompatible [" + app.data['compatibility'] + '][' + self._rocon_uri + ']')
         for app_name in platform_compatible_apps:
             app = platform_compatible_apps[app_name]
             if no_caps_available:
@@ -353,7 +352,8 @@ class RappManager(object):
 
     def _process_platform_info(self, req):
         platform_info = rocon_std_msgs.PlatformInfo(
-                                tuple=self._platform_tuple,
+                                version=rocon_std_msgs.Strings.ROCON_VERSION,
+                                uri=self._rocon_uri,
                                 icon=self._icon)
         return rocon_std_srvs.GetPlatformInfoResponse(platform_info)
 
@@ -472,7 +472,7 @@ class RappManager(object):
             resp.started, resp.message, subscribers, publishers, services, action_clients, action_servers = \
                         rapp.start(self._application_namespace,
                                    self._gateway_name,
-                                   self._platform_tuple,
+                                   self._rocon_uri,
                                    req.remappings,
                                    self._param['app_output_to_screen'],
                                    self.caps_list)
@@ -480,7 +480,7 @@ class RappManager(object):
             resp.started, resp.message, subscribers, publishers, services, action_clients, action_servers = \
                         rapp.start(self._application_namespace,
                                    self._gateway_name,
-                                   self._platform_tuple,
+                                   self._rocon_uri,
                                    req.remappings,
                                    self._param['app_output_to_screen'])
 
