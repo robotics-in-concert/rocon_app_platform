@@ -90,10 +90,10 @@ class RappManager(object):
         # This might be naive and only work well on ubuntu...
         os_codename = rospkg.os_detect.OsDetect().get_codename()
         rosdistro = rospy.get_param("/rosdistro").rstrip()  # have seen rosdistro set with newline characters messing things up
-        rocon_uri = "rocon:///" + self._param['robot_type'] + \
-                            "/" + self._param['robot_name'] + \
-                            "/" + rosdistro + \
-                            "/" + os_codename
+        rocon_uri = "rocon:/" + self._param['robot_type'] + \
+                          "/" + self._param['robot_name'] + \
+                          "/" + rosdistro + \
+                          "/" + os_codename
         try:
             filename = rocon_utilities.find_resource_from_string(self._param['robot_icon'])
             icon = rocon_utilities.icon_to_msg(filename)
