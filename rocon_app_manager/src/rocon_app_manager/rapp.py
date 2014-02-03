@@ -21,6 +21,7 @@ from .exceptions import AppException, InvalidRappException, MissingCapabilitiesE
 import rocon_app_manager_msgs.msg as rapp_manager_msgs
 import rocon_std_msgs.msg as rocon_std_msgs
 import roslaunch.xmlloader
+import rocon_uri
 
 ##############################################################################
 # Class
@@ -63,9 +64,7 @@ class Rapp(object):
     # args that can be parsed for inside a rapp launcher, these args
     # get passed down in the temporary launcher that gets constructed when
     # pushing down a namespace.
-    standard_args = ['gateway_name', 'application_namespace', 'platform_os'
-                     'platform_version', 'platform_system', 'platform_type'
-                     'platform_name']
+    standard_args = ['gateway_name', 'application_namespace', 'rocon_uri']
 
     def __init__(self, package, package_relative_rapp_filename):
         '''
@@ -85,13 +84,13 @@ class Rapp(object):
         with open(self.filename, 'r') as f:
             data = {}
             app_data = yaml.load(f.read())
-            for reqd in ['launch', 'interface', 'platform']:
+            for reqd in ['launch', 'interface', 'compatibility']:
                 if not reqd in app_data:
                     raise AppException("Invalid rapp file format [" + self.filename + "], missing required key [" + reqd + "]")
             data['name'] = package.name + "/" + rapp_name
             data['display_name'] = app_data.get('display', rapp_name)
             data['description'] = app_data.get('description', '')
-            data['platform'] = app_data['platform']
+            data['compatibility'] = app_data['compatibility']
             data['launch'] = self._find_rapp_resource(rapp_name, package_path, app_data['launch'])
             data['launch_args'] = get_standard_args(data['launch'])
             data['interface'] = self._load_interface(self._find_rapp_resource(rapp_name, package_path, app_data['interface']))
@@ -143,7 +142,7 @@ class Rapp(object):
         a.name = self.data['name']
         a.display_name = self.data['display_name']
         a.description = self.data['description']
-        a.platform = self.data['platform']
+        a.compatibility = self.data['compatibility']
         a.status = self.data['status']
         a.icon = rocon_utilities.icon_to_msg(self.data['icon'])
         for pairing_client in self.data['pairing_clients']:
@@ -202,7 +201,7 @@ class Rapp(object):
             clients.append(PairingClient(client_type, manager_data, app_data))
         return clients
 
-    def start(self, application_namespace, gateway_name, platform_info, remappings=[], force_screen=False,
+    def start(self, application_namespace, gateway_name, rocon_uri_string, remappings=[], force_screen=False,
               caps_list=None):
         '''
           Some important jobs here.
@@ -218,8 +217,8 @@ class Rapp(object):
           @type str
           @param gateway_name ; unique name granted to the gateway
           @type str
-          @param platform_info ; unique name granted to the gateway
-          @type PlatformTuple
+          @param rocon_uri_string : uri of the app manager's platform (used as a check for compatibility)
+          @type str : a rocon uri string
           @param remapping : rules for the app flips.
           @type list of rocon_std_msgs.msg.Remapping values.
           @param force_screen : whether to roslaunch the app with --screen or not
@@ -233,9 +232,13 @@ class Rapp(object):
         try:
             # Create modified roslaunch file include the application namespace (robot name + 'application')
             temp = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
-            launch_text = prepare_launch_text(data['launch'],
-                    data['launch_args'], application_namespace, gateway_name,
-                    platform_info)
+            launch_text = _prepare_launch_text(
+                                    data['launch'],
+                                    data['launch_args'],
+                                    application_namespace,
+                                    gateway_name,
+                                    rocon_uri_string
+                                    )
             temp.write(launch_text)
             temp.close()  # unlink it later
 
@@ -305,7 +308,7 @@ class Rapp(object):
                         else:
                             flipped_name = '/' + application_namespace + '/' + t
                         self._connections[connection_type].append(flipped_name)
-            resolve_chain_remappings(self._launch.config.nodes)
+            _resolve_chain_remappings(self._launch.config.nodes)
             self._launch.start()
 
             data['status'] = 'Running'
@@ -406,34 +409,44 @@ def get_standard_args(roslaunch_file):
         return []
 
 
-def prepare_launch_text(launch_file, launch_args, application_namespace,
-                        gateway_name, platform_info):
+def _prepare_launch_text(launch_file, launch_args, application_namespace,
+                        gateway_name, rocon_uri_string):
     '''
-      Prepate the launch file text. Append some standard arguments if the
-      launch file is expecting them.
+      Prepare the launch file text. This essentially wraps the rapp launcher
+      with the following roslaunch elements:
+
+      - group namespace
+      - roslaunch args
+
+      The roslaunch args are a list of string keys used to select which
+      automatically generated roslaunch args (e.g. namespace, name,
+      rocon_uri properties) should get passed to the rapp. Note that we
+      don't pass the whole set, because roslaunch args will throw an error
+      if the rapp itself isn't expecting them. The logoc for determing this is
+      in get_standard_args.
 
       @param launch_file: fully resolved launch file path
       @type str
-      @param launch_args: list of standard args that should be passed to
-             this launch file and are expected by it
+      @param launch_args: strings identifying the keys of the standard roslaunch args
+             to send (not the args themselves)
+      @type str[]
       @param application_namespace ; unique name granted indirectly via the
              gateways, we namespace everything under this
       @type str
-      @param gateway_name ; unique name granted to the gateway
+      @param gateway_name : unique name granted to the gateway
       @type str
-      @param platform_info ; unique name granted to the gateway
-      @type PlatformTuple
+      @param rocon_uri_string : used to pass down information about the platform that is running this app to the app itself.
+      @type str : a rocon uri string
+
+      The rocon_uri_string variable is a fixed identifier for this app manager's platform - i.e. no special
+      characters or wildcards should be contained therein.
     '''
 
     # Prepare argument mapping
     launch_arg_mapping = {}
     launch_arg_mapping['application_namespace'] = application_namespace
     launch_arg_mapping['gateway_name'] = gateway_name
-    launch_arg_mapping['platform_os'] = platform_info.os
-    launch_arg_mapping['platform_version'] = platform_info.version
-    launch_arg_mapping['platform_system'] = platform_info.system
-    launch_arg_mapping['platform_type'] = platform_info.platform
-    launch_arg_mapping['platform_name'] = platform_info.name
+    launch_arg_mapping['rocon_uri'] = rocon_uri_string
 
     launch_text = '<launch>\n  <include ns="%s" file="%s">\n' % (application_namespace, launch_file)
     for arg in launch_args:
@@ -442,9 +455,9 @@ def prepare_launch_text(launch_file, launch_args, application_namespace,
     return launch_text
 
 
-def resolve_chain_remappings(nodes):
+def _resolve_chain_remappings(nodes):
     """
-        resolve chain remapping rules contains in node remapping arguments
+        Resolve chain remapping rules contained in node remapping arguments
         replace the node remapping argument
 
         @param nodes: roslaunch nodes

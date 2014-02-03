@@ -15,9 +15,8 @@ import thread
 import traceback
 import roslaunch.pmon
 from .caps_list import CapsList
-from .utils import platform_compatible, platform_tuple
-import rocon_utilities
 import rocon_python_comms
+import rocon_utilities
 from rocon_utilities import create_gateway_rule, create_gateway_remote_rule
 import rocon_app_manager_msgs.msg as rapp_manager_msgs
 import rocon_app_manager_msgs.srv as rapp_manager_srvs
@@ -27,6 +26,8 @@ import gateway_msgs.msg as gateway_msgs
 import gateway_msgs.srv as gateway_srvs
 import std_msgs.msg as std_msgs
 import threading
+import rocon_uri
+import rospkg.os_detect
 
 # local imports
 import exceptions
@@ -59,7 +60,7 @@ class RappManager(object):
         self._publishers = {}
 
         self._param = setup_ros_parameters()
-        self._set_platform_info()
+        (self._rocon_uri, self._icon) = self._set_platform_info()
         self._init_gateway_services()
         self._init_default_service_names()
 
@@ -82,21 +83,27 @@ class RappManager(object):
         rospy.loginfo("App Manager : initialised.")
 
     def _set_platform_info(self):
-        self.platform_info = rocon_std_msgs.PlatformInfo()
-        self.platform_info.os = rocon_std_msgs.PlatformInfo.OS_LINUX
-        self.platform_info.version = rocon_std_msgs.PlatformInfo.VERSION_ANY  # don't care
-        self.platform_info.platform = self._param['robot_type']
-        self.platform_info.system = rocon_std_msgs.PlatformInfo.SYSTEM_ROS
-        self.platform_info.name = self._param['robot_name']
+        '''
+          Initialises the rapp manager with the appropriate platform info.
+          This is part of the __init__ process.
+        '''
+        # This might be naive and only work well on ubuntu...
+        os_codename = rospkg.os_detect.OsDetect().get_codename()
+        rosdistro = rospy.get_param("/rosdistro").rstrip()  # have seen rosdistro set with newline characters messing things up
+        rocon_uri = "rocon:/" + self._param['robot_type'] + \
+                          "/" + self._param['robot_name'] + \
+                          "/" + rosdistro + \
+                          "/" + os_codename
         try:
             filename = rocon_utilities.find_resource_from_string(self._param['robot_icon'])
-            self.platform_info.icon = rocon_utilities.icon_to_msg(filename)
+            icon = rocon_utilities.icon_to_msg(filename)
         except exceptions.NotFoundException:
             rospy.logwarn("App Manager : icon resource not found [%s]" % self._param['robot_icon'])
-            self.platform_info.icon = rocon_std_msgs.Icon()
+            icon = rocon_std_msgs.Icon()
         except ValueError:
             rospy.logwarn("App Manager : invalid resource name [%s]" % self._param['robot_icon'])
-            self.platform_info.icon = rocon_std_msgs.Icon()
+            icon = rocon_std_msgs.Icon()
+        return (rocon_uri, icon)
 
     def _init_default_service_names(self):
         self._default_service_names = {}
@@ -221,12 +228,11 @@ class RappManager(object):
         for app_name in rapps:
             app = rapps[app_name]
             # Platform check
-            if platform_compatible(platform_tuple(self.platform_info.os, self.platform_info.version, self.platform_info.system, self.platform_info.platform), app.data['platform']):
+            if rocon_uri.is_compatible(self._rocon_uri, app.data['compatibility']):
                 platform_compatible_apps[app.data['name']] = app
             else:
                 platform_filtered_apps[app.data['name']] = app
-                rospy.logwarn("App : '" + str(app.data['name']) + "' is incompatible [" + str(app.data['platform']) + '][' +
-                              str(self.platform_info.os) + '.' + str(self.platform_info.version) + '.' + str(self.platform_info.system) + '.' + str(self.platform_info.platform) + ']')
+                rospy.logwarn("App : '" + str(app.data['name']) + "' is incompatible [" + app.data['compatibility'] + '][' + self._rocon_uri + ']')
         for app_name in platform_compatible_apps:
             app = platform_compatible_apps[app_name]
             if no_caps_available:
@@ -347,7 +353,11 @@ class RappManager(object):
         return rapp_manager_srvs.InviteResponse(True, rapp_manager_msgs.ErrorCodes.SUCCESS, "success")
 
     def _process_platform_info(self, req):
-        return rocon_std_srvs.GetPlatformInfoResponse(self.platform_info)
+        platform_info = rocon_std_msgs.PlatformInfo(
+                                version=rocon_std_msgs.Strings.ROCON_VERSION,
+                                uri=self._rocon_uri,
+                                icon=self._icon)
+        return rocon_std_srvs.GetPlatformInfoResponse(platform_info)
 
     def _process_status(self, req):
         '''
@@ -464,7 +474,7 @@ class RappManager(object):
             resp.started, resp.message, subscribers, publishers, services, action_clients, action_servers = \
                         rapp.start(self._application_namespace,
                                    self._gateway_name,
-                                   self.platform_info,
+                                   self._rocon_uri,
                                    req.remappings,
                                    self._param['app_output_to_screen'],
                                    self.caps_list)
@@ -472,7 +482,7 @@ class RappManager(object):
             resp.started, resp.message, subscribers, publishers, services, action_clients, action_servers = \
                         rapp.start(self._application_namespace,
                                    self._gateway_name,
-                                   self.platform_info,
+                                   self._rocon_uri,
                                    req.remappings,
                                    self._param['app_output_to_screen'])
 

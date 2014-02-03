@@ -15,6 +15,7 @@
   <arg name="rapp_package_blacklist" default="[]"/>
   <arg name="auto_start_rapp" default=""/> <!-- autostart a rapp, e.g. rocon_apps/chirp -->
   <arg name="local_remote_controllers_only" default="false"/> <!-- allow remote control for local machine tests only -->
+  <arg name="screen" default="false"/>  <!-- verbose output from running apps -->
 
   <!-- ******************************* Zeroconf ******************************** -->
   <node ns="zeroconf" pkg="zeroconf_avahi" type="zeroconf" name="zeroconf"/>
@@ -36,5 +37,6 @@
     <arg name="rapp_package_blacklist" value="$(arg rapp_package_blacklist)" />
     <arg name="auto_start_rapp" value="$(arg auto_start_rapp)" />
     <arg name="local_remote_controllers_only" value="$(arg local_remote_controllers_only)" />
+    <arg name="screen" value="$(arg screen)" />
   </include>
 </launch>

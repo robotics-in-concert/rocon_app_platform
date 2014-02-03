@@ -23,7 +23,6 @@ def setup_ros_parameters():
     # image filename
     param['robot_icon']      = rospy.get_param('~robot_icon', '')  #  #@IgnorePep8
     param['app_store_url']   = rospy.get_param('~app_store_url', '')  #@IgnorePep8
-    param['platform_info']   = rospy.get_param('~platform_info', 'linux.*.ros.*')  #@IgnorePep8
     param['auto_start_rapp'] = rospy.get_param('~auto_start_rapp', None)  #@IgnorePep8
     param['rapp_package_whitelist'] = rospy.get_param('~rapp_package_whitelist', [])
     param['rapp_package_blacklist'] = rospy.get_param('~rapp_package_blacklist', [])
