@@ -412,7 +412,7 @@ def get_standard_args(roslaunch_file):
 def _prepare_launch_text(launch_file, launch_args, application_namespace,
                         gateway_name, rocon_uri_string):
     '''
-      Prepate the launch file text. This essentially wraps the rapp launcher
+      Prepare the launch file text. This essentially wraps the rapp launcher
       with the following roslaunch elements:
 
       - group namespace
