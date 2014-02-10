@@ -32,7 +32,4 @@
   <run_depend>rocon_utilities</run_depend>
   <run_depend>rocon_std_msgs</run_depend>
   <run_depend>rocon_uri</run_depend>
-  <export>
-    <rosdoc config="rosdoc.yaml"/>
-  </export>
 </package>

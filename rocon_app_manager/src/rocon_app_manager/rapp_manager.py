@@ -40,14 +40,13 @@ from .rapp import Rapp
 
 
 class RappManager(object):
-    """
+    '''
         Robot App Manager ~ Rocon App Manager
-    """
+    '''
 
     ##########################################################################
     # Initialisation
     ##########################################################################
-
     def __init__(self):
         self._namespace = None  # Namespace that gets used as default namespace for rapp connections
         self._gateway_name = None  # Name of our local gateway (if available)
@@ -72,6 +71,7 @@ class RappManager(object):
         preinstalled_apps = self._load_installed_rapps()  # parses exported rapps from the package path
         (platform_filtered_apps, capabilities_filtered_apps) = self._determine_runnable_rapps(preinstalled_apps)
         self._init_services()
+        self._private_publishers = self._init_private_publishers()
         self._publish_app_list()
         self._publishers['incompatible_app_list'].publish([], [], self._get_app_msg_list(platform_filtered_apps), self._get_app_msg_list(capabilities_filtered_apps))
 
@@ -81,6 +81,18 @@ class RappManager(object):
 
         self._debug_ignores = {}  # a remote_controller_name : timestamp of the last time we logged an ignore response
         rospy.loginfo("App Manager : initialised.")
+
+    def _init_private_publishers(self):
+        '''
+          Generate some private publishers for internal nodes to introspect on (these do not sit on the
+          shifting namespace used for the remote controller and never get advertised/flipped).
+        '''
+        private_publishers = {}
+        # this might be worth upgrading to a rocon_app_manager_msgs.srv.Status-like publisher at some point in the future
+        private_publishers['remote_controller'] = rospy.Publisher('~remote_controller', std_msgs.String, latch=True)
+        # initialise some of the bastards
+        private_publishers['remote_controller'].publish(std_msgs.String(rapp_manager_msgs.Constants.NO_REMOTE_CONTROLLER))
+        return private_publishers
 
     def _set_platform_info(self):
         '''
@@ -179,8 +191,8 @@ class RappManager(object):
         '''
          Retrieves rapps found on the package path.
 
-         @return all installed rapps
-         @rtype dic rapp name : Rapp instance
+        :returns: all installed rapps
+        :rtype: dic rapp name : Rapp instance
         '''
         installed_apps = {}
         ros_package_path = os.getenv('ROS_PACKAGE_PATH', '')
@@ -303,12 +315,16 @@ class RappManager(object):
                 response = rapp_manager_srvs.InviteResponse(False, rapp_manager_msgs.ErrorCodes.INVITING_CONTROLLER_NOT_WHITELISTED, "not flagged in a non-empty whitelist")
             else:
                 response = rapp_manager_srvs.InviteResponse(False, rapp_manager_msgs.ErrorCodes.INVITING_CONTROLLER_BLACKLISTED, "this remote controller has been blacklisted")
+        # publish an update locally
+        if response.result:
+            remote_controller = rapp_manager_msgs.Constants.NO_REMOTE_CONTROLLER if req.cancel else req.remote_target_name
+            self._private_publishers['remote_controller'].publish(std_msgs.String(remote_controller))
         return response
 
     def _accept_invitation(self, req):
         '''
-          @return response message for the invitation
-          @rtype rapp_manager_srvs.InviteResponse(result, error_code, message)
+          :return: response message for the invitation
+          :rtype: rapp_manager_srvs.InviteResponse(result, error_code, message)
         '''
         # Abort checks
         if req.cancel and (req.remote_target_name != self._remote_name):
@@ -367,8 +383,8 @@ class RappManager(object):
           - the namespace it is publishing it and its apps interfaces on
           - the current app status (runnning or stopped)
 
-          @param req : status request object (empty)
-          @type rapp_manager_srvs.StatusRequest
+          :param req: status request object (empty)
+          :type req: rapp_manager_srvs.StatusRequest
         '''
         response = rapp_manager_srvs.StatusResponse()
         if self._current_rapp:
@@ -508,7 +524,7 @@ class RappManager(object):
           case req is configured), or if the rapp monitoring thread detects that it has
           naturally stopped by itself (in which case req is None).
 
-          @param req : variable configured when triggered from the service call.
+          :param req: variable configured when triggered from the service call.
         '''
         resp = rapp_manager_srvs.StopAppResponse()
         if not self._current_rapp:
@@ -582,7 +598,7 @@ class RappManager(object):
 
     def _load(self, directory, typ):
         '''
-          It searchs *.rapp in directories
+          It searchs \*.rapp in directories
         '''
         applist = []
         for dpath, unused_, files in os.walk(directory):
@@ -599,8 +615,8 @@ class RappManager(object):
           Advertise rocon_app_manager services via the gateway,
           if it is available.
 
-          @param service_names
-          @type string
+          :param service_names:
+          :type service_names: strs
         '''
         if self._gateway_name:
             req = gateway_srvs.AdvertiseRequest()
@@ -614,14 +630,14 @@ class RappManager(object):
         '''
           (Un)Flip a service to a remote gateway.
 
-          @param remote_name : the name of the remote gateway to flip to.
-          @type str
-          @param connection_names : the topic/service/action_xxx names
-          @type list of str
-          @param connection_type : publisher, subscriber, service, action_client or action_server
-          @type gateway_msgs.ConnectionType
-          @param cancel_flag : whether or not we are flipping (false) or unflipping (true)
-          @type bool
+          :param remote_name: the name of the remote gateway to flip to.
+          :type remote_name: str
+          :param connection_names: the topic/service/action_xxx names
+          :type connetion_names: list of str
+          :param connection_type: publisher, subscriber, service, action_client or action_server
+          :type connection_type: gateway_msgs.ConnectionType
+          :param cancel_flag: whether or not we are flipping (false) or unflipping (true)
+          :type cancel_flag: bool
         '''
         if len(connection_names) == 0:
             return

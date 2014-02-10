@@ -1,0 +1,5 @@
+display: Child Talker in icon and publics
+description: Hola Child...........
+compatibility: rocon:/*
+launch: rocon_apps/talker.launch
+parent_name: icon_and_publics/parent.rapp
