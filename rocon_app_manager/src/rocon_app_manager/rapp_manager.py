@@ -72,6 +72,7 @@ class RappManager(object):
         preinstalled_apps = self._load_installed_rapps()  # parses exported rapps from the package path
         (platform_filtered_apps, capabilities_filtered_apps) = self._determine_runnable_rapps(preinstalled_apps)
         self._init_services()
+        self._private_publishers = self._init_private_publishers()
         self._publish_app_list()
         self._publishers['incompatible_app_list'].publish([], [], self._get_app_msg_list(platform_filtered_apps), self._get_app_msg_list(capabilities_filtered_apps))
 
@@ -81,6 +82,18 @@ class RappManager(object):
 
         self._debug_ignores = {}  # a remote_controller_name : timestamp of the last time we logged an ignore response
         rospy.loginfo("App Manager : initialised.")
+
+    def _init_private_publishers(self):
+        '''
+          Generate some private publishers for internal nodes to introspect on (these do not sit on the
+          shifting namespace used for the remote controller and never get advertised/flipped).
+        '''
+        private_publishers = {}
+        # this might be worth upgrading to a Status publisher at some point in the future
+        private_publishers['remote_controller'] = rospy.Publisher('~remote_controller', std_msgs.String, latch=True)
+        # initialise some of the bastards
+        private_publishers['remote_controller'].publish(std_msgs.String(''))
+        return private_publishers
 
     def _set_platform_info(self):
         '''
@@ -303,6 +316,10 @@ class RappManager(object):
                 response = rapp_manager_srvs.InviteResponse(False, rapp_manager_msgs.ErrorCodes.INVITING_CONTROLLER_NOT_WHITELISTED, "not flagged in a non-empty whitelist")
             else:
                 response = rapp_manager_srvs.InviteResponse(False, rapp_manager_msgs.ErrorCodes.INVITING_CONTROLLER_BLACKLISTED, "this remote controller has been blacklisted")
+        # publish an update locally
+        if response.result:
+            remote_controller = '' if req.cancel else req.remote_target_name
+            self._private_publishers['remote_controller'].publish(std_msgs.String(remote_controller))
         return response
 
     def _accept_invitation(self, req):
