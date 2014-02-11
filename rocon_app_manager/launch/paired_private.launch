@@ -9,6 +9,7 @@
   <arg name="robot_type" default="cybernetic_pirate"/>
   <arg name="robot_icon" default="rocon_app_manager/cybernetic_pirate.png"/>
   <arg name="gateway_watch_loop_period" default="10"/> <!-- Polling period for multimaster advertising/flipping -->
+  <arg name="gateway_firewall" default="true"/> <!-- Typically nothing comes in! -->
   <arg name="hub_whitelist" default=""/> <!-- semi-colon separated hub names/regex patterns -->
   <arg name="disable_uuids" default="false"/>
   <arg name="rapp_package_whitelist" default="[rocon_apps]"/> <!-- comma separated list of package names -->
@@ -23,6 +24,7 @@
   <!-- ******************************** Gateway ******************************** -->
   <include file="$(find rocon_app_manager)/launch/includes/_app_manager_gateway.xml">
     <arg name="gateway_name" value="$(arg robot_name)" />
+    <arg name="gateway_firewall" value="$(arg gateway_firewall)" />
     <arg name="disable_uuids" value="$(arg disable_uuids)"/>
     <arg name="gateway_watch_loop_period" value="$(arg gateway_watch_loop_period)" />
     <arg name="hub_whitelist" value="$(arg hub_whitelist)" />
