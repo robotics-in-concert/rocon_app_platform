@@ -21,7 +21,6 @@ from .exceptions import AppException, InvalidRappException, MissingCapabilitiesE
 import rocon_app_manager_msgs.msg as rapp_manager_msgs
 import rocon_std_msgs.msg as rocon_std_msgs
 import roslaunch.xmlloader
-import rocon_uri
 
 ##############################################################################
 # Class
