@@ -89,7 +89,7 @@ class RappManager(object):
           shifting namespace used for the remote controller and never get advertised/flipped).
         '''
         private_publishers = {}
-        # this might be worth upgrading to a Status publisher at some point in the future
+        # this might be worth upgrading to a rocon_app_manager_msgs.srv.Status-like publisher at some point in the future
         private_publishers['remote_controller'] = rospy.Publisher('~remote_controller', std_msgs.String, latch=True)
         # initialise some of the bastards
         private_publishers['remote_controller'].publish(std_msgs.String(''))
