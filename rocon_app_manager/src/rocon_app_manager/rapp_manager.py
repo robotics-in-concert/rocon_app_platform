@@ -92,7 +92,7 @@ class RappManager(object):
         # this might be worth upgrading to a rocon_app_manager_msgs.srv.Status-like publisher at some point in the future
         private_publishers['remote_controller'] = rospy.Publisher('~remote_controller', std_msgs.String, latch=True)
         # initialise some of the bastards
-        private_publishers['remote_controller'].publish(std_msgs.String(''))
+        private_publishers['remote_controller'].publish(std_msgs.String(rapp_manager_msgs.Constants.NO_REMOTE_CONTROLLER))
         return private_publishers
 
     def _set_platform_info(self):
@@ -318,7 +318,7 @@ class RappManager(object):
                 response = rapp_manager_srvs.InviteResponse(False, rapp_manager_msgs.ErrorCodes.INVITING_CONTROLLER_BLACKLISTED, "this remote controller has been blacklisted")
         # publish an update locally
         if response.result:
-            remote_controller = '' if req.cancel else req.remote_target_name
+            remote_controller = rapp_manager_msgs.Constants.NO_REMOTE_CONTROLLER if req.cancel else req.remote_target_name
             self._private_publishers['remote_controller'].publish(std_msgs.String(remote_controller))
         return response
 
