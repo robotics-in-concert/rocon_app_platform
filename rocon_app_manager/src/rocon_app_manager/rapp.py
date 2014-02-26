@@ -83,7 +83,7 @@ class Rapp(object):
         with open(self.filename, 'r') as f:
             data = {}
             app_data = yaml.load(f.read())
-            for reqd in ['launch', 'interface', 'compatibility']:
+            for reqd in ['launch', 'public_interface', 'compatibility']:
                 if not reqd in app_data:
                     raise AppException("Invalid rapp file format [" + self.filename + "], missing required key [" + reqd + "]")
             data['name'] = package.name + "/" + rapp_name
@@ -92,7 +92,7 @@ class Rapp(object):
             data['compatibility'] = app_data['compatibility']
             data['launch'] = self._find_rapp_resource(rapp_name, package_path, app_data['launch'])
             data['launch_args'] = get_standard_args(data['launch'])
-            data['interface'] = self._load_interface(self._find_rapp_resource(rapp_name, package_path, app_data['interface']))
+            data['public_interface'] = self._load_interface(self._find_rapp_resource(rapp_name, package_path, app_data['public_interface']))
             data['pairing_clients'] = self._load_pairing_clients(app_data, self.filename)
             if 'icon' not in app_data:
                 data['icon'] = None
@@ -284,7 +284,7 @@ class Rapp(object):
 
             for connection_type in ['publishers', 'subscribers', 'services', 'action_clients', 'action_servers']:
                 self._connections[connection_type] = []
-                for t in data['interface'][connection_type]:
+                for t in data['public_interface'][connection_type]:
                     remapped_name = None
                     # Now we push the rapp launcher down into the prefixed
                     # namespace, so just use it directly
