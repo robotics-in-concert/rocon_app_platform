@@ -2,7 +2,7 @@ display: Talker
 description: Default ros style talker tutorial
 compatibility: rocon:/*
 launch: rocon_apps/talker.launch
-interface: rocon_apps/talker.interface
+public_interface: rocon_apps/talker.interface
 icon: rocon_apps/rocon_bubble.png
 pairing_clients:
  - type: android
