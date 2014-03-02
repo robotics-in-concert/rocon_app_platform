@@ -3,9 +3,11 @@
 	<name>rocon_app_manager</name>
 	<comment></comment>
 	<projects>
+		<project>rocon_console</project>
+		<project>rocon_gateway_utils</project>
 		<project>rocon_msgs</project>
 		<project>rocon_python_utils</project>
-		<project>rocon_utilities</project>
+		<project>rocon_uri</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
