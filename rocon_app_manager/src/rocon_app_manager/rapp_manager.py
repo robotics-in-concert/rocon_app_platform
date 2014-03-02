@@ -16,8 +16,7 @@ import traceback
 import roslaunch.pmon
 from .caps_list import CapsList
 import rocon_python_comms
-import rocon_utilities
-from rocon_utilities import create_gateway_rule, create_gateway_remote_rule
+from rocon_gateway_utils import create_gateway_rule, create_gateway_remote_rule
 import rocon_app_manager_msgs.msg as rapp_manager_msgs
 import rocon_app_manager_msgs.srv as rapp_manager_srvs
 import rocon_std_msgs.msg as rocon_std_msgs
@@ -105,11 +104,11 @@ class RappManager(object):
         os_codename = rospkg.os_detect.OsDetect().get_codename()
         rocon_uri = "rocon:/" + self._param['robot_type'] + \
                           "/" + self._param['robot_name'] + \
-                          "/" + rocon_python_utils.get_rosdistro() + \
+                          "/" + rocon_python_utils.ros.get_rosdistro() + \
                           "/" + os_codename
         try:
-            filename = rocon_utilities.find_resource_from_string(self._param['robot_icon'])
-            icon = rocon_utilities.icon_to_msg(filename)
+            filename = rocon_python_utils.ros.find_resource_from_string(self._param['robot_icon'])
+            icon = rocon_python_utils.ros.icon_to_msg(filename)
         except exceptions.NotFoundException:
             rospy.logwarn("App Manager : icon resource not found [%s]" % self._param['robot_icon'])
             icon = rocon_std_msgs.Icon()
@@ -198,7 +197,7 @@ class RappManager(object):
         installed_apps = {}
         ros_package_path = os.getenv('ROS_PACKAGE_PATH', '')
         ros_package_path = [x for x in ros_package_path.split(':') if x]
-        package_index = rocon_utilities.package_index_from_package_path(ros_package_path)
+        package_index = rocon_python_utils.ros.package_index_from_package_path(ros_package_path)
         for package in package_index.values():
             # whitelist/blacklist filter
             if self._param['rapp_package_whitelist']:
