@@ -240,11 +240,15 @@ class RappManager(object):
         for app_name in rapps:
             app = rapps[app_name]
             # Platform check
-            if rocon_uri.is_compatible(self._rocon_uri, app.data['compatibility']):
-                platform_compatible_apps[app.data['name']] = app
-            else:
+            try:
+                if rocon_uri.is_compatible(self._rocon_uri, app.data['compatibility']):
+                    platform_compatible_apps[app.data['name']] = app
+                else:
+                    platform_filtered_apps[app.data['name']] = app
+                    rospy.logwarn("App : '" + str(app.data['name']) + "' is incompatible [" + app.data['compatibility'] + '][' + self._rocon_uri + ']')
+            except rocon_uri.RoconURIValueError as e:
                 platform_filtered_apps[app.data['name']] = app
-                rospy.logwarn("App : '" + str(app.data['name']) + "' is incompatible [" + app.data['compatibility'] + '][' + self._rocon_uri + ']')
+                rospy.logerr("App : '" + str(app.data['name']) + "' has invalid rocon uri [%s][%s]" % (app.data['compatibility'], str(e)))
         for app_name in platform_compatible_apps:
             app = platform_compatible_apps[app_name]
             if no_caps_available:
