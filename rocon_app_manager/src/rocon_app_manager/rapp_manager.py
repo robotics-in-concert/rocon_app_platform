@@ -69,8 +69,8 @@ class RappManager(object):
         self.caps_list = {}
         self._initialising_services = False
 
-        preinstalled_apps = self._load_installed_rapps()  # parses exported rapps from the package path
-        (platform_filtered_apps, capabilities_filtered_apps) = self._determine_runnable_rapps(preinstalled_apps)
+        self._preinstalled_apps = self._load_installed_rapps()  # parses exported rapps from the package path
+        (platform_filtered_apps, capabilities_filtered_apps) = self._determine_runnable_rapps(self._preinstalled_apps)
         self._init_services()
         self._private_publishers = self._init_private_publishers()
         self._publish_app_list()
@@ -453,6 +453,15 @@ class RappManager(object):
             rapp = self.apps['runnable'][req.name]
         except KeyError:
             resp.started = False
+
+            # check if app is installed
+            try:
+                self._preinstalled_apps[req.name]
+            except KeyError:
+                resp.message = ("The requested app '%s' is not installed." % req.name)
+                rospy.logwarn("App Manager : %s" % resp.message)
+                return resp
+
             resp.message = ("The requested app '%s' is installed, but cannot be started"
                             ", because its required capabilities are not available." % req.name)
             rospy.logwarn("App Manager : %s" % resp.message)
