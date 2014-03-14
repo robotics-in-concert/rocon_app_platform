@@ -28,18 +28,30 @@ class CapsList(object):
     '''
     CapsLists stores the data about the available capabilities retrieved from the capability server
     '''
-    def __init__(self):
+    def __init__(self, capability_server_node_name='capability_server'):
         '''
-        Retrieve the specifications for the available interfaces and providers from the capability server
+        Sets up a client for the capability server, including a bond.
+        Also, retrieves the specifications for the available interfaces and providers from the capability server
+
+        :param capability_server_node_name: name of the remote capability server
+        :type capability_server_node_name: str
 
         @raise rospy.exceptions.ROSException: Exception is raised when retrieving the capability data
                                               from the capability server returned errors
-                                              or when waiting for the capability server's service times out.
+                                              or when waiting for the capability server's services times out.
         '''
-        self._default_timeout = 1.0
+        self._default_timeout = 3.0
 
-        self._caps_client = client.CapabilitiesClient("capability_server")
-        self._spec_index, errors = service_discovery.spec_index_from_service("capability_server",
+        # set up client
+        self._caps_client = client.CapabilitiesClient(capability_server_node_name)
+        if not self._caps_client.wait_for_services(self._default_timeout):
+            raise rospy.exceptions.ROSException("Timed out when waiting for the capability server.")
+
+        # establish_bond
+        self._caps_client.establish_bond(self._default_timeout)
+
+        # get spec index
+        self._spec_index, errors = service_discovery.spec_index_from_service(capability_server_node_name,
                                                                              self._default_timeout)
         if errors:
             raise rospy.exceptions.ROSException("Couldn't get specification index. Error: " + str(errors))
@@ -92,7 +104,7 @@ class CapsList(object):
         @type: boolean
         '''
 
-        return self._caps_client.use_capability(name, preferred_provider)
+        return self._caps_client.use_capability(name, preferred_provider, self._default_timeout)
 
     def stop_capability(self, name):
         '''
@@ -105,7 +117,7 @@ class CapsList(object):
         @type: boolean
         '''
 
-        return self._caps_client.free_capability(name)
+        return self._caps_client.free_capability(name, self._default_timeout)
 
     def get_cap_remappings(self, cap, caps_remap_from_list, caps_remap_to_list):
         '''
