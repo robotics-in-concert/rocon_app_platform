@@ -457,9 +457,7 @@ class RappManager(object):
             resp.started = False
 
             # check if app is installed
-            try:
-                self._preinstalled_apps[req.name]
-            except KeyError:
+            if not req.name in self._preinstalled_apps:
                 resp.message = ("The requested app '%s' is not installed." % req.name)
                 rospy.logwarn("App Manager : %s" % resp.message)
                 return resp
