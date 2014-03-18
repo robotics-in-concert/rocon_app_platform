@@ -1,6 +1,6 @@
 display: Listener
 description: Default ros style listener tutorial
-compatibility: rocon:/*
+compatibility: rocon:/
 launch: rocon_apps/listener.launch
 public_interface: rocon_apps/listener.interface
 icon: rocon_apps/rocon_bubble.png
