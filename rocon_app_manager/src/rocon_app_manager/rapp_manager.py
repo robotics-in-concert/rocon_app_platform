@@ -26,11 +26,12 @@ import gateway_msgs.srv as gateway_srvs
 import std_msgs.msg as std_msgs
 import threading
 import rocon_uri
+import rospkg
 import rospkg.os_detect
 import rocon_python_utils
 
 # local imports
-import exceptions
+from . import exceptions
 from ros_parameters import setup_ros_parameters
 from .rapp import Rapp
 
@@ -58,6 +59,7 @@ class RappManager(object):
         roslaunch.pmon._init_signal_handlers()
         self._services = {}
         self._publishers = {}
+        self._rospack = rospkg.RosPack()  # used to speed up searches for resources
 
         self._param = setup_ros_parameters()
         (self._rocon_uri, self._icon) = self._set_platform_info()
@@ -207,7 +209,7 @@ class RappManager(object):
                 continue
             for export in package.exports:
                 if export.tagname == 'rocon_app':
-                    app = Rapp(package, export.content)
+                    app = Rapp(package, export.content, self._rospack)
                     installed_apps[app.data['name']] = app
         return installed_apps
 
