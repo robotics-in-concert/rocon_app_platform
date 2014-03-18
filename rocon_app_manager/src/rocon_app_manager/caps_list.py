@@ -38,8 +38,10 @@ class CapsList(object):
 
         @raise rospy.exceptions.ROSException: Exception is raised when retrieving the capability data
                                               from the capability server returned errors
-                                              or when waiting for the capability server's services times out.
+                                              or when waiting for the capability server's services times out
+                                              or when failing to retrieve the capability server's nodelet manager name
         '''
+
         self._default_timeout = 3.0
 
         # set up client
@@ -49,6 +51,17 @@ class CapsList(object):
 
         # establish_bond
         self._caps_client.establish_bond(self._default_timeout)
+
+        # get the name of the capability server's nodelet manager
+        service_name = capability_server_node_name + '/get_nodelet_manager_name'
+        cap_server_nodelet_manager_srv = rospy.ServiceProxy(service_name, capabilities_srvs.GetNodeletManagerName)
+        try:
+            resp = cap_server_nodelet_manager_srv()
+        except rospy.ServiceException as exc:
+            raise rospy.exceptions.ROSException("Couldn't not get capability server's nodelet manager name: "
+                                                + str(exc))
+        self.nodelet_manager_name = '/' + resp.nodelet_manager_name
+        print self.nodelet_manager_name
 
         # get spec index
         self._spec_index, errors = service_discovery.spec_index_from_service(capability_server_node_name,
