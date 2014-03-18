@@ -26,11 +26,12 @@ import gateway_msgs.srv as gateway_srvs
 import std_msgs.msg as std_msgs
 import threading
 import rocon_uri
+import rospkg
 import rospkg.os_detect
 import rocon_python_utils
 
 # local imports
-import exceptions
+from . import exceptions
 from ros_parameters import setup_ros_parameters
 from .rapp import Rapp
 
@@ -58,6 +59,7 @@ class RappManager(object):
         roslaunch.pmon._init_signal_handlers()
         self._services = {}
         self._publishers = {}
+        self._rospack = rospkg.RosPack()  # used to speed up searches for resources
 
         self._param = setup_ros_parameters()
         (self._rocon_uri, self._icon) = self._set_platform_info()
@@ -69,8 +71,8 @@ class RappManager(object):
         self.caps_list = {}
         self._initialising_services = False
 
-        preinstalled_apps = self._load_installed_rapps()  # parses exported rapps from the package path
-        (platform_filtered_apps, capabilities_filtered_apps) = self._determine_runnable_rapps(preinstalled_apps)
+        self._preinstalled_apps = self._load_installed_rapps()  # parses exported rapps from the package path
+        (platform_filtered_apps, capabilities_filtered_apps) = self._determine_runnable_rapps(self._preinstalled_apps)
         self._init_services()
         self._private_publishers = self._init_private_publishers()
         self._publish_app_list()
@@ -207,7 +209,7 @@ class RappManager(object):
                 continue
             for export in package.exports:
                 if export.tagname == 'rocon_app':
-                    app = Rapp(package, export.content)
+                    app = Rapp(package, export.content, self._rospack)
                     installed_apps[app.data['name']] = app
         return installed_apps
 
@@ -240,11 +242,15 @@ class RappManager(object):
         for app_name in rapps:
             app = rapps[app_name]
             # Platform check
-            if rocon_uri.is_compatible(self._rocon_uri, app.data['compatibility']):
-                platform_compatible_apps[app.data['name']] = app
-            else:
+            try:
+                if rocon_uri.is_compatible(self._rocon_uri, app.data['compatibility']):
+                    platform_compatible_apps[app.data['name']] = app
+                else:
+                    platform_filtered_apps[app.data['name']] = app
+                    rospy.logwarn("App : '" + str(app.data['name']) + "' is incompatible [" + app.data['compatibility'] + '][' + self._rocon_uri + ']')
+            except rocon_uri.RoconURIValueError as e:
                 platform_filtered_apps[app.data['name']] = app
-                rospy.logwarn("App : '" + str(app.data['name']) + "' is incompatible [" + app.data['compatibility'] + '][' + self._rocon_uri + ']')
+                rospy.logerr("App : '" + str(app.data['name']) + "' has invalid rocon uri [%s][%s]" % (app.data['compatibility'], str(e)))
         for app_name in platform_compatible_apps:
             app = platform_compatible_apps[app_name]
             if no_caps_available:
@@ -449,6 +455,13 @@ class RappManager(object):
             rapp = self.apps['runnable'][req.name]
         except KeyError:
             resp.started = False
+
+            # check if app is installed
+            if not req.name in self._preinstalled_apps:
+                resp.message = ("The requested app '%s' is not installed." % req.name)
+                rospy.logwarn("App Manager : %s" % resp.message)
+                return resp
+
             resp.message = ("The requested app '%s' is installed, but cannot be started"
                             ", because its required capabilities are not available." % req.name)
             rospy.logwarn("App Manager : %s" % resp.message)
