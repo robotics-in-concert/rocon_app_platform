@@ -20,6 +20,7 @@
   <run_depend>gateway_msgs</run_depend>
   <run_depend>python-rospkg</run_depend>
   <run_depend>rocon_app_manager_msgs</run_depend>
+  <run_depend>rocon_app_utilities</run_depend>
   <run_depend>rocon_apps</run_depend>
   <run_depend>rocon_console</run_depend>
   <run_depend>rocon_gateway_utils</run_depend>
