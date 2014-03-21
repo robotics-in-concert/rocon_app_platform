@@ -62,7 +62,7 @@ def _rapp_cmd_profile(argv):
 
 def _rapp_cmd_compat(argv):
 
-    #  Parse command arguemtns
+    #  Parse command arguments
     args = argv[2:]
     parser = argparse.ArgumentParser(description='Displays list of compatible rapps')
     parser.add_argument('compatibility', type=str, help='Rocon URI')
