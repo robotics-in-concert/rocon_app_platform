@@ -217,11 +217,11 @@ class RappManager(object):
          Prune unsupported apps due to incompatibilities in platform information or lack of
          support for required capabilities.
 
-         @param rapps: an index of rapps to check
-         @type dic name : Rapp
+         :param rapps: an index of rapps to check
+         :type rapps: {name : Rapp}
 
-         @return incompatible app list dictionaries for platform and capability incompatibilities respectively
-         @type 2-tuple of app list dictionaries
+         :returns: incompatible app list dictionaries for platform and capability incompatibilities respectively
+         :rtype: 2-tuple of app list dictionaries
         '''
         # First try initialise the list of available capabilities
         no_caps_available = False
@@ -279,10 +279,16 @@ class RappManager(object):
 
     def _process_invite(self, req):
         '''
-          @todo This needs better arranging for logic. Currently it ignores whitelists/blacklists if the local_remote_controllers
+          :todo: This needs better arranging for logic. Currently it ignores whitelists/blacklists if the local_remote_controllers
           only is flagged. Not an urgent use case though.
 
           To fix, just do abort checks for local remote controllers first, then put it through the rest of the logic as well.
+
+          :param req: Invitation request
+          :type req: rapp_manager_srvs.InviteRequest
+
+          :returns: Response
+          :rtype: rapp_manager_srvs.InviteResponse
         '''
         # Todo : add checks for whether client is currently busy or not
         response = rapp_manager_srvs.InviteResponse(True, rapp_manager_msgs.ErrorCodes.SUCCESS, "")
@@ -328,7 +334,10 @@ class RappManager(object):
 
     def _accept_invitation(self, req):
         '''
-          :return: response message for the invitation
+          :param req: request
+          :type req: rapp_manager_srvs.InviteRequest
+
+          :returns: response message for the invitation
           :rtype: rapp_manager_srvs.InviteResponse(result, error_code, message)
         '''
         # Abort checks
@@ -627,7 +636,7 @@ class RappManager(object):
           Advertise rocon_app_manager services via the gateway,
           if it is available.
 
-          :param service_names:
+          :param service_names: rocon app manager service names
           :type service_names: strs
         '''
         if self._gateway_name:
