@@ -152,39 +152,29 @@ class TestRappIndexer():
         # string rocon uri test
         console.pretty_println('String Rocon URI Given')
         compat = 'rocon:/kobuki'
-        rapps = self.indexer.get_compatible_rapps(compat)
-        incompat = [r for r in rapps if not r.is_compatible(compat)]
+        compatible_rapps, incompatible_rapps = self.indexer.get_compatible_rapps(compat)
+        assert_true(len(compatible_rapps) == 1 and len(incompatible_rapps) == 1)
+
+        incompat = [r for r in compatible_rapps if not r.is_compatible(compat)]
+        compat = [r for r in incompatible_rapps if r.is_compatible(compat)]
         assert_true(len(incompat) == 0)
+        assert_true(len(compat) == 0)
         
         # wrong type given
         console.pretty_println('Wrong Type URI Given')
         compat = 'olleh'
         assert_raises(RoconURIValueError, self.indexer.get_compatible_rapps, compat)
 
-        # raw_data includes rapp ancestor conflict
-        console.pretty_println('Raw Data includes ancestor conflict')
-        self.setup(multi_children_data)
-        assert_raises(RappAncestorConflictException, self.indexer.get_compatible_rapps)
-
         # raw_data includes cyclic
         console.pretty_println('Raw Data includes cyclic')
         self.setup(cyclic_data)
         assert_raises(RappCyclicChainException, self.indexer.get_compatible_rapps)
-
-        # validate the given rapp list
-        self.setup(valid_data)
-        console.pretty_println('No URI Given')
-        rapps = self.indexer.get_compatible_rapps()
-        assert_true(len(rapps) == 1)
 
     def test_to_dot(self):
         print_title('Test To Dot')
         
         console.pretty_println('Not Implemented')
         assert_raises(NotImplementedError,self.indexer.to_dot) 
-
-
-
 
 
 
