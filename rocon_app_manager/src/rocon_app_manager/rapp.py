@@ -16,7 +16,7 @@ from roslaunch.core import RLException
 import roslaunch.parent
 import traceback
 import tempfile
-import rocon_utilities
+import rocon_python_utils
 from .exceptions import AppException, InvalidRappException, MissingCapabilitiesException
 import rocon_app_manager_msgs.msg as rapp_manager_msgs
 import rocon_std_msgs.msg as rocon_std_msgs
@@ -60,19 +60,21 @@ class Rapp(object):
     '''
     # I should add a __slots__ definition here to make it easy to read
 
-    # args that can be parsed for inside a rapp launcher, these args
-    # get passed down in the temporary launcher that gets constructed when
-    # pushing down a namespace.
+    # standard args that can be put inside a rapp launcher, the rapp manager
+    # will fill these args in when starting the rapp
     standard_args = ['gateway_name', 'application_namespace', 'rocon_uri']
 
-    def __init__(self, package, package_relative_rapp_filename):
+    def __init__(self, package, package_relative_rapp_filename, rospack):
         '''
-           :param package this rapp is nested in
-           :type package: :py:class:`catkin_pkg.package.Package`
-           :param package_relative_rapp_filename : string specified by the package export
-           :type package_relative_rapp_filename: os.path
+           @param package: this rapp is nested in
+           @type package: :py:class:`catkin_pkg.package.Package`
+           @param package_relative_rapp_filename: string specified by the package export
+           @type package_relative_rapp_filename: os.path
+           @param rospack: utility cache to speed up ros resource searches
+           @type rospack: :py:class:`rospkg.RosPack`
         '''
         self.package_name = package.name
+        self._rospack = rospack
         package_path = os.path.dirname(package.filename)
         self.filename = os.path.join(package_path, package_relative_rapp_filename)
         self._connections = {}
@@ -90,14 +92,14 @@ class Rapp(object):
             data['display_name'] = app_data.get('display', rapp_name)
             data['description'] = app_data.get('description', '')
             data['compatibility'] = app_data['compatibility']
-            data['launch'] = self._find_rapp_resource(rapp_name, package_path, app_data['launch'])
+            data['launch'] = self._find_rapp_resource(rapp_name, app_data['launch'])
             data['launch_args'] = get_standard_args(data['launch'])
-            data['public_interface'] = self._load_interface(self._find_rapp_resource(rapp_name, package_path, app_data['public_interface']))
+            data['public_interface'] = self._load_interface(self._find_rapp_resource(rapp_name, app_data['public_interface']))
             data['pairing_clients'] = self._load_pairing_clients(app_data, self.filename)
             if 'icon' not in app_data:
                 data['icon'] = None
             else:
-                data['icon'] = self._find_rapp_resource(rapp_name, package_path, app_data['icon'])
+                data['icon'] = self._find_rapp_resource(rapp_name, app_data['icon'])
             data['status'] = 'Ready'
             required_capabilities = 'required_capabilities'
             if required_capabilities in app_data:
@@ -106,26 +108,22 @@ class Rapp(object):
                     data[required_capabilities].append(cap)
         self.data = data
 
-    def _find_rapp_resource(self, rapp_name, package_path, resource):
+    def _find_rapp_resource(self, rapp_name, resource):
         '''
           Find a rapp resource (.launch, .interface, icon) relative to the
           specified package path.
 
-          :param rapp_name : name of the rapp, only used for log messages.
-          :type rapp_name: str
-          :param package_path : the root of the package to begin the search
-          :type package_path: os.path
-          :param resource : a typical resource identifier to look for
-          :type resource: pkg_name/file pair in str format.
+          @param rapp_name : name of the rapp, only used for log messages.
+          @type str
+          @param resource : a typical resource identifier to look for
+          @type pkg_name/file pair in str format.
+
+          :raises: :exc:`.exceptions.AppException` if the resource is not found
         '''
-        unused_package, name = roslib.names.package_resource_name(resource)
-        for root, dirs, files in os.walk(package_path):
-            if name in files:
-                return os.path.join(root, name)
-            to_prune = [x for x in dirs if x.startswith('.')]
-            for x in to_prune:
-                dirs.remove(x)
-        raise AppException("invalid rapp - %s does not exist [%s]" % (name, rapp_name))
+        try:
+            return rocon_python_utils.ros.find_resource_from_string(resource, self._rospack)
+        except rospkg.ResourceNotFound:
+            raise AppException("invalid rapp - %s does not exist [%s]" % (resource, rapp_name))
 
     def __repr__(self):
         string = ""
@@ -143,7 +141,7 @@ class Rapp(object):
         a.description = self.data['description']
         a.compatibility = self.data['compatibility']
         a.status = self.data['status']
-        a.icon = rocon_utilities.icon_to_msg(self.data['icon'])
+        a.icon = rocon_python_utils.ros.icon_to_msg(self.data['icon'])
         for pairing_client in self.data['pairing_clients']:
             a.pairing_clients.append(PairingClient(pairing_client.client_type,
                                      dict_to_KeyValue(pairing_client.manager_data),
@@ -212,18 +210,18 @@ class Rapp(object):
 
           2) Apply remapping rules while ignoring the namespace underneath.
 
-          :param application_namespace: unique name granted indirectly via the gateways, we namespace everything under this
-          :type application_namespace: str
-          :param gateway_name: unique name granted to the gateway
-          :type gateway_name: str
-          :param rocon_uri_string: uri of the app manager's platform (used as a check for compatibility)
-          :type rocon_uri_string: str - a rocon uri string
-          :param remapping: rules for the app flips.
-          :type remapping: list of rocon_std_msgs.msg.Remapping values.
-          :param force_screen: whether to roslaunch the app with --screen or not
-          :type force_screen: boolean
-          :param caps_list: this holds the list of available capabilities, if app needs capabilities
-          :type caps_list: CapsList
+          @param application_namespace ; unique name granted indirectly via the gateways, we namespace everything under this
+          @type str
+          @param gateway_name ; unique name granted to the gateway
+          @type str
+          @param rocon_uri_string : uri of the app manager's platform (used as a check for compatibility)
+          @type str : a rocon uri string
+          @param remapping : rules for the app flips.
+          @type list of rocon_std_msgs.msg.Remapping values.
+          @param force_screen : whether to roslaunch the app with --screen or not
+          @type boolean
+          @param caps_list : this holds the list of available capabilities, if app needs capabilities
+          @type CapsList
         '''
         data = self.data
         rospy.loginfo("App Manager : launching '" + (data['name']) + "' underneath /" + application_namespace)
@@ -356,8 +354,8 @@ class Rapp(object):
 
          Used by the rapp_manager.
 
-         :returns: True if the rapp is executing or False otherwise.
-         :rtype: bool
+         @return True if the rapp is executing or False otherwise.
+         @type Bool
         '''
         if not self._launch:
             return False
@@ -387,11 +385,11 @@ def get_standard_args(roslaunch_file):
       in the file. Returns the complete list of top-level arguments that
       match standard args so that they can be passed to the launch file
 
-      :param roslaunch_file: rapp launch file we are parsing for arguments
-      :type roslaunch_file: str
-      :returns: list of top-level arguments that match standard arguments. Empty
+      @param roslaunch_file : rapp launch file we are parsing for arguments
+      @type str
+      @return list of top-level arguments that match standard arguments. Empty
               list on parse failure
-      :rtype: [str]
+      @rtype [str]
     '''
     try:
         loader = roslaunch.xmlloader.XmlLoader(resolve_anon=False)
@@ -424,18 +422,18 @@ def _prepare_launch_text(launch_file, launch_args, application_namespace,
       if the rapp itself isn't expecting them. The logoc for determing this is
       in get_standard_args.
 
-      :param launch_file: fully resolved launch file path
-      :type launch_file: str
-      :param launch_args: strings identifying the keys of the standard roslaunch args
+      @param launch_file: fully resolved launch file path
+      @type str
+      @param launch_args: strings identifying the keys of the standard roslaunch args
              to send (not the args themselves)
-      :type launch_args: str[]
-      :param application_namespace: unique name granted indirectly via the
+      @type str[]
+      @param application_namespace ; unique name granted indirectly via the
              gateways, we namespace everything under this
-      :type application_namespace: str
-      :param gateway_name: unique name granted to the gateway
-      :type gateway_name: str
-      :param rocon_uri_string : used to pass down information about the platform that is running this app to the app itself.
-      :type rocon_uri_string: str - a rocon uri string
+      @type str
+      @param gateway_name : unique name granted to the gateway
+      @type str
+      @param rocon_uri_string : used to pass down information about the platform that is running this app to the app itself.
+      @type str : a rocon uri string
 
       The rocon_uri_string variable is a fixed identifier for this app manager's platform - i.e. no special
       characters or wildcards should be contained therein.
@@ -459,8 +457,8 @@ def _resolve_chain_remappings(nodes):
         Resolve chain remapping rules contained in node remapping arguments
         replace the node remapping argument
 
-        :param nodes: roslaunch nodes
-        :type nodes: roslaunch.Nodes[]
+        @param nodes: roslaunch nodes
+        @type: roslaunch.Nodes[]
     """
     for n in nodes:
         new_remap_args_dict = {}

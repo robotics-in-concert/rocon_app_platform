@@ -6,7 +6,7 @@
 <launch>
   <!-- ************************* Public Arguments ****************************** -->
   <arg name="robot_name" default="cybernetic_pirate"/>
-  <arg name="robot_type" default="cybernetic_pirate"/>
+  <arg name="robot_type" default="pc"/>
   <arg name="robot_icon" default="rocon_app_manager/cybernetic_pirate.png"/>
   <arg name="gateway_watch_loop_period" default="10"/> <!-- Polling period for multimaster advertising/flipping -->
   <arg name="gateway_firewall" default="true"/> <!-- Typically nothing comes in! -->

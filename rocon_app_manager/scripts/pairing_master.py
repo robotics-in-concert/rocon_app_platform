@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # License: BSD
-#   https://raw.github.com/robotics-in-concert/rocon_app_platform/hydro-devel/rocon_app_manager/LICENSE
+#   https://raw.github.com/robotics-in-concert/rocon_app_platform/license/LICENSE
 #
 ##############################################################################
 # Imports
@@ -13,9 +13,7 @@ import rospy
 import gateway_msgs.msg as gateway_msgs
 import gateway_msgs.srv as gateway_srvs
 import rocon_app_manager_msgs.srv as rocon_app_manager_srvs
-import rocon_app_manager_msgs.msg as rocon_app_manager_msgs
 import rocon_python_comms
-import rocon_utilities
 import rocon_console.console as console
 import std_msgs.msg as std_msgs
 
@@ -23,8 +21,9 @@ import std_msgs.msg as std_msgs
 # Methods
 ##############################################################################
 
+
 def local_gateway_name():
-    
+
     gateway_name = None
     gateway_info_service = rocon_python_comms.SubscriberProxy('~gateway_info', gateway_msgs.GatewayInfo)
     while not rospy.is_shutdown():
@@ -36,12 +35,13 @@ def local_gateway_name():
         rospy.rostime.wallsleep(1.0)
     return gateway_name
 
+
 def remote_gateway_name():
     '''
       Assumption: note that the remote gateway info in the paired master system
       should only ever show at most, one remote gateway. That should be the
       private counterpart (we're not using zeroconf over here).
-      
+
       @return namespace of the app manager (matches the remote gateway name)
       @rtype string or None : string does not yet prefix a leading '/'
     '''
@@ -67,10 +67,11 @@ def remote_gateway_name():
         sys.exit(0)
     return remote_gateway_name
 
+
 class InvitationHandler():
-    
-    __slots__ = ['local_gateway_name', 'remote_gateway_name', 'remote_invite_service', 'relay_invitation_server', 'watchdog_flag'] 
-    
+
+    __slots__ = ['local_gateway_name', 'remote_gateway_name', 'remote_invite_service', 'relay_invitation_server', 'watchdog_flag']
+
     def __init__(self, local_gateway_name, remote_gateway_name, auto_invite):
         self.watchdog_flag = True
         self.local_gateway_name = local_gateway_name
@@ -79,7 +80,7 @@ class InvitationHandler():
         remote_invite_service_name = '/' + remote_gateway_name + '/invite'
         # Speed up the gateway watcher for convenience (otherwise it'll take like 5 seconds to pick up the app manager
         gateway_watcher_period_service = rospy.ServiceProxy('~set_watcher_period', gateway_srvs.SetWatcherPeriod)
-        unused_watcher_period_response = gateway_watcher_period_service(gateway_srvs.SetWatcherPeriodRequest(0.25)) 
+        unused_watcher_period_response = gateway_watcher_period_service(gateway_srvs.SetWatcherPeriodRequest(0.25))
         # Detect the app manager
         self.remote_invite_service = rospy.ServiceProxy(remote_invite_service_name, rocon_app_manager_srvs.Invite)
         rospy.loginfo("Pairing Master : waiting for invitation service [%s]" % remote_invite_service_name)
@@ -89,11 +90,11 @@ class InvitationHandler():
             sys.exit(0)  # Ros shutdown
         # Reset the watcher period to its default.
         unused_watcher_period_response = gateway_watcher_period_service(gateway_srvs.SetWatcherPeriodRequest(-1.0))
-        # Set up services 
+        # Set up services
         rospy.loginfo("Pairing Master : initialising simple client invitation service [%s]" % remote_invite_service_name)
         self.relay_invitation_server = rospy.Service('~invite', rocon_app_manager_srvs.SimpleInvite, self.relayed_invitation)
         self.watchdog_subscriber = rospy.Subscriber('~watchdog', std_msgs.Bool, self.watchdog_flag_cb)
-        
+
         if self.auto_invite:
             rospy.loginfo("Pairing Master : auto-invite mode, disabling the cleanup watchdog.")
             self.watchdog_flag = False
@@ -103,15 +104,15 @@ class InvitationHandler():
         '''
           Used to keep an eye on android connections. If for any reason the android app connects, and disappears
           without releasing control of the rapp manager, then this automatically does so after a timeout.
-          
-          Just toggle a flag here that is watched in the spin() thread.   
+
+          Just toggle a flag here that is watched in the spin() thread.
         '''
         self.watchdog_flag = incoming.data
         if self.watchdog_flag:
             rospy.loginfo("Pairing Master : enabling the cleanup watchdog.")
         else:
             rospy.loginfo("Pairing Master : disabling the cleanup watchdog.")
-        
+
     def is_pairing_device_present(self, master):
         pubs, unused_subs, unused_xxx = master.getSystemState()
         android_app_name_publishers = [x for x in pubs if x[0] == '/pairing_master/android_app_name']
@@ -119,13 +120,13 @@ class InvitationHandler():
             return False
         else:
             return True
-        
+
     def spin(self):
         '''
           If the private master's robot app manager is currently being remote controlled by us (start_app and stop_app
           is available), then it checks to make sure the android client is there. If not, it uninvites the private
           robot app manager so that it is free to be remote controlled by other sources.
-          
+
           To check that it is there, it looks to see if either the android remocon or android remocon app is
           publishing to the /pairing/android_app_name topic.
         '''
@@ -141,7 +142,7 @@ class InvitationHandler():
                     rospy.rostime.wallsleep(0.25)
                 try:
                     # If not found, exceptions get thrown.
-                    result = master.lookupService('/' + self.remote_gateway_name + '/start_app')
+                    unused_result = master.lookupService('/' + self.remote_gateway_name + '/start_app')
                     # Found, so check that an android client is connected.
                     if not self.is_pairing_device_present(master):
                         # Don't automatically disengage as sometimes the start_app handle will appear before the android
@@ -152,7 +153,7 @@ class InvitationHandler():
                         if flagged_for_release_count == 20:
                             # Android client disappeared, probably crashed, so release control (uninvite)
                             rospy.loginfo("Pairing Master : android client disappeared, releasing remote control.")
-                            remote_response = self.remote_invite_service(rocon_app_manager_srvs.InviteRequest(
+                            unused_remote_response = self.remote_invite_service(rocon_app_manager_srvs.InviteRequest(
                                                                      remote_target_name=self.local_gateway_name,
                                                                      application_namespace='',
                                                                      cancel=True))
@@ -160,12 +161,12 @@ class InvitationHandler():
                     else:
                         flagged_for_release_count = 0
                 except rospy.service.ServiceException:
-                    pass # Was in the middle of uninviting when ros shutdown
+                    pass  # Was in the middle of uninviting when ros shutdown
                 except rosgraph.masterapi.Error:
                     pass
                 except rosgraph.masterapi.Failure:
                     pass
-    
+
     def relayed_invitation(self, req):
         '''
           Provides a relayed invitation from a client (e.g. android remocon).
@@ -186,7 +187,7 @@ class InvitationHandler():
         except rospy.exceptions.ROSInterruptException:  # shutdown exception
             sys.exit(0)
         return rocon_app_manager_srvs.SimpleInviteResponse(remote_response.result)
-    
+
 ##############################################################################
 # Main
 ##############################################################################
