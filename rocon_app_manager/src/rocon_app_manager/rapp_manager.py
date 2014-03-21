@@ -228,7 +228,7 @@ class RappManager(object):
         no_caps_available = False
         try:
             self.caps_list = CapsList()
-        except IOError as e:
+        except rospy.exceptions.ROSException as e:
             if 'timeout' in str(e):
                 rospy.loginfo("App Manager : disabling apps requiring capabilities [timed out looking for the capability server]")
             else:

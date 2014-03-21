@@ -13,6 +13,7 @@
 ##############################################################################
 
 import rospy
+from capabilities import client
 from capabilities import discovery
 from capabilities import service_discovery
 import capabilities.srv as capabilities_srvs
@@ -27,21 +28,33 @@ class CapsList(object):
     '''
     CapsLists stores the data about the available capabilities retrieved from the capability server
     '''
-    def __init__(self):
+    def __init__(self, capability_server_node_name='capability_server'):
         '''
-        Retrieve the specifications for the available interfaces and providers from the capability server
+        Sets up a client for the capability server, including a bond.
+        Also, retrieves the specifications for the available interfaces and providers from the capability server
 
-        @raise IOError: Exception is raised when retrieving the capability data from the capability server returned
-                        errors or when waiting for the capability server's service times out.
+        :param capability_server_node_name: name of the remote capability server
+        :type capability_server_node_name: str
+
+        @raise rospy.exceptions.ROSException: Exception is raised when retrieving the capability data
+                                              from the capability server returned errors
+                                              or when waiting for the capability server's services times out.
         '''
-        try:
-            rospy.wait_for_service('capability_server/start_capability', 1.0)
-        except rospy.ROSException as exc:
-            raise IOError("Couldn't get specification index. Service timeout: " + str(exc))
+        self._default_timeout = 3.0
 
-        self._spec_index, errors = service_discovery.spec_index_from_service("capability_server")
+        # set up client
+        self._caps_client = client.CapabilitiesClient(capability_server_node_name)
+        if not self._caps_client.wait_for_services(self._default_timeout):
+            raise rospy.exceptions.ROSException("Timed out when waiting for the capability server.")
+
+        # establish_bond
+        self._caps_client.establish_bond(self._default_timeout)
+
+        # get spec index
+        self._spec_index, errors = service_discovery.spec_index_from_service(capability_server_node_name,
+                                                                             self._default_timeout)
         if errors:
-            raise IOError("Couldn't get specification index. Error: " + str(errors))
+            raise rospy.exceptions.ROSException("Couldn't get specification index. Error: " + str(errors))
 
         self._available_interfaces = []
         self._available_semantic_interfaces = []
@@ -87,25 +100,11 @@ class CapsList(object):
         @param preferred_provider: name of the preferred provider of the capability (optional)
         @type preferred_provider: string
 
-        @return: true, if the service call for starting the capability returned true,
-                 false if service call returned false, a timeout occured or the service call returned with an error
+        @return: true, if using the capability succeeded, false otherwise
         @type: boolean
         '''
-        try:
-            rospy.wait_for_service('capability_server/start_capability', 1.0)
-        except rospy.ROSException as exc:
-            rospy.logerr("Service timeout: " + str(exc))
-            return False
 
-        start_cap_srv = rospy.ServiceProxy('capability_server/start_capability',
-                                           capabilities_srvs.StartCapability)
-        try:
-            resp_start_cap = start_cap_srv(name, preferred_provider)
-        except rospy.ServiceException as exc:
-            rospy.logerr("Service did not process request: " + str(exc))
-            raise False
-
-        return resp_start_cap.successful
+        return self._caps_client.use_capability(name, preferred_provider, self._default_timeout)
 
     def stop_capability(self, name):
         '''
@@ -114,27 +113,11 @@ class CapsList(object):
         @param name: name of the capability to stop
         @type name: string
 
-        @return: true, if the service call for stopping the capability returned true,
-                 false if service call returned false, a timeout occured or the service call returned with an error
+        @return: true, if freeing the capability succeeded, false otherwise
         @type: boolean
         '''
 
-        try:
-            rospy.wait_for_service('capability_server/stop_capability', 1.0)
-        except rospy.ROSException as exc:
-            rospy.logerr("Service timeout: " + str(exc))
-            return False
-
-        start_cap_srv = rospy.ServiceProxy('capability_server/stop_capability',
-                                           capabilities_srvs.StopCapability)
-
-        try:
-            resp_start_cap = start_cap_srv(name)
-        except rospy.ServiceException as exc:
-            rospy.logerr("Service did not process request: " + str(exc))
-            return False
-
-        return resp_start_cap.successful
+        return self._caps_client.free_capability(name, self._default_timeout)
 
     def get_cap_remappings(self, cap, caps_remap_from_list, caps_remap_to_list):
         '''
