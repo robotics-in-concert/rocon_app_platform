@@ -12,12 +12,14 @@
 # Imports
 ##############################################################################
 
-import rospy
 from capabilities import client
 from capabilities import discovery
 from capabilities import service_discovery
 import capabilities.srv as capabilities_srvs
+import rocon_python_comms
+import rospy
 from .exceptions import MissingCapabilitiesException
+from .exceptions import NotFoundException
 
 ##############################################################################
 # Class
@@ -28,13 +30,10 @@ class CapsList(object):
     '''
     CapsLists stores the data about the available capabilities retrieved from the capability server
     '''
-    def __init__(self, capability_server_node_name='capability_server'):
+    def __init__(self):
         '''
         Sets up a client for the capability server, including a bond.
         Also, retrieves the specifications for the available interfaces and providers from the capability server
-
-        :param capability_server_node_name: name of the remote capability server
-        :type capability_server_node_name: str
 
         @raise rospy.exceptions.ROSException: Exception is raised when retrieving the capability data
                                               from the capability server returned errors
@@ -43,31 +42,39 @@ class CapsList(object):
         '''
 
         self._default_timeout = 3.0
+        capability_server_node_name = rospy.get_param("~capability_server_name", "capability_server")
+
+        # look for fully resolved name of the capability server
+        try:
+            fully_resolved_name = rocon_python_comms.find_node(capability_server_node_name, unique=True)[0]
+        except rocon_python_comms.NotFoundException as e:
+            raise NotFoundException("Couldn't find capability server node. Error: " + str(e))
 
         # set up client
-        self._caps_client = client.CapabilitiesClient(capability_server_node_name)
+        self._caps_client = client.CapabilitiesClient(fully_resolved_name)
         if not self._caps_client.wait_for_services(self._default_timeout):
-            raise rospy.exceptions.ROSException("Timed out when waiting for the capability server.")
-
+            raise NotFoundException("Timed out when waiting for the capability server (" + fully_resolved_name + ").")
         # establish_bond
         self._caps_client.establish_bond(self._default_timeout)
 
         # get the name of the capability server's nodelet manager
-        service_name = capability_server_node_name + '/get_nodelet_manager_name'
+        service_name = fully_resolved_name + '/get_nodelet_manager_name'
         cap_server_nodelet_manager_srv = rospy.ServiceProxy(service_name, capabilities_srvs.GetNodeletManagerName)
         try:
             resp = cap_server_nodelet_manager_srv()
         except rospy.ServiceException as exc:
-            raise rospy.exceptions.ROSException("Couldn't not get capability server's nodelet manager name: "
-                                                + str(exc))
-        self.nodelet_manager_name = '/' + resp.nodelet_manager_name
-        print self.nodelet_manager_name
+            raise NotFoundException("Couldn't not get capability server's nodelet manager name: " + str(exc))
+        self.nodelet_manager_name = resp.nodelet_manager_name
 
         # get spec index
-        self._spec_index, errors = service_discovery.spec_index_from_service(capability_server_node_name,
-                                                                             self._default_timeout)
+        try:
+            self._spec_index, errors = service_discovery.spec_index_from_service(fully_resolved_name,
+                                                                                 self._default_timeout)
+        except rospy.exceptions.ROSException as e:
+            raise NotFoundException("Couldn't get specification index. Error: " + str(e))
+
         if errors:
-            raise rospy.exceptions.ROSException("Couldn't get specification index. Error: " + str(errors))
+            raise NotFoundException("Couldn't get specification index. Error: " + str(errors))
 
         self._available_interfaces = []
         self._available_semantic_interfaces = []
