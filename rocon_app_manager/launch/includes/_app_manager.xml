@@ -12,6 +12,7 @@
   <arg name="rapp_package_blacklist" default="[]"/>
   <arg name="auto_start_rapp" default=""/> <!-- autostart a rapp, e.g. rocon_apps/chirp -->
   <arg name="screen" default="false"/>  <!-- verbose output from running apps -->
+  <arg name="capability_server_name" default="capability_server"/>  <!-- name of the capability server -->
 
   <!-- **************************** App Manager ******************************** -->
   <node pkg="rocon_app_manager" type="rapp_manager.py" name="app_manager">
@@ -24,6 +25,7 @@
     <param name="auto_start_rapp" value="$(arg auto_start_rapp)"/>
     <param name="local_remote_controllers_only" value="$(arg local_remote_controllers_only)"/>
     <param name="screen" value="$(arg screen)"/>
+    <param name="capability_server_name" value="$(arg capability_server_name)"/>
     <remap from="app_manager/gateway_info" to="gateway/gateway_info"/>
     <remap from="app_manager/remote_gateway_info" to="gateway/remote_gateway_info"/>
     <remap from="app_manager/force_update" to="gateway/force_update"/>

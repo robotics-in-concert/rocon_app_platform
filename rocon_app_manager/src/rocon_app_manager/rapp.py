@@ -62,7 +62,7 @@ class Rapp(object):
 
     # standard args that can be put inside a rapp launcher, the rapp manager
     # will fill these args in when starting the rapp
-    standard_args = ['gateway_name', 'application_namespace', 'rocon_uri']
+    standard_args = ['gateway_name', 'application_namespace', 'rocon_uri', 'capability_server_nodelet_manager_name']
 
     def __init__(self, package, package_relative_rapp_filename, rospack):
         '''
@@ -229,13 +229,19 @@ class Rapp(object):
         try:
             # Create modified roslaunch file include the application namespace (robot name + 'application')
             temp = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
-            launch_text = _prepare_launch_text(
-                                    data['launch'],
-                                    data['launch_args'],
-                                    application_namespace,
-                                    gateway_name,
-                                    rocon_uri_string
-                                    )
+            if caps_list:
+                launch_text = _prepare_launch_text(data['launch'],
+                                                   data['launch_args'],
+                                                   application_namespace,
+                                                   gateway_name,
+                                                   rocon_uri_string,
+                                                   caps_list.nodelet_manager_name)
+            else:
+                launch_text = _prepare_launch_text(data['launch'],
+                                                   data['launch_args'],
+                                                   application_namespace,
+                                                   gateway_name,
+                                                   rocon_uri_string)
             temp.write(launch_text)
             temp.close()  # unlink it later
 
@@ -407,7 +413,7 @@ def get_standard_args(roslaunch_file):
 
 
 def _prepare_launch_text(launch_file, launch_args, application_namespace,
-                        gateway_name, rocon_uri_string):
+                        gateway_name, rocon_uri_string, capability_server_nodelet_manager_name=None):
     '''
       Prepare the launch file text. This essentially wraps the rapp launcher
       with the following roslaunch elements:
@@ -444,6 +450,7 @@ def _prepare_launch_text(launch_file, launch_args, application_namespace,
     launch_arg_mapping['application_namespace'] = application_namespace
     launch_arg_mapping['gateway_name'] = gateway_name
     launch_arg_mapping['rocon_uri'] = rocon_uri_string
+    launch_arg_mapping['capability_server_nodelet_manager_name'] = capability_server_nodelet_manager_name
 
     launch_text = '<launch>\n  <include ns="%s" file="%s">\n' % (application_namespace, launch_file)
     for arg in launch_args:
