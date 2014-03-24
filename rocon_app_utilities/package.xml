@@ -14,6 +14,7 @@
   <url type="bugtracker">https://github.com/robotics-in-concert/rocon_app_platform/issues</url>
 
   <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>catkin_pkg</build_depend>
   <build_depend>rocon_console</build_depend>
   <build_depend>rocon_python_utils</build_depend>
   <build_depend>rocon_uri</build_depend>
