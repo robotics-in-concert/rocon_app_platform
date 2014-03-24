@@ -29,6 +29,7 @@ import rocon_uri
 import rospkg
 import rospkg.os_detect
 import rocon_python_utils
+import rocon_app_utilities 
 
 # local imports
 from . import exceptions
@@ -69,13 +70,10 @@ class RappManager(object):
         self.app_list_file = {}
         self.caps_list = {}
         self._initialising_services = False
-
-        self._preinstalled_apps = self._load_installed_rapps()  # parses exported rapps from the package path
-        (platform_filtered_apps, capabilities_filtered_apps) = self._determine_runnable_rapps(self._preinstalled_apps)
+        self._indexer = rocon_app_utilities.RappIndexer(package_whitelist=self._param['rapp_package_whitelist'], package_blacklist=self._param['rapp_package_blacklist'])
+        self._runnable_apps, self._platform_filtered_apps, self._capabilities_filtered_apps = self._determine_runnable_rapps()
         self._init_services()
         self._private_publishers = self._init_private_publishers()
-        self._publish_app_list()
-        self._publishers['incompatible_app_list'].publish([], [], self._get_app_msg_list(platform_filtered_apps), self._get_app_msg_list(capabilities_filtered_apps))
 
         if self._param['auto_start_rapp']:  # None and '' are both false here
             request = rapp_manager_srvs.StartAppRequest(self._param['auto_start_rapp'], [])
@@ -188,43 +186,72 @@ class RappManager(object):
         self._initialising_services = False
         return True
 
-    def _load_installed_rapps(self):
+    def _determine_runnable_rapps(self):
         '''
-         Retrieves rapps found on the package path.
+         Prune unsupported apps due to lack of support for required capabilities.
 
-        :returns: all installed rapps
-        :rtype: dic rapp name : Rapp instance
+         :returns: incompatible app list dictionaries for capability incompatibilities respectively
+         :rtype: {rocon_app_manager.Rapp}, [str], [str] 
         '''
-        installed_apps = {}
-        ros_package_path = os.getenv('ROS_PACKAGE_PATH', '')
-        ros_package_path = [x for x in ros_package_path.split(':') if x]
-        package_index = rocon_python_utils.ros.package_index_from_package_path(ros_package_path)
-        for package in package_index.values():
-            # whitelist/blacklist filter
-            if self._param['rapp_package_whitelist']:
-                if package.name not in self._param['rapp_package_whitelist']:
-                    continue
-            elif package.name in self._param['rapp_package_blacklist']:
-                continue
-            for export in package.exports:
-                if export.tagname == 'rocon_app':
-                    app = Rapp(package, export.content, self._rospack)
-                    installed_apps[app.data['name']] = app
-        return installed_apps
+        compatible_rapplist, incompatible_rapplist = self._indexer.get_compatible_rapps(self._rocon_uri)
 
-    def _determine_runnable_rapps(self, rapps):
+        # TODO: Currently it suses rocon_app_utilities.Rapp. It should be converted into rocon_app_manager.Rapp
+
+        runnable_rapps, capabilities_incompatible_rapps = self._filter_capability_unavailable_rapps(compatible_rapplist)
+
+        # Log out the rapps
+        for rapp in incompatible_rapplist: 
+            rospy.logwarn("App : '" + str(rapp.resource_name) + "' is incompatible [" + rapp.data['compatibility'] + "][" + self._rocon_uri + "]")
+
+        for rapp_name, reason in capabilities_incompatible_rapps.items():
+            rospy.logwarn("App : '" + rapp_name + "' " + str(reason))
+
+        for rapp_name in runnable_rapps.keys():
+            rospy.loginfo("App : '" + rapp_name + "' added to the list of runnable apps.")
+
+        platform_filtered_rapps = [rapp.resource_name for rapp in incompatible_rapplist]
+        capabilities_filtered_rapps = capabilities_incompatible_rapps.keys() 
+
+        return (runnable_rapps, platform_filtered_rapps, capabilities_filtered_rapps)
+
+                    rospy.loginfo("App : '" + str(app.data['name']) + "' added to the list of runnable apps.")
+
+    def _filter_capability_unavailable_rapps(self, compatible_rapplist):
         '''
-         Prune unsupported apps due to incompatibilities in platform information or lack of
-         support for required capabilities.
+          Filters out rapps which does not meet the platform's capability
 
-         :param rapps: an index of rapps to check
-         :type rapps: {name : Rapp}
+          :params compatible_rapplist: Platform compatible rapp dict
+          :type compatible_rapplist: dict
 
-         :returns: incompatible app list dictionaries for platform and capability incompatibilities respectively
-         :rtype: 2-tuple of app list dictionaries
+          :returns: runnable rapp, capability filtered rapp
+          :rtype: dict, dict
         '''
-        # First try initialise the list of available capabilities
-        no_caps_available = False
+        is_caps_available = self._init_capabilities()  # First try initialise the list of available capabilities
+        capabilities_filtered_apps = {}
+        runnable_apps = {}
+
+        # Then add runable apps to list
+        for app in compatible_rapplist:
+            if not is_caps_available:
+                if 'required_capabilities' in app.data:
+                    reason = " cannot be run, since capabilities are not available."
+                             + " App will be excluded from the list of runnable apps."
+                    capabilities_filtered_apps[app.data['name']] = reason
+                else:
+                    runnable_apps[app.data['name']] = app
+            else:
+                try:
+                    self.caps_list.compatibility_check(app)
+                    runnable_apps[app.data['name']] = app
+                except exceptions.MissingCapabilitiesException as e:
+                    reason = " cannot be run, since some required capabilities ("
+                             + str(e.missing_caps)
+                             + ") are not installed. App will be excluded from the list of runnable apps."
+                    capabilities_filtered_apps[app.data['name']] = reason 
+
+        return runnable_apps, capabilities_filtered_apps
+
+    def _init_capabilities(self):
         try:
             self.caps_list = CapsList()
         except exceptions.NotFoundException as e:
@@ -232,46 +259,8 @@ class RappManager(object):
                 rospy.loginfo("App Manager : disabling apps requiring capabilities [%s]" % str(e))
             else:
                 rospy.logwarn("App Manager : disabling apps requiring capabilities [%s]" % str(e))
-            no_caps_available = True
-        # Then add runable apps to list
-        self.apps['runnable'] = {}
-        platform_compatible_apps = {}
-        platform_filtered_apps = {}
-        capabilities_filtered_apps = {}
-        for app_name in rapps:
-            app = rapps[app_name]
-            # Platform check
-            try:
-                if rocon_uri.is_compatible(self._rocon_uri, app.data['compatibility']):
-                    platform_compatible_apps[app.data['name']] = app
-                else:
-                    platform_filtered_apps[app.data['name']] = app
-                    rospy.logwarn("App : '" + str(app.data['name']) + "' is incompatible [" + app.data['compatibility'] + '][' + self._rocon_uri + ']')
-            except rocon_uri.RoconURIValueError as e:
-                platform_filtered_apps[app.data['name']] = app
-                rospy.logerr("App : '" + str(app.data['name']) + "' has invalid rocon uri [%s][%s]" % (app.data['compatibility'], str(e)))
-        for app_name in platform_compatible_apps:
-            app = platform_compatible_apps[app_name]
-            if no_caps_available:
-                if 'required_capabilities' in app.data:
-                    capabilities_filtered_apps[app.data['name']] = app
-                    rospy.logwarn("App : '" + str(app.data['name'])
-                                  + "' cannot be run, since capabilities are not available."
-                                  + " App will be excluded from the list of runnable apps.")
-                else:
-                    self.apps['runnable'][app.data['name']] = app
-                    rospy.loginfo("App : '" + str(app.data['name']) + "' added to the list of runnable apps.")
-            else:
-                try:
-                    self.caps_list.compatibility_check(app)
-                    self.apps['runnable'][app.data['name']] = app
-                    rospy.loginfo("App : '" + str(app.data['name']) + "' added to the list of runnable apps.")
-                except exceptions.MissingCapabilitiesException as e:
-                    capabilities_filtered_apps[app.data['name']] = app
-                    rospy.logwarn("App : '" + str(app.data['name']) + "' cannot be run, since some required capabilities ("
-                                  + str(e.missing_caps)
-                                  + ") are not installed. App will be excluded from the list of runnable apps.")
-        return (platform_filtered_apps, capabilities_filtered_apps)
+            return False
+        return True
 
     ##########################################################################
     # Ros Callbacks
@@ -422,7 +411,7 @@ class RappManager(object):
 
     def _process_get_runnable_app_list(self, req):
         response = rapp_manager_srvs.GetAppListResponse()
-        response.available_apps.extend(self._get_app_msg_list(self.apps['runnable']))
+        response.available_apps.extend(self._get_app_msg_list(self._runnable_apps))
         response.running_apps = []
         if self._current_rapp:
             response.running_apps.append(self._current_rapp.to_msg())
@@ -435,10 +424,10 @@ class RappManager(object):
         app_list = rapp_manager_msgs.AppList()
         try:
             if self._current_rapp:
-                app_list.available_apps.extend(self._get_app_msg_list(self.apps['runnable']))
+                app_list.available_apps.extend(self._get_app_msg_list(self._runnable_apps))
                 app_list.running_apps = [self._current_rapp.to_msg()]
             else:
-                app_list.available_apps.extend(self._get_app_msg_list(self.apps['runnable']))
+                app_list.available_apps.extend(self._get_app_msg_list(self._runnable_apps))
                 app_list.running_apps = []
             self._publishers['app_list'].publish(app_list)
         except KeyError:
@@ -460,7 +449,7 @@ class RappManager(object):
 
         # check is the app can be run
         try:
-            rapp = self.apps['runnable'][req.name]
+            rapp = self._runnable_apps[req.name]
         except KeyError:
             resp.started = False
 
@@ -476,9 +465,9 @@ class RappManager(object):
             return resp
 
         # check if the app requires capabilities
-        if 'required_capabilities' in self.apps['runnable'][req.name].data:
+        if 'required_capabilities' in self._runnable_apps[req.name].data:
             rospy.loginfo("App Manager : starting required capabilities.")
-            for cap in self.apps['runnable'][req.name].data['required_capabilities']:
+            for cap in self._runnable_apps[req.name].data['required_capabilities']:
                 try:
                     start_resp = self.caps_list.start_capability(cap["name"])
                 except rospy.ROSException as exc:
@@ -507,7 +496,7 @@ class RappManager(object):
 
         rospy.loginfo("App Manager : starting app '" + req.name + "'.")
 
-        if 'required_capabilities' in self.apps['runnable'][req.name].data:
+        if 'required_capabilities' in self._runnable_apps[req.name].data:
             resp.started, resp.message, subscribers, publishers, services, action_clients, action_servers = \
                         rapp.start(self._application_namespace,
                                    self._gateway_name,
@@ -571,9 +560,9 @@ class RappManager(object):
         if resp.stopped:
             self._current_rapp = None
             self._publish_app_list()
-            if 'required_capabilities' in self.apps['runnable'][rapp_name].data:
+            if 'required_capabilities' in self._runnable_apps[rapp_name].data:
                 rospy.loginfo("App Manager : Stopping required capabilities.")
-                for cap in self.apps['runnable'][rapp_name].data['required_capabilities']:
+                for cap in self._runnable_apps[rapp_name].data['required_capabilities']:
                     try:
                         start_resp = self.caps_list.stop_capability(cap["name"])
                     except rospy.ROSException as exc:
@@ -681,6 +670,14 @@ class RappManager(object):
                 rospy.logwarn("App Manager : failed to cancel flips (probably remote hub intentionally went down as well) [%s, %s]" % (resp.result, resp.error_message))
             else:
                 rospy.logerr("App Manager : failed to flip [%s, %s]" % (resp.result, resp.error_message))
+
+    def _publish_current_rapp_status(self):
+        # Publish currently available rapp list
+        self._publish_app_list()
+
+        # Publish unavailable rapp list
+        # TODO: Currently blacklisted apps and non-whitelisted apps are not provided yet
+        self._publishers['incompatible_app_list'].publish([], [], self._get_app_msg_list(self._platform_filtered_apps), self._get_app_msg_list(self._capabilities_filtered_apps))
 
     def spin(self):
         while not rospy.is_shutdown():
