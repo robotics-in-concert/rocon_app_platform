@@ -1,0 +1,3 @@
+compatibility: rocon:/turtlebot
+launch: rocon_apps/talker.launch
+parent_name: compat/teleop

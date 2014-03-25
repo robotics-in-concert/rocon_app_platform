@@ -1,0 +1,7 @@
+display: Parent Talker in icon and publics
+description: Hola Hola Parent 
+public_interface: rocon_apps/talker.interface
+public_parameters: rocon_apps/talker.parameters
+icon: rocon_apps/talker.png
+compatibility: rocon:/*
+launch: rocon_apps/talker.launch

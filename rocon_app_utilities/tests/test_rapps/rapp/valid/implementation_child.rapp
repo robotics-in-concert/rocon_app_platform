@@ -1,0 +1,3 @@
+compatibility: rocon:/*
+launch: rocon_apps/talker.launch
+parent_name: rocon_apps/talker.rapp

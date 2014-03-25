@@ -253,3 +253,79 @@ class CapsList(object):
             if remap in caps_remap_to_list:
                 index = caps_remap_to_list.index(remap)
                 caps_remap_to_list[index] = self._providers[interface.name].remappings[remap]
+
+
+#################################################
+# Local Methods                
+#################################################
+def start_capabilities_for_rapp(capabilities, caps_list): 
+    '''
+      Starts up all required capaibilities
+
+      :param capaibilities: list of starting capabilities
+      :type: list of capabilities
+      :param caps_list: capability list
+      :type: CapsList
+
+      :returns: True if successful. False with reason if it fails 
+      :rtype: bool, str
+    '''
+    for cap in capabilities:
+        try:
+            start_resp = caps_list.start_capability(cap["name"])
+        except rospy.ROSException as exc:
+            message = ("App Manager : service for starting capabilities is not available."
+                            + " Will not start app. Error:"
+                            + str(exc))
+            rospy.logerr("App Manager : %s" % message)
+            return False, message
+        except IOError as exc:
+            message = ("App Manager : error occurred while processing 'start_capability' service."
+                            + " Will not start app. Error: "
+                            + str(exc))
+            rospy.logerr("App Manager : %s" % message)
+            return False, message
+        if start_resp:
+            rospy.loginfo("App Manager : started required capability '" + str(cap["name"]) + "'.")
+        else:
+            message = ("App Manager : starting capability '" + str(cap["name"]) + " was not successful."
+                            " Will not start app.")
+            rospy.logerr("App Manager : %s" % message)
+            return False, message
+    rospy.loginfo("App Manager : all required capabilities have been started.")
+    return True, ""
+
+def stop_capabilities_for_rapp(capabilities, caps_list):
+    '''                                                     
+      Starts up all required capaibilities
+ 
+      :param capaibilities: list of starting capabilities
+      :type: list of capabilities
+      :param caps_list: capability list
+      :type: CapsList
+ 
+      :returns: True if successful. False with reason if it fails 
+      :rtype: bool, str
+    '''
+    for cap in capabilities:
+        try:
+            start_resp = caps_list.stop_capability(cap["name"])
+        except rospy.ROSException as exc:
+            message = ("App Manager : Service for stopping capabilities is not available."
+                            + " Error:" + str(exc))
+            rospy.logerr("App Manager : %s" % message)
+            return False, message
+        except IOError as exc:
+            message = ("App Manager : Error occurred while processing 'stop_capability' service."
+                            + " Error: " + str(exc))
+            rospy.logerr("App Manager : %s" % message)
+            return False, message
+        if start_resp:
+            rospy.loginfo("App Manager : Stopped required capability '" + str(cap["name"]) + "'.")
+        else:
+            message = ("App Manager : Stopping capability '" + str(cap["name"])
+                            + " was not successful.")
+            rospy.logerr("App Manager : %s" % message)
+            return False, message
+    rospy.loginfo("App Manager : All required capabilities have been stopped.")
+    return True, ""
