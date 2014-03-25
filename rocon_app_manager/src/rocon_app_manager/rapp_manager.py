@@ -14,7 +14,7 @@ import time
 import thread
 import traceback
 import roslaunch.pmon
-from .caps_list import CapsList, start_capabilities_for_rapp, stop_capabilities_for_rapp
+from .caps_list import CapsList, start_capabilities_from_caps_list, stop_capabilities_from_caps_list
 import rocon_python_comms
 from rocon_gateway_utils import create_gateway_rule, create_gateway_remote_rule
 import rocon_app_manager_msgs.msg as rapp_manager_msgs
@@ -469,7 +469,7 @@ class RappManager(object):
 
         if caps_list:
             rospy.loginfo("App Manager : starting required capabilities.")
-            result, message = start_capabilities_for_rapp(self._runnable_apps[req.name].data['required_capabilities'], self.caps_list)
+            result, message = start_capabilities_from_caps_list(self._runnable_apps[req.name].data['required_capabilities'], self.caps_list)
 
             if not result: # if not none, it failed to start capabilities
                 resp.started = False
@@ -535,7 +535,7 @@ class RappManager(object):
             self._publish_app_list()
             if 'required_capabilities' in self._runnable_apps[rapp_name].data:
                 rospy.loginfo("App Manager : Stopping required capabilities.")
-                result, message = start_capabilities_for_rapp(self._runnable_apps[rapp_name].data['required_capabilities'], self.caps_list)
+                result, message = stop_capabilities_from_caps_list(self._runnable_apps[rapp_name].data['required_capabilities'], self.caps_list)
                 if not result: # if not none, it failed to start capabilities
                     resp.stop= False
                     resp.message = message  

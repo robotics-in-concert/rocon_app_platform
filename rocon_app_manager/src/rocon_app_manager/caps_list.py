@@ -256,9 +256,9 @@ class CapsList(object):
 
 
 #################################################
-# Local Methods                
+# Utilities 
 #################################################
-def start_capabilities_for_rapp(capabilities, caps_list): 
+def start_capabilities_from_caps_list(capabilities, caps_list): 
     '''
       Starts up all required capaibilities
 
@@ -295,7 +295,7 @@ def start_capabilities_for_rapp(capabilities, caps_list):
     rospy.loginfo("App Manager : all required capabilities have been started.")
     return True, ""
 
-def stop_capabilities_for_rapp(capabilities, caps_list):
+def stop_capabilities_from_caps_list(capabilities, caps_list):
     '''                                                     
       Starts up all required capaibilities
  
