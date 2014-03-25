@@ -17,7 +17,7 @@ import roslaunch.parent
 import traceback
 import tempfile
 import rocon_python_utils
-from .exceptions import AppException, InvalidRappException, MissingCapabilitiesException
+from .exceptions import RappException, InvalidRappException, MissingCapabilitiesException
 import rocon_app_manager_msgs.msg as rapp_manager_msgs
 import rocon_std_msgs.msg as rocon_std_msgs
 import roslaunch.xmlloader
@@ -63,7 +63,7 @@ class Rapp(object):
     # will fill these args in when starting the rapp
     standard_args = ['gateway_name', 'application_namespace', 'rocon_uri', 'capability_server_nodelet_manager_name']
 
-    def __init__(self, package, package_relative_rapp_filename, rospack):
+    def __init__(self, rapp_definition):
         '''
            :param package: this rapp is nested in
            :type package: :py:class:`catkin_pkg.package.Package`
@@ -72,9 +72,6 @@ class Rapp(object):
            :param rospack: utility cache to speed up ros resource searches
            :type rospack: :py:class:`rospkg.RosPack`
         '''
-        self.package_name = package.name
-        self._rospack = rospack
-        package_path = os.path.dirname(package.filename)
         self.filename = os.path.join(package_path, package_relative_rapp_filename)
         self._connections = {}
         for connection_type in ['publishers', 'subscribers', 'services', 'action_clients', 'action_servers']:
@@ -86,7 +83,7 @@ class Rapp(object):
             app_data = yaml.load(f.read())
             for reqd in ['launch', 'public_interface', 'compatibility']:
                 if not reqd in app_data:
-                    raise AppException("Invalid rapp file format [" + self.filename + "], missing required key [" + reqd + "]")
+                    raise RappException("Invalid rapp file format [" + self.filename + "], missing required key [" + reqd + "]")
             data['name'] = package.name + "/" + rapp_name
             data['display_name'] = app_data.get('display', rapp_name)
             data['description'] = app_data.get('description', '')
@@ -117,12 +114,12 @@ class Rapp(object):
           :param resource: a typical resource identifier to look for
           :type resource: pkg_name/file pair in str format.
 
-          :raises: :exc:`.exceptions.AppException` if the resource is not found
+          :raises: :exc:`.exceptions.RappException` if the resource is not found
         '''
         try:
             return rocon_python_utils.ros.find_resource_from_string(resource, self._rospack)
         except rospkg.ResourceNotFound:
-            raise AppException("invalid rapp - %s does not exist [%s]" % (resource, rapp_name))
+            raise RappException("invalid rapp - %s does not exist [%s]" % (resource, rapp_name))
 
     def __repr__(self):
         string = ""
@@ -169,7 +166,7 @@ class Rapp(object):
                     d[k] = new_data
 
             except KeyError:
-                raise AppException("Invalid interface, missing keys")
+                raise RappException("Invalid interface, missing keys")
 
         return d
 

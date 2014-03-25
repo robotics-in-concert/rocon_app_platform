@@ -12,21 +12,21 @@
 ##############################################################################
 
 
-class AppException(Exception):
+class RappException(Exception):
     """
      App Exception
     """
     pass
 
 
-class NotFoundException(AppException):
+class NotFoundException(RappException):
     """
       Resource Not Found Exception
     """
     pass
 
 
-class InvalidRappException(Exception):
+class InvalidRappException(RappException):
     '''
       Raised if the app definition is invalid.
     '''
