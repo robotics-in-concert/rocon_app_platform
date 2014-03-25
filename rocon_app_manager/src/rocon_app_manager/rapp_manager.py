@@ -69,7 +69,10 @@ class RappManager(object):
         self.app_list_file = {}
         self.caps_list = {}
         self._initialising_services = False
+
+        rospy.loginfo("App Manager : Indexing Rapps...")
         self._indexer = rocon_app_utilities.RappIndexer(package_whitelist=self._param['rapp_package_whitelist'], package_blacklist=self._param['rapp_package_blacklist'])
+        rospy.loginfo("App Manager : Done")
         self._runnable_apps, self._platform_filtered_apps, self._capabilities_filtered_apps = self._determine_runnable_rapps()
         self._init_services()
         self._private_publishers = self._init_private_publishers()
