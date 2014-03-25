@@ -35,11 +35,11 @@ def _rapp_cmd_list(argv):
       Command-line parsing for 'rapp list' command.
     """
     indexer = RappIndexer()
-    rapp_list = indexer.get_compatible_rapps()
+    compatible_rapps, incompatible_rapps = indexer.get_compatible_rapps()
 
     print('== Available Rapp List == ')
-    for r in rapp_list:  
-        print('  ' + str(r))
+    for r in compatible_rapps:  
+        print('  ' + str(r.resource_name))
 
 
 def _rapp_cmd_info(argv):
