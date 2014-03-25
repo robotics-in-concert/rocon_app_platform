@@ -18,7 +18,7 @@ from rocon_console import console
 
 class RappIndexer(object):
 
-    __slots__ = ['raw_data_path', 'raw_data', 'invalid_rapps', 'package_whitelist', 'package_blacklist']
+    __slots__ = ['raw_data_path', 'raw_data', 'invalid_data', 'package_whitelist', 'package_blacklist']
 
     def __init__(self, raw_data=None, package_whitelist=None, package_blacklist=[]):
         self.raw_data_path = {}
