@@ -53,10 +53,10 @@ class RappIndexer(object):
                 raw_data[resource_name] = r
             except InvalidRappFieldException as irfe:
                 invalid_data[resource_name] = str(irfe)
-                console.warning('  [' + resource_name + '] has not been added : ' + str(irfe))
+#console.warning('  [' + resource_name + '] has not been added : ' + str(irfe))
             except InvalidRappException as ire:
                 invalid_data[resource_name] = str(ire)
-                console.warning('  [' + resource_name + '] has not been added : ' + str(ire))
+#console.warning('  [' + resource_name + '] has not been added : ' + str(ire))
         self.raw_data = raw_data
         self.invalid_data = invalid_data
         self.package_whitelist = package_whitelist

@@ -14,10 +14,9 @@
 
 class RappException(Exception):
     """
-     App Exception
+     Rapp Exception
     """
     pass
-
 
 class NotFoundException(RappException):
     """
@@ -25,6 +24,16 @@ class NotFoundException(RappException):
     """
     pass
 
+class RappResourceNotExistException(RappException):
+    '''
+      Rapp Attribute Resource does not exist...
+    '''
+    pass
+
+class RappMalformedException(RappException):
+    '''
+      If rapp contains missing key...
+    '''
 
 class InvalidRappException(RappException):
     '''
