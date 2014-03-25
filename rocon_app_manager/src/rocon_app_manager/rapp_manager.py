@@ -73,7 +73,14 @@ class RappManager(object):
         self._runnable_apps, self._platform_filtered_apps, self._capabilities_filtered_apps = self._determine_runnable_rapps()
         self._init_services()
         self._private_publishers = self._init_private_publishers()
-        self._publish_current_rapp_status()
+
+
+        # Publish currently available rapp list
+        self._publish_app_list()
+                                                                                                                                  
+        # Publish unavailable rapp list
+        # TODO: Currently blacklisted apps and non-whitelisted apps are not provided yet
+        self._publishers['incompatible_app_list'].publish([], [], self._platform_filtered_apps, self._capabilities_filtered_apps)
 
         if self._param['auto_start_rapp']:  # None and '' are both false here
             request = rapp_manager_srvs.StartAppRequest(self._param['auto_start_rapp'], [])
@@ -603,14 +610,6 @@ class RappManager(object):
                 rospy.logwarn("App Manager : failed to cancel flips (probably remote hub intentionally went down as well) [%s, %s]" % (resp.result, resp.error_message))
             else:
                 rospy.logerr("App Manager : failed to flip [%s, %s]" % (resp.result, resp.error_message))
-
-    def _publish_current_rapp_status(self):
-        # Publish currently available rapp list
-        self._publish_app_list()
-
-        # Publish unavailable rapp list
-        # TODO: Currently blacklisted apps and non-whitelisted apps are not provided yet
-        self._publishers['incompatible_app_list'].publish([], [], self._platform_filtered_apps, self._capabilities_filtered_apps)
 
     def spin(self):
         while not rospy.is_shutdown():
