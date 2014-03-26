@@ -12,8 +12,6 @@ import os
 import traceback
 import argparse
 
-
-import rocon_utilities
 from .indexer import RappIndexer
 
 #################################################################################

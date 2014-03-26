@@ -163,7 +163,7 @@ class RappIndexer(object):
           :type rapp_name: str
 
           :returns: fully resolved rapp  
-          :rtype: rocon_utilities.Rapp
+          :rtype: rocon_app_utilities.Rapp
         '''
         rapp = copy.deepcopy(self.raw_data[rapp_name]) # Not to currupt original data
         parent_name = rapp.parent_name
