@@ -204,6 +204,7 @@ class RappManager(object):
          :returns: incompatible app list dictionaries for capability incompatibilities respectively
          :rtype: {rocon_app_manager.Rapp}, [str], [str] 
         '''
+        rospy.loginfo("App Manager : Determining runnable rapps...")
         compatible_rapplist, incompatible_rapplist = self._indexer.get_compatible_rapps(self._rocon_uri)
         runnable_rapp_specs, capabilities_incompatible_rapps = self._filter_capability_unavailable_rapps(compatible_rapplist)
         runnable_rapps, defected_rapps = convert_rapps_from_rapp_specs(runnable_rapp_specs, self._rospack)
@@ -217,6 +218,8 @@ class RappManager(object):
 
         for rapp_name in runnable_rapps.keys():
             rospy.loginfo("App Manager : '" + rapp_name + "' added to the list of runnable apps.")
+
+        rospy.loginfo("App Manager : Done")
 
         platform_filtered_rapps = [rapp.ancestor_name for rapp in incompatible_rapplist]
         capabilities_filtered_rapps = capabilities_incompatible_rapps.keys() 
