@@ -111,8 +111,21 @@ class RappIndexer(object):
           :returns: a list of compatible rapps, a list of incompatible rapps
           :rtype: [rocon_app_utilities.Rapp], [rocon_app_utilities.Rapp]
         '''
-        compatible_rapps = {resource_name: rapp for resource_name, rapp in self.raw_data.items() if rapp.is_implementation and rapp.is_compatible(uri)}
-        incompatible_rapps = {resource_name: rapp for resource_name, rapp in self.raw_data.items() if rapp.is_implementation and not resource_name in compatible_rapps}
+        compatible_rapps = {}
+        incompatible_rapps = {}
+        invalid_rapps = {}
+        for resource_name, rapp in self.raw_data.items():
+            if not rapp.is_implementation:
+                continue
+
+            try:
+                if rapp.is_compatible(uri):
+                    compatible_rapps[resource_name] = rapp 
+                else:
+                    incompatible_rapps[resource_name] = rapp
+            except Exception as e:
+                print(str(e))
+                invalid_rapps[resource_name] = rapp
 
         #  TODO: Utilise invalid list later for better introspection
         resolved_compatible_rapplist, _ = self._resolve_rapplist(compatible_rapps)
