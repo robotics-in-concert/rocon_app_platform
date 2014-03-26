@@ -210,13 +210,13 @@ class RappManager(object):
 
         # Log out the rapps
         for rapp in incompatible_rapplist: 
-            rospy.logwarn("App : '" + str(rapp.ancestor_name) + "' is incompatible [" + rapp.data['compatibility'] + "][" + self._rocon_uri + "]")
+            rospy.logwarn("App Manager : '" + str(rapp.ancestor_name) + "' is incompatible [" + rapp.data['compatibility'] + "][" + self._rocon_uri + "]")
 
         for rapp_name, reason in capabilities_incompatible_rapps.items():
-            rospy.logwarn("App : '" + rapp_name + "' " + str(reason))
+            rospy.logwarn("App Manager : '" + rapp_name + "' " + str(reason))
 
         for rapp_name in runnable_rapps.keys():
-            rospy.loginfo("App : '" + rapp_name + "' added to the list of runnable apps.")
+            rospy.loginfo("App Manager : '" + rapp_name + "' added to the list of runnable apps.")
 
         platform_filtered_rapps = [rapp.ancestor_name for rapp in incompatible_rapplist]
         capabilities_filtered_rapps = capabilities_incompatible_rapps.keys() 
