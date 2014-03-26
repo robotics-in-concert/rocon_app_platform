@@ -29,7 +29,7 @@ class RappIndexer(object):
         if raw_data:
             self.raw_data = raw_data
         else:
-            self.update_index()
+            self.update_index(package_whitelist, package_blacklist)
 
 
     def update_index(self, package_whitelist=None, package_blacklist=[]):

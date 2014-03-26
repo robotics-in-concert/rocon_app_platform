@@ -77,7 +77,7 @@ class Rapp(object):
         a.description = self.data['description']
         a.compatibility = self.data['compatibility']
         a.status = self.data['status']
-        a.icon = rocon_python_utils.ros.icon_resource_to_msg(self.data['icon'])
+        a.icon = rocon_python_utils.ros.icon_to_msg(self.data['icon'])
         a.pairing_clients = [pc.to_msg() for pc in self.data['pairing_clients']]
 
         key = 'required_capabilities'
@@ -247,8 +247,8 @@ def load_specs_from_file(specification, rospack):
     data['name'] = specification.ancestor_name
     data['display_name']      = rapp_data.get('display', data['name'])
     data['description']       = rapp_data.get('description', '')
-    data['icon']              = rapp_data.get('icon', None)
     data['compatibility']     = rapp_data['compatibility']
+    data['icon']              = _find_resource(rapp_data['icon'], rospack) if 'icon' in rapp_data else None
     data['launch']            = _find_resource(rapp_data['launch'], rospack)
     data['launch_args']       = _get_standard_args(data['launch'])
     data['public_interface']  = _load_public_interface(rapp_data.get('public_interface', None), rospack)
