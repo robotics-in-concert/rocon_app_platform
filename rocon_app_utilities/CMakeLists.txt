@@ -12,7 +12,7 @@ file(GLOB_RECURSE ${PROJECT_NAME}_SCRIPT_SOURCES RELATIVE ${PROJECT_SOURCE_DIR} 
 roslint_python(${${PROJECT_NAME}_MODULE_SOURCES} ${${PROJECT_NAME}_SCRIPT_SOURCES})
 
 if (CATKIN_ENABLE_TESTING)
-  add_subdirectory(tests)
+  catkin_add_nosetests(tests)
 endif()
 
 #############
