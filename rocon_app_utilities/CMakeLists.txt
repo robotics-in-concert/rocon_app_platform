@@ -1,10 +1,16 @@
+##############################################################################
+# CMake
+##############################################################################
+
 cmake_minimum_required(VERSION 2.8.3)
 project(rocon_app_utilities)
 
+##############################################################################
+# Catkin
+##############################################################################
+
 find_package(catkin REQUIRED COMPONENTS roslint)
-
 catkin_python_setup()
-
 catkin_package()
 
 file(GLOB_RECURSE ${PROJECT_NAME}_MODULE_SOURCES RELATIVE ${PROJECT_SOURCE_DIR} src/*.py)
@@ -15,6 +21,6 @@ if (CATKIN_ENABLE_TESTING)
   catkin_add_nosetests(tests)
 endif()
 
-#############
-## Install ##
-#############
+##############################################################################
+# Installs
+##############################################################################
