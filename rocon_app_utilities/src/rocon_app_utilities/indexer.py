@@ -46,7 +46,7 @@ class RappIndexer(object):
         for resource_name, path in self.raw_data_path.items():
             try:
                 r = Rapp(resource_name)
-                r.load_from_file(path)
+                r.load_spec_from_file(path)
                 r.classify()
                 raw_data[resource_name] = r
             except InvalidRappFieldException as irfe:
@@ -57,8 +57,6 @@ class RappIndexer(object):
         self.invalid_data = invalid_data
         self.package_whitelist = package_whitelist
         self.package_blacklist = package_blacklist
-#print("Raw data: %s" % raw_data.keys())
-#print("Invalid data: %s" % invalid_data)
 
     def get_package_whitelist_blacklist(self):
         return self.package_whitelist, self.package_blacklist

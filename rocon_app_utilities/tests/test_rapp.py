@@ -31,7 +31,7 @@ def test_rapp_loading():
     console.pretty_println('Extra Field', console.bold)
     filename = pwd + '/test_rapps/rapp/invalid_loading/invalid_attribute.rapp'
     console.pretty_println(' - %s'% filename)
-    assert_raises(InvalidRappException, load_yaml_from_file, filename)
+    assert_raises(InvalidRappException, load_rapp_yaml_from_file, filename)
 
     # console.pretty_println('Duplicated Field',console.bold)
     # TODO
@@ -80,7 +80,6 @@ def test_rapp_inheritance():
                 return False
             if not data[f] == d:
                 return False
-
         return True
 
     print_title('Rapp Inheritance')
@@ -95,7 +94,7 @@ def test_rapp_inheritance():
          ('public_interface',  'rocon_apps/talker.interface'),
          ('public_parameters', 'rocon_apps/talker.parameters'),
          ('icon',              'rocon_apps/talker.png')]
-    assert_true(validate(child.data, d))
+    assert_true(validate(child.raw_data, d))
     
 
     # icon and publics
@@ -107,7 +106,7 @@ def test_rapp_inheritance():
          ('public_interface',  'rocon_apps/talker.interface'),
          ('public_parameters', 'rocon_apps/talker.parameters'),
          ('icon',              'rocon_apps/talker.png')]
-    assert_true(validate(child.data, d))
+    assert_true(validate(child.raw_data, d))
 
     # publics
     path = '/test_rapps/rapp/inherity/publics'
@@ -117,7 +116,7 @@ def test_rapp_inheritance():
          ('description',       'public public child'),
          ('public_interface',  'rocon_apps/talker.interface'),
          ('public_parameters', 'rocon_apps/talker.parameters')]
-    assert_true(validate(child.data, d))
+    assert_true(validate(child.raw_data, d))
 
     # from meta
     path ='/test_rapps/rapp/inherity/from_meta'
@@ -128,7 +127,7 @@ def test_rapp_inheritance():
          ('public_interface',  'rocon_apps/talker.interface'),
          ('public_parameters', 'rocon_apps/talker.parameters'),
          ('icon',              'rocon_apps/talker.png')]
-    assert_true(validate(child.data, d))
+    assert_true(validate(child.raw_data, d))
 
 
     # from another child
@@ -138,7 +137,7 @@ def test_rapp_inheritance():
     d = [('display',           'Talker'),
          ('description',       'Default ros style talker tutorial'),
          ('icon',              'rocon_apps/talker.png')]
-    assert_true(validate(child.data, d))
+    assert_true(validate(child.raw_data, d))
 
 def print_title(title):
     print(console.bold + "\n****************************************************************************************" + console.reset)
@@ -147,6 +146,6 @@ def print_title(title):
 
 def verify_one(Except, func, filename):
     f = pwd + filename
-    data = load_yaml_from_file(f)
+    data = load_rapp_yaml_from_file(f)
     console.pretty_println(' - %s'%f)
     assert_raises(Except, func, data)

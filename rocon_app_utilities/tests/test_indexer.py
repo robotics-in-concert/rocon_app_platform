@@ -83,14 +83,14 @@ class TestRappIndexer():
 
         # Correct call
         rapp = self.indexer.get_raw_rapp('basic/child')
-        assert_true(rapp.data['compatibility'] == 'rocon:/*')
-        assert_true(rapp.data['launch'] == 'rocon_apps/talker.launch')
-        assert_true(rapp.data['parent_name'] == 'basic/parent')
+        assert_true(rapp.raw_data['compatibility'] == 'rocon:/*')
+        assert_true(rapp.raw_data['launch'] == 'rocon_apps/talker.launch')
+        assert_true(rapp.raw_data['parent_name'] == 'basic/parent')
 
 
     def test_get_rapp(self):
         def compare(a,b,field):
-            return a.data[field] == b.data[field]
+            return a.raw_data[field] == b.raw_data[field]
 
         print_title('Test Get Rapp')
         
