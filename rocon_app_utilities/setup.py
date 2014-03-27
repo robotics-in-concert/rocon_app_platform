@@ -6,7 +6,7 @@ from catkin_pkg.python_setup import generate_distutils_setup
 d = generate_distutils_setup(
     packages=['rocon_app_utilities'],
     package_dir={'': 'src'},
-    scripts=['scripts/rapp'],
+    scripts=['scripts/rocon_app'],
     requires=['roslib', 'rospy', 'rocon_python_utils']
 )
 
