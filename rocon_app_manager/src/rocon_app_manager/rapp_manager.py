@@ -199,30 +199,37 @@ class RappManager(object):
          :rtype: {rocon_app_manager.Rapp}, [str], [str]
         '''
         rospy.loginfo("App Manager : determining runnable rapps...")
-        compatible_rapplist, incompatible_rapplist = self._indexer.get_compatible_rapps(self._rocon_uri)
-        runnable_rapp_specs, capabilities_incompatible_rapps = self._filter_capability_unavailable_rapps(compatible_rapplist)
+        compatible_rapps, platform_incompatible_rapps, invalid_rapps = self._indexer.get_compatible_rapps(self._rocon_uri)
+        runnable_rapp_specs, capabilities_incompatible_rapps = self._filter_capability_unavailable_rapps(compatible_rapps)
         runnable_rapps, defected_rapps = convert_rapps_from_rapp_specs(runnable_rapp_specs, self._rospack)
 
         # Log out the rapps
-        for rapp in incompatible_rapplist:
-            rospy.logwarn("App Manager : '" + str(rapp.ancestor_name) + "' is incompatible [" + rapp.data['compatibility'] + "][" + self._rocon_uri + "]")
+        for rapp in platform_incompatible_rapps.values():
+            rospy.logwarn("App Manager : '" + str(rapp.resource_name) + "' is incompatible [" + rapp.data['compatibility'] + "][" + self._rocon_uri + "]")
 
         for rapp_name, reason in capabilities_incompatible_rapps.items():
-            rospy.logwarn("App Manager : '" + rapp_name + "' " + str(reason))
+            rospy.logwarn("App Manager : '" + rapp_name + "' is incompatible [" + str(reason) + "]")
+
+        for rapp_name, reason in platform_incompatible_rapps.items():
+            rospy.logwarn("App Manager : '" + rapp_name + "' is incompatible [" + str(reason) + "]")
+
+        for rapp_name, reason in defected_rapps.items():
+            rospy.logwarn("App Manager : '" + rapp_name + "' is incompatible [" + str(reason) + "]")
+
 
         for rapp_name in runnable_rapps.keys():
             rospy.loginfo("App Manager : '" + rapp_name + "' added to the list of runnable apps.")
 
-        platform_filtered_rapps = [rapp.ancestor_name for rapp in incompatible_rapplist]
+        platform_filtered_rapps = platform_incompatible_rapps.keys() 
         capabilities_filtered_rapps = capabilities_incompatible_rapps.keys()
 
         return (runnable_rapps, platform_filtered_rapps, capabilities_filtered_rapps)
 
-    def _filter_capability_unavailable_rapps(self, compatible_rapplist):
+    def _filter_capability_unavailable_rapps(self, compatible_rapps):
         '''
           Filters out rapps which does not meet the platform's capability
 
-          :params compatible_rapplist: Platform compatible rapp dict
+          :params compatible_rapps: Platform compatible rapp dict
           :type compatible_rapplist: dict
 
           :returns: runnable rapp, capability filtered rapp
@@ -233,7 +240,7 @@ class RappManager(object):
         runnable_apps = {}
 
         # Then add runable apps to list
-        for rapp in compatible_rapplist:
+        for rapp_name, rapp in compatible_rapps.items():
             if not is_caps_available:
                 if 'required_capabilities' in rapp.data:
                     reason = "cannot be run, since capabilities are not available. Rapp will be excluded from the list of runnable apps."
