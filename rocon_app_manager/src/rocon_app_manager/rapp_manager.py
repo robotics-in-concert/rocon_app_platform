@@ -77,12 +77,6 @@ class RappManager(object):
         self._private_publishers = self._init_private_publishers()
         self._init_services()
 
-        # Publish currently available rapp list
-        self._publish_app_list()
-
-        # Publish unavailable rapp list
-        # TODO: Currently blacklisted apps and non-whitelisted apps are not provided yet
-        self._publishers['incompatible_app_list'].publish([], [], self._platform_filtered_apps, self._capabilities_filtered_apps)
 
         if self._param['auto_start_rapp']:  # None and '' are both false here
             request = rapp_manager_srvs.StartAppRequest(self._param['auto_start_rapp'], [])
@@ -192,6 +186,8 @@ class RappManager(object):
             self._initialising_services = False
             return False
         self._publish_app_list()  # get the latched publisher refiring
+        # TODO: Currently blacklisted apps and non-whitelisted apps are not provided yet
+        self._publishers['incompatible_app_list'].publish([], [], self._platform_filtered_apps, self._capabilities_filtered_apps)
         self._initialising_services = False
         return True
 
