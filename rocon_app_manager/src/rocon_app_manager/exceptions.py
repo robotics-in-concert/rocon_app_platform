@@ -18,11 +18,13 @@ class RappException(Exception):
     """
     pass
 
+
 class NotFoundException(RappException):
     """
       Resource Not Found Exception
     """
     pass
+
 
 class RappResourceNotExistException(RappException):
     '''
@@ -30,10 +32,12 @@ class RappResourceNotExistException(RappException):
     '''
     pass
 
+
 class RappMalformedException(RappException):
     '''
       If rapp contains missing key...
     '''
+
 
 class InvalidRappException(RappException):
     '''

@@ -26,9 +26,11 @@ from .pairing_client import PairingClient
 ##############################################################################
 # Class
 ##############################################################################
+
+
 class Rapp(object):
     '''
-        Got many inspiration and imported from willow_app_manager implementation 
+        Got many inspiration and imported from willow_app_manager implementation
     '''
     # I should add a __slots__ definition here to make it easy to read
 
@@ -50,10 +52,10 @@ class Rapp(object):
 
         try:
             self.data = load_specs_from_file(rapp_specification, rospack)
-        except RappResourceNotExistException as e :
+        except RappResourceNotExistException as e:
             reason = str(e) + ' [' + str(rapp_specification.ancestor_name) + ']'
             raise RappException(reason)
-        except RappMalformedException as e: 
+        except RappMalformedException as e:
             reason = str(e) + ' [' + str(rapp_specification.ancestor_name) + ']'
             raise RappException(reason)
         self.data['status'] = 'Ready'
@@ -85,7 +87,7 @@ class Rapp(object):
             a.required_capabilities = [cap['name'] for cap in self.data[key]]
 
         return a
-          
+
     def start(self, application_namespace, gateway_name, rocon_uri_string, remappings=[], force_screen=False,
               caps_list=None):
         '''
@@ -119,8 +121,8 @@ class Rapp(object):
             temp = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
             self._launch = prepare_launcher(data, application_namespace, gateway_name, rocon_uri_string, nodelet_manager_name, force_screen, temp)
 
-            # Better logic for the future, 1) get remap rules from capabilities. 2) get remap rules from requets. 3) apply them all. It would be clearer to understand the logic and easily upgradable 
-            if 'required_capabilities' in data: # apply capability-specific remappings needed
+            # Better logic for the future, 1) get remap rules from capabilities. 2) get remap rules from requets. 3) apply them all. It would be clearer to understand the logic and easily upgradable
+            if 'required_capabilities' in data:  # apply capability-specific remappings needed
                 apply_remapping_rules_from_capabilities(self._launch, data, caps_list)
 
             self._connections = apply_remapping_rules_from_start_app_request(self._launch, data, remappings, application_namespace)
@@ -164,7 +166,7 @@ class Rapp(object):
                 self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
 
         return True, "Success", self._connections['subscribers'], self._connections['publishers'], \
-                self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
+            self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
 
     def is_running(self):
         '''
@@ -196,7 +198,7 @@ def convert_rapps_from_rapp_specs(rapp_specs, rospack):
       Converts rocon_app_utilities.Rapp into rocon_app_manager.Rapp
 
       :param rapp_specs: dict of rapp specification
-      :type rapp_specs: {ancestor_name: rocon_app_utilities.Rapp} 
+      :type rapp_specs: {ancestor_name: rocon_app_utilities.Rapp}
       :param rospack: utility cache to speed up ros resource searches
       :type rospack: :py:class:`rospkg.RosPack`
 
@@ -216,11 +218,11 @@ def convert_rapps_from_rapp_specs(rapp_specs, rospack):
     return runnable_rapps, defected_rapps
 
 
-def _init_connections(): 
+def _init_connections():
     '''
-      Initialise connections which use as public interface 
+      Initialise connections which use as public interface
 
-      :returns: dict of connections with empty list 
+      :returns: dict of connections with empty list
       :rtype: {connection_type: list}
     '''
     PUBLIC_CONNECTION_TYPES = ['publishers', 'subscribers', 'services', 'action_clients', 'action_servers']
@@ -253,14 +255,15 @@ def load_specs_from_file(specification, rospack):
     data['launch_args']       = _get_standard_args(data['launch'])
     data['public_interface']  = _load_public_interface(rapp_data.get('public_interface', None), rospack)
 
-    data['public_parameters'] = _load_public_parameters(rapp_data.get('public_parameters',None), rospack) # TODO : It is not tested yet.
+    data['public_parameters'] = _load_public_parameters(rapp_data.get('public_parameters', None), rospack)  # TODO : It is not tested yet.
     data['pairing_clients']   = _load_pairing_clients(rapp_data.get('pairing_clients', []))
 
     required_capabilities = 'required_capabilities'
     if required_capabilities in rapp_data:
-        data[required_capabilities] = [ c for c in rapp_data[required_capabilities]]
+        data[required_capabilities] = [c for c in rapp_data[required_capabilities]]
 
     return data
+
 
 def _find_resource(resource, rospack):
     '''
@@ -301,7 +304,7 @@ def _load_public_interface(public_interface_resource, rospack):
 
     # If public interface is not present. return empty list for each connection types
     if not public_interface_resource:
-        d = { k : [] for k in keys}
+        d = {k: [] for k in keys}
         return d
 
     public_interface_file_path = _find_resource(public_interface_resource, rospack)
@@ -331,7 +334,7 @@ def _load_public_parameters(public_parameters_resource, rospack):
       :param rospack: utility cache to speed up ros resource searches
       :type rospack: :py:class:`rospkg.RosPack`
 
-      :returns: dict of public parameter 
+      :returns: dict of public parameter
       :rtype: {keys : []}
     '''
 
@@ -369,6 +372,7 @@ def _load_pairing_clients(clients_data, appfile="UNKNOWN"):
         clients.append(PairingClient(client_type, manager_data, app_data))
     return clients
 
+
 def _get_standard_args(roslaunch_file):
     '''
       Given the Rapp launch file, this function parses the top-level args
@@ -383,10 +387,8 @@ def _get_standard_args(roslaunch_file):
     '''
     try:
         loader = roslaunch.xmlloader.XmlLoader(resolve_anon=False)
-        unused_config = load_config_default([roslaunch_file], None, loader=loader,
-                                     verbose=False, assign_machines=False)
-        available_args = \
-                [str(x) for x in loader.root_context.resolve_dict['arg']]
+        unused_config = load_config_default([roslaunch_file], None, loader=loader, verbose=False, assign_machines=False)
+        available_args = [str(x) for x in loader.root_context.resolve_dict['arg']]
         return [x for x in available_args if x in Rapp.standard_args]
     except (RLException, rospkg.common.ResourceNotFound) as e:
         # The ResourceNotFound lets us catch errors when the launcher has invalid
