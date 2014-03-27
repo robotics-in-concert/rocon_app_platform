@@ -34,11 +34,16 @@ def _rapp_cmd_list(argv):
       Command-line parsing for 'rapp list' command.
     """
     indexer = RappIndexer()
-    compatible_rapps, incompatible_rapps = indexer.get_compatible_rapps()
+    compatible_rapps, incompatible_rapps, invalid_rapps = indexer.get_compatible_rapps()
 
-    print('== Available rocon_app List == ')
-    for r in compatible_rapps:
-        print('  ' + str(r.resource_name))
+    print('== Available Rapp List == ')
+    for n in compatible_rapps:
+        print('  ' + str(n))
+
+    if len(invalid_rapps) > 0:
+        print('== Invalid Rapp List == ')
+        for k, v in invalid_rapps.items():
+            print('  ' + k + ' : ' + str(v))
 
 
 def _rapp_cmd_info(argv):
@@ -62,7 +67,6 @@ def _rapp_cmd_profile(argv):
 
 
 def _rapp_cmd_compat(argv):
-
     #  Parse command arguments
     args = argv[2:]
     parser = argparse.ArgumentParser(description='Displays list of compatible rapps')
@@ -72,12 +76,19 @@ def _rapp_cmd_compat(argv):
     compatibility = parsed_args.compatibility
 
     indexer = RappIndexer()
-    rapp_list = indexer.get_compatible_rapps(compatibility)
+    compatible_rapps, incompatible_rapps, invalid_rapps = indexer.get_compatible_rapps(compatibility)
 
     print('== Available Rapp List for [%s] == ' % compatibility)
-    for r in rapp_list:
-        print('  ' + str(r.get_name()))
+    for r in compatible_rapps:
+        print('  ' + str(r))
 
+    print('== Incompatible Rapp List for [%s] == ' % compatibility)
+    for k, v in incompatible_rapps.items(): 
+        print('  ' + k + ' : ' + str(v.data['compatibility']))
+
+    print('== Invalid Rapp List for [%s] == ' % compatibility)
+    for k, v in incompatible_rapps.items(): 
+        print('  ' + k + ' : ' + str(v))
 
 def _fullusage():
     print("""\nrocon_app is a command-line tool for printing information about Rapp

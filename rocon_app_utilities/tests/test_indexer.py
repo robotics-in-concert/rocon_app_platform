@@ -144,7 +144,6 @@ class TestRappIndexer():
         console.pretty_println('Cyclic', console.bold)
         assert_raises(RappCyclicChainException, self.indexer.get_rapp, 'cyclic/child')
 
-
     def test_get_compatible_rapps(self):
         print_title('Test Get Compatible Rapps')
 
@@ -152,24 +151,17 @@ class TestRappIndexer():
         # string rocon uri test
         console.pretty_println('String Rocon URI Given')
         compat = 'rocon:/kobuki'
-        compatible_rapps, incompatible_rapps = self.indexer.get_compatible_rapps(compat)
-        assert_true(len(compatible_rapps) == 1 and len(incompatible_rapps) == 1)
+        compatible_rapps, incompatible_rapps, invalid_rapps = self.indexer.get_compatible_rapps(compat)
 
-        incompat = [r for r in compatible_rapps if not r.is_compatible(compat)]
-        compat = [r for r in incompatible_rapps if r.is_compatible(compat)]
+        for r in invalid_rapps:
+            print(r + " : " + invalid_rapps[r])
+        assert_true(len(compatible_rapps.keys()) == 1 and len(incompatible_rapps.keys()) == 1)
+
+        incompat = [r for r in compatible_rapps.values() if not r.is_compatible(compat)]
+        compat = [r for r in incompatible_rapps.values() if r.is_compatible(compat)]
         assert_true(len(incompat) == 0)
         assert_true(len(compat) == 0)
         
-        # wrong type given
-        console.pretty_println('Wrong Type URI Given')
-        compat = 'olleh'
-        assert_raises(RoconURIValueError, self.indexer.get_compatible_rapps, compat)
-
-        # raw_data includes cyclic
-        console.pretty_println('Raw Data includes cyclic')
-        self.setup(cyclic_data)
-        assert_raises(RappCyclicChainException, self.indexer.get_compatible_rapps)
-
     def test_to_dot(self):
         print_title('Test To Dot')
         
