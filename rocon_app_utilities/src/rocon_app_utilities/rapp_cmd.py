@@ -37,8 +37,10 @@ def _rapp_cmd_list(argv):
     compatible_rapps, incompatible_rapps, invalid_rapps = indexer.get_compatible_rapps()
 
     print('== Available Rapp List == ')
-    for n in compatible_rapps:
-        print('  ' + str(n))
+    for n in compatible_rapps.values():
+        print('  Resource: %s'%(str(n.resource_name)))
+        print('     - %s '%str(n.ancestor_name))
+
 
     if len(invalid_rapps) > 0:
         print('== Invalid Rapp List == ')
@@ -79,8 +81,9 @@ def _rapp_cmd_compat(argv):
     compatible_rapps, incompatible_rapps, invalid_rapps = indexer.get_compatible_rapps(compatibility)
 
     print('== Available Rapp List for [%s] == ' % compatibility)
-    for r in compatible_rapps:
-        print('  ' + str(r))
+    for r in compatible_rapps.values():
+        print('  Resource: %s'%(str(n.resource_name)))
+        print('     - %s '%str(n.ancestor_name))
 
     print('== Incompatible Rapp List for [%s] == ' % compatibility)
     for k, v in incompatible_rapps.items(): 
