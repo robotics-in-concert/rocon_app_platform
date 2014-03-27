@@ -13,6 +13,8 @@ import rocon_std_msgs.msg as rocon_std_msgs
 ##############################################################################
 # Utilities
 ##############################################################################
+
+
 def dict_to_KeyValue(d):
     '''
       Converts a dictionary to key value ros msg type.
@@ -28,8 +30,9 @@ def dict_to_KeyValue(d):
         l.append(rocon_std_msgs.KeyValue(k, str(v)))
     return l
 
+
 def _prepare_launch_text(launch_file, launch_args, application_namespace,
-                        gateway_name, rocon_uri_string, capability_server_nodelet_manager_name=None):
+                         gateway_name, rocon_uri_string, capability_server_nodelet_manager_name=None):
     '''
       Prepare the launch file text. This essentially wraps the rapp launcher
       with the following roslaunch elements:
@@ -103,14 +106,14 @@ def prepare_launcher(data, application_namespace, gateway_name, rocon_uri_string
     '''
       prepare roslaunch to start rapp.
     '''
-    # Create modified roslaunch file include the application namespace (robot name + 'application') 
-                                                                                                    
+    # Create modified roslaunch file include the application namespace (robot name + 'application')
+
     launch_text = _prepare_launch_text(data['launch'],
-                                           data['launch_args'],
-                                           application_namespace,
-                                           gateway_name,
-                                           rocon_uri_string,
-                                           nodelet_manager_name)
+                                       data['launch_args'],
+                                       application_namespace,
+                                       gateway_name,
+                                       rocon_uri_string,
+                                       nodelet_manager_name)
     temp.write(launch_text)
     temp.close()  # unlink it later
 
@@ -156,7 +159,8 @@ def apply_remapping_rules_from_capabilities(launch_spec, data, caps_list):
             rospy.logwarn("App Manager : Could not determine remapping for capability topic '"
                           + cap_remap + "'.")
             rospy.logwarn("App Manager : App might not function correctly."
-                       + " Add it to the remapped topics, if needed.")
+                          + " Add it to the remapped topics, if needed.")
+
 
 def apply_remapping_rules_from_start_app_request(launch_spec, data, remappings, application_namespace):
     '''
@@ -166,7 +170,7 @@ def apply_remapping_rules_from_start_app_request(launch_spec, data, remappings, 
       :type launch_spec: roslaunch.parent.ROSLaunchParent
       :params data: rapp data
       :type data: dict
-      :param remapping: rules for the app flips.                     
+      :param remapping: rules for the app flips.
       :type remapping: list of rocon_std_msgs.msg.Remapping values.
       :param application_namespace: unique name granted indirectly via the gateways, we namespace everything under this
       :type application_namespace: str
@@ -175,11 +179,11 @@ def apply_remapping_rules_from_start_app_request(launch_spec, data, remappings, 
       :rtype: { connection_type: Remapping topic list}
     '''
     connections = {}
-                                                                                                          
+
     # Prefix with robot name by default (later pass in remap argument)
     remap_from_list = [remapping.remap_from for remapping in remappings]
     remap_to_list = [remapping.remap_to for remapping in remappings]
-                                                                                                          
+
     for connection_type in ['publishers', 'subscribers', 'services', 'action_clients', 'action_servers']:
         connections[connection_type] = []
         for t in data['public_interface'][connection_type]:
