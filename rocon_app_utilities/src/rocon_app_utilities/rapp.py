@@ -5,7 +5,7 @@
 #
 #################################################################################
 
-from __future__ import division, print_function 
+from __future__ import division, print_function
 import yaml
 from .exceptions import *
 import rocon_uri
@@ -13,6 +13,7 @@ import rocon_uri
 #################################################################################
 # Local Method
 #################################################################################
+
 
 def _is_implementation_rapp(data):
     '''
@@ -22,7 +23,7 @@ def _is_implementation_rapp(data):
       :type data: dict
 
       :returns: whether it is implementation or not
-      :rtype: bool 
+      :rtype: bool
     '''
     IMPLEMETATION_VALIDATION_LIST = ['launch', 'compatibility']
 
@@ -40,7 +41,7 @@ def _is_ancestor_rapp(data):
       :type data: dict
 
       :returns: whether it is ancestor or not
-      :rtype: bool 
+      :rtype: bool
     '''
     CHILD_VALIDATION_LIST = ['parent_name']
 
@@ -75,7 +76,7 @@ def load_yaml_from_file(filename):
 
 def classify_rapp_type(data):
     '''
-      Classify the current rapp among VirtualAncestor, ImplementationAnacestor, ImplementationChild 
+      Classify the current rapp among VirtualAncestor, ImplementationAnacestor, ImplementationChild
 
       :param data: rapp yaml data
       :type data: dict
@@ -92,24 +93,24 @@ def classify_rapp_type(data):
     impl = 'Implementation' if is_impl else 'Virtual'
     ance = 'Ancestor' if is_ance else 'Child'
     try:
-        if is_impl and is_ance: # Implementation Ancestor
+        if is_impl and is_ance:  # Implementation Ancestor
             ImplementationAncestorRapp.is_valid(data)
-        elif is_impl and not is_ance: # Implementation Child
+        elif is_impl and not is_ance:  # Implementation Child
             ImplementationChildRapp.is_valid(data)
-        elif not is_impl and is_ance: # Virtual Ancestor
+        elif not is_impl and is_ance:  # Virtual Ancestor
             VirtualAncestorRapp.is_valid(data)
         else:                         # Virtual Child
             raise InvalidRappException('Virtual Child rapp. Invalid!')
     except InvalidRappFieldException as ife:
         raise ife
-        
+
     t = str(impl + ' ' + ance)
-    return is_impl, is_ance, t 
+    return is_impl, is_ance, t
 
 
 def validate_rapp_field(data):
     '''
-        Validate each field. E.g) check rocon uri. Check the linked file exist 
+        Validate each field. E.g) check rocon uri. Check the linked file exist
     '''
     raise NotImplementedError()
     #  TODO
@@ -118,7 +119,7 @@ def validate_rapp_field(data):
 
 class Rapp(object):
     '''
-        Rocon(or Robot) App definition. 
+        Rocon(or Robot) App definition.
     '''
     __slots__ = ['resource_name', 'data', 'type', 'is_implementation', 'is_ancestor', 'ancestor_name', 'parent_name']
 
@@ -130,7 +131,7 @@ class Rapp(object):
         self.is_implementation = False
         self.is_ancestor = False
 
-        if filename: 
+        if filename:
             self.load_from_file(filename)
             #validate_rapp_field(self.dat)
             self.classify()
@@ -138,23 +139,22 @@ class Rapp(object):
     def __str__(self):
         return str(self.resource_name + ' - ' + self.type)
 
-
     def is_compatible(self, uri):
         '''
           it compares its compatibility with given uri. and returns true if it is compatible.
           If it is virtual rapp which does not have compatibility field, return True always
 
-          :param uri: rocon_uri 
+          :param uri: rocon_uri
           :type uri: rocon_uri.RoconURI
 
-          :returns: true if compatible 
+          :returns: true if compatible
           :rtype: bool
         '''
         my_uri = self.data['compatibility'] if 'compatibility' in self.data else None
 
         if my_uri:
             return rocon_uri.is_compatible(my_uri, uri)
-        else: 
+        else:
             return True
 
     def classify(self):
@@ -166,7 +166,7 @@ class Rapp(object):
           is_ancestor        : Is it Ancestor?
           type               : str(Virtual Ancestor, Implementation Ancestor or Implementation Child)
         '''
-        self.parent_name = self.data['parent_name'] if 'parent_name' in  self.data else None
+        self.parent_name = self.data['parent_name'] if 'parent_name' in self.data else None
         self.is_implementation, self.is_ancestor, self.type = classify_rapp_type(self.data)
 
     def load_from_file(self, filename):
@@ -192,7 +192,7 @@ class Rapp(object):
         del self.data['parent_name']
 
         for attribute in INHERITABLE_ATTRIBUTES:
-            if not attribute in self.data and attribute in rapp.data: 
+            if not attribute in self.data and attribute in rapp.data:
                 self.data[attribute] = rapp.data[attribute]
 
         self.classify()
@@ -207,21 +207,21 @@ class RappValidation(Rapp):
     def is_valid(cls, data):
         '''
             Rapp Validation. If it has all requirements and does not include any not_allowed attributes, it is valid rapp
-            
-            :param data: rapp specification 
+
+            :param data: rapp specification
             :type data: dict
 
-            :returns: whether it is valid spec 
+            :returns: whether it is valid spec
             :rtype: bool
 
             :raises: InvalidRappFieldException: It includes not allowed field or misses required field
         '''
-        missing_required = cls._difference(cls._required, data.keys()) 
+        missing_required = cls._difference(cls._required, data.keys())
         included_not_allowed = cls._intersection(cls._not_allowed, data.keys())
 
         if len(missing_required) > 0 or len(included_not_allowed) > 0:
             raise InvalidRappFieldException(cls, missing_required, included_not_allowed)
-        
+
         return True
 
     @classmethod
@@ -233,7 +233,6 @@ class RappValidation(Rapp):
     def _difference(cls, attributes, data):
         diff = set(attributes).difference(set(data))
         return list(diff)
-
 
 
 class VirtualAncestorRapp(RappValidation):

@@ -5,7 +5,7 @@
 #
 #################################################################################
 
-from __future__ import division, print_function 
+from __future__ import division, print_function
 
 import sys
 import os
@@ -18,15 +18,16 @@ from .indexer import RappIndexer
 # Global variables
 #################################################################################
 
-NAME='rapp'
+NAME = 'rapp'
 
 #################################################################################
-# global methods 
+# global methods
 #################################################################################
 
 #################################################################################
-# Local methods 
+# Local methods
 #################################################################################
+
 
 def _rapp_cmd_list(argv):
     """
@@ -36,7 +37,7 @@ def _rapp_cmd_list(argv):
     compatible_rapps, incompatible_rapps = indexer.get_compatible_rapps()
 
     print('== Available Rapp List == ')
-    for r in compatible_rapps:  
+    for r in compatible_rapps:
         print('  ' + str(r.resource_name))
 
 
@@ -54,9 +55,11 @@ def _rapp_cmd_depends_on(argv):
     print("Childs")
     pass
 
+
 def _rapp_cmd_profile(argv):
     indexer = RappIndexer()
     pass
+
 
 def _rapp_cmd_compat(argv):
 
@@ -71,9 +74,8 @@ def _rapp_cmd_compat(argv):
     indexer = RappIndexer()
     rapp_list = indexer.get_compatible_rapps(compatibility)
 
-
-    print('== Available Rapp List for [%s] == '%compatibility)
-    for r in rapp_list:  
+    print('== Available Rapp List for [%s] == ' % compatibility)
+    for r in rapp_list:
         print('  ' + str(r.get_name()))
 
 
@@ -91,11 +93,11 @@ Commands:
 
 Type rapp <command> -h for more detailed usage, e.g. 'rapp info -h'
 """)
-    sys.exit(getattr(os,'EX_USAGE',1))
+    sys.exit(getattr(os, 'EX_USAGE', 1))
 
 
 #################################################################################
-# Main  
+# Main
 #################################################################################
 
 def main():
@@ -123,7 +125,7 @@ def main():
         else:
             _fullusage()
     except Exception as e:
-        sys.stderr.write("Error: %s\n"%str(e))
+        sys.stderr.write("Error: %s\n" % str(e))
         ex, val, tb = sys.exc_info()
         traceback.print_exception(ex, val, tb)
 

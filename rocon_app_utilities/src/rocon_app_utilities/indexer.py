@@ -5,7 +5,7 @@
 #
 #################################################################################
 
-from __future__ import division, print_function 
+from __future__ import division, print_function
 import copy
 
 #from .rapp import Rapp, MetaRapp
@@ -16,6 +16,7 @@ from .exceptions import *
 from .rapp import Rapp
 from rocon_console import console
 
+
 class RappIndexer(object):
 
     __slots__ = ['raw_data_path', 'raw_data', 'invalid_data', 'package_whitelist', 'package_blacklist']
@@ -24,17 +25,16 @@ class RappIndexer(object):
         self.raw_data_path = {}
         self.raw_data = {}
         self.package_whitelist = package_whitelist
-        self.package_blacklist = package_blacklist 
+        self.package_blacklist = package_blacklist
 
         if raw_data:
             self.raw_data = raw_data
         else:
             self.update_index(package_whitelist, package_blacklist)
 
-
     def update_index(self, package_whitelist=None, package_blacklist=[]):
         '''
-          Crawls rocon apps from ROS_PACKAGE_PATH and generates raw_data dictionary.  
+          Crawls rocon apps from ROS_PACKAGE_PATH and generates raw_data dictionary.
 
           :param package_whitelist: list of target package list
           :type package_whitelist: [str]
@@ -106,8 +106,8 @@ class RappIndexer(object):
           returns all rapps which are compatible with given URI
 
           :param uri: Rocon URI
-          :type uri: str 
-          
+          :type uri: str
+
           :returns: a list of compatible rapps, a list of incompatible rapps
           :rtype: [rocon_app_utilities.Rapp], [rocon_app_utilities.Rapp]
         '''
@@ -120,7 +120,7 @@ class RappIndexer(object):
 
             try:
                 if rapp.is_compatible(uri):
-                    compatible_rapps[resource_name] = rapp 
+                    compatible_rapps[resource_name] = rapp
                 else:
                     incompatible_rapps[resource_name] = rapp
             except Exception as e:
@@ -135,7 +135,7 @@ class RappIndexer(object):
 
     def _resolve_rapplist(self, rapps):
         '''
-          resolve full spec of given dict of rapps 
+          resolve full spec of given dict of rapps
 
           :param rapps: list of rapps
           :type dict
@@ -143,7 +143,7 @@ class RappIndexer(object):
           :returns: resolved rapp list, invalid rapp list
           :rtypes: [], []
         '''
-        resolved_list = [] 
+        resolved_list = []
         used_ancestors = {}
         invalid_list = []
         for resource_name, rapp in rapps.items():
@@ -152,8 +152,8 @@ class RappIndexer(object):
             if ancestor_name in used_ancestors:
                 invalid_list.append(resource_name)
             resolved_list.append(resolved_rapp)
-            used_ancestors[ancestor_name] = resource_name 
-        return resolved_list, invalid_list 
+            used_ancestors[ancestor_name] = resource_name
+        return resolved_list, invalid_list
 
     def _resolve(self, rapp_name):
         '''
@@ -162,10 +162,10 @@ class RappIndexer(object):
           :param rapp name: Rapp name
           :type rapp_name: str
 
-          :returns: fully resolved rapp  
+          :returns: fully resolved rapp
           :rtype: rocon_app_utilities.Rapp
         '''
-        rapp = copy.deepcopy(self.raw_data[rapp_name]) # Not to currupt original data
+        rapp = copy.deepcopy(self.raw_data[rapp_name])  # Not to currupt original data
         parent_name = rapp.parent_name
         stack = []
         stack.append(rapp.resource_name)
@@ -185,10 +185,10 @@ class RappIndexer(object):
             return rapp, stack.pop()
 
         if not parent_name:
-            raise RappInvalidChainException('Invalid Rapp Chain from [' + str(rapp)+']')
+            raise RappInvalidChainException('Invalid Rapp Chain from [' + str(rapp) + ']')
 
         if not parent_name in self.raw_data:
-            raise ParentRappNotFoundException(rapp.resource_name,parent_name)
+            raise ParentRappNotFoundException(rapp.resource_name, parent_name)
 
         if parent_name in stack:
             raise RappCyclicChainException(stack)
@@ -204,5 +204,5 @@ class RappIndexer(object):
             returns the dot graph format. Not Implemented Yet.
         '''
         raise NotImplementedError()
-        # TODO
+          # TODO
         pass

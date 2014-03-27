@@ -5,6 +5,7 @@
 #
 #################################################################################
 
+
 class RappException(Exception):
     """
         Rapp Exception
@@ -18,11 +19,13 @@ class InvalidRappException(RappException):
     '''
     pass
 
+
 class ParentRappNotFoundException(RappException):
     '''
         Parent Not Found Exception
     '''
     pass
+
 
 class RappInvalidChainException(RappException):
     '''
@@ -30,11 +33,13 @@ class RappInvalidChainException(RappException):
     '''
     pass
 
+
 class RappAncestorConflictException(RappException):
     '''
         If indexer found two implementation with the same ancestor
     '''
     pass
+
 
 class RappCyclicChainException(RappException):
     '''
@@ -49,7 +54,7 @@ class RappCyclicChainException(RappException):
 
 class RappNotExistException(RappException):
     '''
-        When Rapp does not exist 
+        When Rapp does not exist
     '''
     pass
 
