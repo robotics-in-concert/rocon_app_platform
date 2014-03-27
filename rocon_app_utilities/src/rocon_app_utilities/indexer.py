@@ -57,6 +57,8 @@ class RappIndexer(object):
         self.invalid_data = invalid_data
         self.package_whitelist = package_whitelist
         self.package_blacklist = package_blacklist
+        print("Raw data: %s" % raw_data.keys())
+        print("Invalid data: %s" % invalid_data)
 
     def get_package_whitelist_blacklist(self):
         return self.package_whitelist, self.package_blacklist
