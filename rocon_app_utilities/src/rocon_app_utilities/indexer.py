@@ -8,13 +8,11 @@
 from __future__ import division, print_function
 import copy
 
-#from .rapp import Rapp, MetaRapp
 import rocon_python_utils
 import rocon_uri
 
 from .exceptions import *
 from .rapp import Rapp
-from rocon_console import console
 
 
 class RappIndexer(object):
@@ -53,10 +51,8 @@ class RappIndexer(object):
                 raw_data[resource_name] = r
             except InvalidRappFieldException as irfe:
                 invalid_data[resource_name] = str(irfe)
-#console.warning('  [' + resource_name + '] has not been added : ' + str(irfe))
             except InvalidRappException as ire:
                 invalid_data[resource_name] = str(ire)
-#console.warning('  [' + resource_name + '] has not been added : ' + str(ire))
         self.raw_data = raw_data
         self.invalid_data = invalid_data
         self.package_whitelist = package_whitelist
