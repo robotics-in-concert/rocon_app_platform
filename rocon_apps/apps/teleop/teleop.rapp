@@ -1,0 +1,4 @@
+display: Teleop
+description: Robot teleoperation. 
+public_interface: rocon_apps/teleop.interface
+icon: rocon_bubble_icons/joystick.png
