@@ -18,7 +18,7 @@ from .indexer import RappIndexer
 # Global variables
 #################################################################################
 
-NAME = 'rapp'
+NAME = 'rocon_app'
 
 #################################################################################
 # global methods
@@ -36,7 +36,7 @@ def _rapp_cmd_list(argv):
     indexer = RappIndexer()
     compatible_rapps, incompatible_rapps = indexer.get_compatible_rapps()
 
-    print('== Available Rapp List == ')
+    print('== Available rocon_app List == ')
     for r in compatible_rapps:
         print('  ' + str(r.resource_name))
 
@@ -80,18 +80,18 @@ def _rapp_cmd_compat(argv):
 
 
 def _fullusage():
-    print("""\nrapp is a command-line tool for printing information about Rapp
+    print("""\nrocon_app is a command-line tool for printing information about Rapp
 
 Commands:
-\trapp list\tdisplay a list of cached rapps
-\trapp info\tdisplay rapp information
-\trapp depends\tdisplay a rapp dependency list
-\trapp depends-on\tdisplay a list of rapps that depend on the given rapp
-\trapp profile\tupdate cache
-\trapp compat\tdisplay a list of rapps that are compatible with the given rocon uri
-\trapp help\tUsage
+\trocon_app list\tdisplay a list of cached rapps
+\trocon_app info\tdisplay rapp information
+\trocon_app depends\tdisplay a rapp dependency list
+\trocon_app depends-on\tdisplay a list of rapps that depend on the given rapp
+\trocon_app profile\tupdate cache
+\trocon_app compat\tdisplay a list of rapps that are compatible with the given rocon uri
+\trocon_app help\tUsage
 
-Type rapp <command> -h for more detailed usage, e.g. 'rapp info -h'
+Type rocon_app <command> -h for more detailed usage, e.g. 'rocon_app info -h'
 """)
     sys.exit(getattr(os, 'EX_USAGE', 1))
 
