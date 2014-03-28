@@ -11,6 +11,7 @@ from .exceptions import *
 import rocon_uri
 from .rapp_validation import classify_rapp_type 
 from .rapp_loader import load_rapp_yaml_from_file, load_rapp_specs_from_file
+import rospkg
 
 #################################################################################
 # Rapp Class 
@@ -23,7 +24,7 @@ class Rapp(object):
     '''
     __slots__ = ['resource_name', 'raw_data', 'data', 'type', 'is_implementation', 'is_ancestor', 'ancestor_name', 'parent_name', 'rospack']
 
-    def __init__(self, name, rospack, filename=None):
+    def __init__(self, name, rospack=rospkg.RosPack(), filename=None):
         self.resource_name = name
         self.raw_data = {}
         self.data = {}

@@ -149,7 +149,7 @@ def _load_public_parameters(public_parameters_resource, rospack):
         return {}
 
     d = {}
-    public_parameters_file_path = find_resource(public_parameters_resource, rospack)
+    public_parameters_file_path = _find_resource(public_parameters_resource, rospack)
 
     # TODO: Do it!
 

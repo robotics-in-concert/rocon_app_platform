@@ -58,18 +58,13 @@ def test_rapp_classification():
     console.pretty_println('Field Conflict Rapp', console.bold)
     verify_one(InvalidRappFieldException, classify_rapp_type, '/test_rapps/rapp/invalid_classification/conflict.rapp')
 
-def test_rapp_field_validation():
-    print_title('Rapp Field Validation')
-
-    console.pretty_println('Not Implemented', console.bold)
-    verify_one(NotImplementedError, validate_rapp_field, '/test_rapps/rapp/valid/implementation_ancestor.rapp')
 
 def test_rapp_inheritance():
     def inherit_pair(path):
         filename = pwd + path + '/child.rapp'
-        child = Rapp('child',filename) 
+        child = Rapp('child',filename=filename) 
         filename = pwd + path + '/parent.rapp'
-        parent = Rapp('parent',filename) 
+        parent = Rapp('parent',filename=filename) 
 
         child.inherit(parent)
         return child
