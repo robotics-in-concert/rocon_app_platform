@@ -60,8 +60,6 @@ class RappManager(object):
         self._publishers = {}
         self._param = setup_ros_parameters()
         (self._rocon_uri, self._icon) = self._set_platform_info()
-        self._init_gateway_services()
-        self._init_default_service_names()
 
         self.apps = {}
         self.app_list_file = {}
@@ -73,6 +71,8 @@ class RappManager(object):
         self._runnable_apps, self._platform_filtered_apps, self._capabilities_filtered_apps, self._invalid_apps = self._determine_runnable_rapps()
 
         self._private_publishers = self._init_private_publishers()
+        self._init_default_service_names()
+        self._init_gateway_services()
         self._init_services()
 
 
