@@ -116,17 +116,17 @@ class RappValidation(object):
 class VirtualAncestorRapp(RappValidation):
     _required = ['display', 'description']
     _optional = ['icon', 'public_interface', 'public_parameters']
-    _not_allowed = ['compatibility', 'launch', 'parent_name', 'pairing_clients', 'required_capability']
+    _not_allowed = ['compatibility', 'launch', 'parent_name', 'pairing_clients', 'required_capabilities']
 
 
 class ImplementationAncestorRapp(RappValidation):
     _required = ['display', 'description', 'compatibility', 'launch']
-    _optional = ['icon', 'pairing_clients', 'required_capability', 'public_interface', 'public_parameters']
+    _optional = ['icon', 'pairing_clients', 'required_capabilities', 'public_interface', 'public_parameters']
     _not_allowed = ['parent_name']
 
 
 class ImplementationChildRapp(RappValidation):
     _required = ['compatibility', 'launch', 'parent_name']
-    _optional = ['icon', 'pairing_clients', 'required_capability']
+    _optional = ['icon', 'pairing_clients', 'required_capabilities']
     _not_allowed = ['public_interface', 'public_parameters']
 

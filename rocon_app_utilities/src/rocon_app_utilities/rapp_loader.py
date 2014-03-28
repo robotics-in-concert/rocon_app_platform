@@ -25,7 +25,7 @@ def load_rapp_yaml_from_file(filename):
 
       :raises: InvalidRappFieldException: Rapp includes invalid filed
     '''
-    RAPP_ATTRIBUTES = ['display', 'description', 'icon', 'public_interface', 'public_parameters', 'compatibility', 'launch', 'parent_name', 'pairing_clients', 'required_capability']
+    RAPP_ATTRIBUTES = ['display', 'description', 'icon', 'public_interface', 'public_parameters', 'compatibility', 'launch', 'parent_name', 'pairing_clients', 'required_capabilities']
 
     with open(filename, 'r') as f:
         app_data = yaml.load(f.read())
