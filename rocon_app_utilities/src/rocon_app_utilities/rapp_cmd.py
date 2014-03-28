@@ -53,9 +53,9 @@ def _rapp_cmd_info(argv):
     pass
 
 
-def _rapp_cmd_depends(argv):
-    print("Dependecies")
-    pass
+#def _rapp_cmd_depends(argv):
+#    print("Dependecies")
+#    pass
 
 
 def _rapp_cmd_depends_on(argv):
@@ -63,9 +63,9 @@ def _rapp_cmd_depends_on(argv):
     pass
 
 
-def _rapp_cmd_profile(argv):
-    indexer = RappIndexer()
-    pass
+#def _rapp_cmd_profile(argv):
+#    indexer = RappIndexer()
+#    pass
 
 
 def _rapp_cmd_compat(argv):
@@ -99,15 +99,18 @@ def _fullusage():
 Commands:
 \trocon_app list\tdisplay a list of cached rapps
 \trocon_app info\tdisplay rapp information
-\trocon_app depends\tdisplay a rapp dependency list
-\trocon_app depends-on\tdisplay a list of rapps that depend on the given rapp
-\trocon_app profile\tupdate cache
 \trocon_app compat\tdisplay a list of rapps that are compatible with the given rocon uri
 \trocon_app help\tUsage
 
 Type rocon_app <command> -h for more detailed usage, e.g. 'rocon_app info -h'
 """)
     sys.exit(getattr(os, 'EX_USAGE', 1))
+
+
+# Future TODO    
+#\trocon_app depends\tdisplay a rapp dependency list
+#\trocon_app depends-on\tdisplay a list of rapps that depend on the given rapp
+#\trocon_app profile\tupdate cache
 
 
 #################################################################################

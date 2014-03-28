@@ -10,6 +10,7 @@ import copy
 
 import rocon_python_utils
 import rocon_uri
+import rospkg
 
 from .exceptions import *
 from .rapp import Rapp
@@ -17,13 +18,14 @@ from .rapp import Rapp
 
 class RappIndexer(object):
 
-    __slots__ = ['raw_data_path', 'raw_data', 'invalid_data', 'package_whitelist', 'package_blacklist']
+    __slots__ = ['raw_data_path', 'raw_data', 'invalid_data', 'package_whitelist', 'package_blacklist', 'rospack']
 
     def __init__(self, raw_data=None, package_whitelist=None, package_blacklist=[]):
         self.raw_data_path = {}
         self.raw_data = {}
         self.package_whitelist = package_whitelist
         self.package_blacklist = package_blacklist
+        self.rospack = rospkg.RosPack()
 
         if raw_data:
             self.raw_data = raw_data
@@ -45,14 +47,17 @@ class RappIndexer(object):
 
         for resource_name, path in self.raw_data_path.items():
             try:
-                r = Rapp(resource_name)
-                r.load_spec_from_file(path)
-                r.classify()
+                r = Rapp(resource_name, self.rospack)
+                r.load_rapp_yaml_from_file(path)
                 raw_data[resource_name] = r
             except InvalidRappFieldException as irfe:
                 invalid_data[resource_name] = str(irfe)
             except InvalidRappException as ire:
                 invalid_data[resource_name] = str(ire)
+
+
+
+
         self.raw_data = raw_data
         self.invalid_data = invalid_data
         self.package_whitelist = package_whitelist
@@ -120,17 +125,25 @@ class RappIndexer(object):
                 else:
                     incompatible_rapps[resource_name] = rapp
             except Exception as e:
-                invalid_rapps[resource_name] = rapp
+                invalid_rapps[resource_name] = str(e)
 
         #  TODO: Utilise invalid list later for better introspection
-        resolved_compatible_rapplist, invalid_compatible = self._resolve_rapplist(compatible_rapps)
-        resolved_incompatible_rapplist, invalid_incompatible = self._resolve_rapplist(incompatible_rapps)
+        resolved_compatible_rapps, invalid_compatible = self._resolve_rapplist(compatible_rapps)
+        resolved_incompatible_rapps, invalid_incompatible = self._resolve_rapplist(incompatible_rapps)
         invalid_rapps.update(invalid_compatible)
         invalid_rapps.update(invalid_incompatible)
+
+        try:
+            for r in resolved_compatible_rapps.values():
+                r.load_rapp_specs_from_file()
+        except RappResourceNotExistException as e:
+            invalid_rapps[resource_name] = str(e)
+        except RappMalformedException as e:
+            invalid_rapps[resource_name] = str(e)
         
         if hasattr(self, 'invalid_data'):
             invalid_rapps.update(self.invalid_data)
-        return resolved_compatible_rapplist, resolved_incompatible_rapplist, invalid_rapps
+        return resolved_compatible_rapps, resolved_incompatible_rapps, invalid_rapps
 
     def _resolve_rapplist(self, rapps):
         '''

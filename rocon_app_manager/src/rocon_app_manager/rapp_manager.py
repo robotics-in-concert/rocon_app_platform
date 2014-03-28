@@ -58,8 +58,6 @@ class RappManager(object):
         roslaunch.pmon._init_signal_handlers()
         self._services = {}
         self._publishers = {}
-        self._rospack = rospkg.RosPack()  # used to speed up searches for resources
-
         self._param = setup_ros_parameters()
         (self._rocon_uri, self._icon) = self._set_platform_info()
         self._init_gateway_services()
@@ -72,7 +70,7 @@ class RappManager(object):
 
         rospy.loginfo("App Manager : indexing rapps...")
         self._indexer = rocon_app_utilities.RappIndexer(package_whitelist=self._param['rapp_package_whitelist'], package_blacklist=self._param['rapp_package_blacklist'])
-        self._runnable_apps, self._platform_filtered_apps, self._capabilities_filtered_apps = self._determine_runnable_rapps()
+        self._runnable_apps, self._platform_filtered_apps, self._capabilities_filtered_apps, self._invalid_apps = self._determine_runnable_rapps()
 
         self._private_publishers = self._init_private_publishers()
         self._init_services()
@@ -201,7 +199,7 @@ class RappManager(object):
         rospy.loginfo("App Manager : determining runnable rapps...")
         compatible_rapps, platform_incompatible_rapps, invalid_rapps = self._indexer.get_compatible_rapps(self._rocon_uri)
         runnable_rapp_specs, capabilities_incompatible_rapps = self._filter_capability_unavailable_rapps(compatible_rapps)
-        runnable_rapps, defected_rapps = convert_rapps_from_rapp_specs(runnable_rapp_specs, self._rospack)
+        runnable_rapps = convert_rapps_from_rapp_specs(runnable_rapp_specs)
 
         # Log out the rapps
         for rapp in platform_incompatible_rapps.values():
@@ -210,20 +208,16 @@ class RappManager(object):
         for rapp_name, reason in capabilities_incompatible_rapps.items():
             rospy.logwarn("App Manager : '" + rapp_name + "' is incompatible [" + str(reason) + "]")
 
-        for rapp_name, reason in platform_incompatible_rapps.items():
-            rospy.logwarn("App Manager : '" + rapp_name + "' is incompatible [" + str(reason) + "]")
+        for rapp_name, reason in invalid_rapps.items():
+            rospy.logwarn("App Manager : '" + rapp_name + "' is invalid [" + str(reason) + "]")
 
-        for rapp_name, reason in defected_rapps.items():
-            rospy.logwarn("App Manager : '" + rapp_name + "' is incompatible [" + str(reason) + "]")
-
-
-        for rapp_name in runnable_rapps.keys():
+        for rapp_name, v in runnable_rapps.items():
             rospy.loginfo("App Manager : '" + rapp_name + "' added to the list of runnable apps.")
 
         platform_filtered_rapps = platform_incompatible_rapps.keys() 
         capabilities_filtered_rapps = capabilities_incompatible_rapps.keys()
 
-        return (runnable_rapps, platform_filtered_rapps, capabilities_filtered_rapps)
+        return (runnable_rapps, platform_filtered_rapps, capabilities_filtered_rapps, invalid_rapps)
 
     def _filter_capability_unavailable_rapps(self, compatible_rapps):
         '''

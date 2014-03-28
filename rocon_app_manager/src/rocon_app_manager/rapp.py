@@ -12,8 +12,7 @@ import traceback
 import rocon_python_utils
 import rocon_app_manager_msgs.msg as rapp_manager_msgs
 import rocon_std_msgs.msg as rocon_std_msgs
-from .exceptions import RappException, RappResourceNotExistException, RappMalformedException, MissingCapabilitiesException
-from rocon_app_utilities.rapp_loader import load_specs_from_file
+from .exceptions import MissingCapabilitiesException
 
 # Local Imports
 from .utils import *
@@ -32,26 +31,16 @@ class Rapp(object):
     # standard args that can be put inside a rapp launcher, the rapp manager
     # will fill these args in when starting the rapp
 
-    def __init__(self, rapp_specification, rospack):
+    def __init__(self, rapp_specification):
         '''
            :param package: this rapp is nested in
            :type package: :py:class:`catkin_pkg.package.Package`
            :param package_relative_rapp_filename: string specified by the package export
            :type package_relative_rapp_filename: os.path
-           :param rospack: utility cache to speed up ros resource searches
-           :type rospack: :py:class:`rospkg.RosPack`
         '''
         self._connections = _init_connections()
         self._raw_data = rapp_specification
-
-        try:
-            self.data = load_specs_from_file(rapp_specification, rospack)
-        except RappResourceNotExistException as e:
-            reason = str(e) + ' [' + str(rapp_specification.ancestor_name) + ']'
-            raise RappException(reason)
-        except RappMalformedException as e:
-            reason = str(e) + ' [' + str(rapp_specification.ancestor_name) + ']'
-            raise RappException(reason)
+        self.data = rapp_specification.data 
         self.data['status'] = 'Ready'
 
     def __repr__(self):
@@ -187,29 +176,22 @@ class Rapp(object):
 ##############################################################################
 # Utilities
 ##############################################################################
-def convert_rapps_from_rapp_specs(rapp_specs, rospack):
+def convert_rapps_from_rapp_specs(rapp_specs):
     '''
       Converts rocon_app_utilities.Rapp into rocon_app_manager.Rapp
 
       :param rapp_specs: dict of rapp specification
       :type rapp_specs: {ancestor_name: rocon_app_utilities.Rapp}
-      :param rospack: utility cache to speed up ros resource searches
-      :type rospack: :py:class:`rospkg.RosPack`
 
-
-      :returns: runnable rapps, defected rapps
-      :rtype: {ancestor_name:rocon_app_manager.Rapp}, {ancestor_name: defect reason}
+      :returns: runnable rapps
+      :rtype: {ancestor_name:rocon_app_manager.Rapp}
     '''
     runnable_rapps = {}
-    defected_rapps = {}
 
     for name, spec in rapp_specs.items():
-        try:
-            r = Rapp(spec, rospack)
-            runnable_rapps[name] = r
-        except RappException as e:
-            defected_rapps[name] = str(e)
-    return runnable_rapps, defected_rapps
+        r = Rapp(spec)
+        runnable_rapps[name] = r
+    return runnable_rapps
 
 
 def _init_connections():

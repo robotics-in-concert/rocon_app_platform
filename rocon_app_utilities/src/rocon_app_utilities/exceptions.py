@@ -70,3 +70,16 @@ class InvalidRappFieldException(RappException):
 
     def __str__(self):
         return str('\n\t' + str(self.cls) + '\n\tMissing Requirements - ' + str(self.invalid_required) + '\n\tInvalid Not Allowed - ' + str(self.invalid_not_allowed))
+
+
+class RappResourceNotExistException(RappException):
+    '''
+      Rapp Attribute Resource does not exist...
+    '''
+    pass
+
+
+class RappMalformedException(RappException):
+    '''
+      If rapp contains missing key...
+    '''

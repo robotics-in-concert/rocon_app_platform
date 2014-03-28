@@ -4,13 +4,12 @@
 #   https://raw.github.com/robotics-in-concert/rocon_app_platform/license/LICENSE
 #
 #################################################################################
-from .exceptions import InvalidRappException
+from .exceptions import InvalidRappException, RappResourceNotExistException, RappMalformedException
 import yaml
 import rospkg
 import roslaunch.xmlloader
 from roslaunch.config import load_config_default
 from roslaunch.core import RLException
-from rocon_app_manager.exceptions import RappResourceNotExistException, RappMalformedException
 import rocon_python_utils
 from rocon_app_manager.pairing_client import PairingClient
 
@@ -38,7 +37,7 @@ def load_rapp_yaml_from_file(filename):
     return app_data
 
 
-def load_specs_from_file(specification, rospack):
+def load_rapp_specs_from_file(specification, rospack=rospkg.RosPack()):
     '''
       Specification consists of resource which is file pointer. This function loads those files in memeory
 

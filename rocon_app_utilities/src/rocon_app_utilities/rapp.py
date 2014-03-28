@@ -10,21 +10,7 @@ import yaml
 from .exceptions import *
 import rocon_uri
 from .rapp_validation import classify_rapp_type 
-from .rapp_loader import load_rapp_yaml_from_file
-
-#################################################################################
-# Local Method
-#################################################################################
-
-
-def validate_rapp_field(data):
-    '''
-        Validate each field. E.g) check rocon uri. Check the linked file exist
-    '''
-    raise NotImplementedError()
-    #  TODO
-    pass
-
+from .rapp_loader import load_rapp_yaml_from_file, load_rapp_specs_from_file
 
 #################################################################################
 # Rapp Class 
@@ -35,9 +21,9 @@ class Rapp(object):
     '''
         Rocon(or Robot) App definition.
     '''
-    __slots__ = ['resource_name', 'raw_data', 'data', 'type', 'is_implementation', 'is_ancestor', 'ancestor_name', 'parent_name']
+    __slots__ = ['resource_name', 'raw_data', 'data', 'type', 'is_implementation', 'is_ancestor', 'ancestor_name', 'parent_name', 'rospack']
 
-    def __init__(self, name, filename=None):
+    def __init__(self, name, rospack, filename=None):
         self.resource_name = name
         self.raw_data = {}
         self.data = {}
@@ -45,11 +31,10 @@ class Rapp(object):
         self.ancestor_name = None
         self.is_implementation = False
         self.is_ancestor = False
+        self.rospack = rospack
 
         if filename:
-            self.load_spec_from_file(filename)
-            #validate_rapp_field(self.dat)
-            self.classify()
+            self.load_rapp_yaml_from_file(filename)
 
     def __str__(self):
         return str(self.resource_name + ' - ' + self.type)
@@ -84,7 +69,7 @@ class Rapp(object):
         self.parent_name = self.raw_data['parent_name'] if 'parent_name' in self.raw_data else None
         self.is_implementation, self.is_ancestor, self.type = classify_rapp_type(self.raw_data)
 
-    def load_spec_from_file(self, filename):
+    def load_rapp_yaml_from_file(self, filename):
         '''
           loads rapp data from file. and classifies itself.
 
@@ -93,6 +78,12 @@ class Rapp(object):
         '''
         self.raw_data = load_rapp_yaml_from_file(filename)
         self.classify()
+
+    def load_rapp_specs_from_file(self):
+        '''
+           Specification consists of resource which is file pointer. This function loads those files in memeory
+        '''
+        self.data = load_rapp_specs_from_file(self, self.rospack)
 
     def inherit(self, rapp):
         '''
