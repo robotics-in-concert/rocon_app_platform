@@ -63,7 +63,6 @@ class Rapp(object):
         a.compatibility = self.data['compatibility']
         a.status = self.data['status']
         a.icon = rocon_python_utils.ros.icon_to_msg(self.data['icon'])
-        a.pairing_clients = [pc.to_msg() for pc in self.data['pairing_clients']]
 
         key = 'required_capabilities'
         if key in self.data:

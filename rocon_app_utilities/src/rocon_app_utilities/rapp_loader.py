@@ -11,7 +11,7 @@ import roslaunch.xmlloader
 from roslaunch.config import load_config_default
 from roslaunch.core import RLException
 import rocon_python_utils
-from rocon_app_manager.pairing_client import PairingClient
+from rocon_console import console
 
 def load_rapp_yaml_from_file(filename):
     '''
@@ -59,9 +59,10 @@ def load_rapp_specs_from_file(specification, rospack=rospkg.RosPack()):
     data['launch']            = _find_resource(rapp_data['launch'], rospack)
     data['launch_args']       = _get_standard_args(data['launch'])
     data['public_interface']  = _load_public_interface(rapp_data.get('public_interface', None), rospack)
-
     data['public_parameters'] = _load_public_parameters(rapp_data.get('public_parameters', None), rospack)  # TODO : It is not tested yet.
-    data['pairing_clients']   = _load_pairing_clients(rapp_data.get('pairing_clients', []))
+
+    if 'pairing_clients' in rapp_data:
+        console.logwarn('Rapp Indexer : [%s] includes "pairing_clients". It is deprecated attribute. Please drop it'%specification.resource_name)
 
     required_capabilities = 'required_capabilities'
     if required_capabilities in rapp_data:
@@ -155,29 +156,6 @@ def _load_public_parameters(public_parameters_resource, rospack):
     return d
 
 
-def _load_pairing_clients(clients_data, appfile="UNKNOWN"):
-    '''
-      Load pairing client information from the .rapp file.
-      :raises RappMalformedException: if the .rapp pairing clients definition was invalid.
-    '''
-    clients = []
-    for c in clients_data:
-        for reqd in ['type', 'manager']:
-            if not reqd in c:
-                raise RappMalformedException("malformed .rapp [%s], missing required key [%s]" % (appfile, reqd))
-        client_type = c['type']
-        manager_data = c['manager']
-        if not type(manager_data) == dict:
-            raise RappMalformedException("malformed .rapp [%s]: manager data must be a map" % (appfile))
-
-        app_data = c.get('app', {})
-        if not type(app_data) == dict:
-            raise RappMalformedException("malformed appfile [%s]: app data must be a map" % (appfile))
-
-        clients.append(PairingClient(client_type, manager_data, app_data))
-    return clients
-
-
 def _get_standard_args(roslaunch_file):
     '''
       Given the Rapp launch file, this function parses the top-level args
@@ -200,6 +178,6 @@ def _get_standard_args(roslaunch_file):
     except (RLException, rospkg.common.ResourceNotFound) as e:
         # The ResourceNotFound lets us catch errors when the launcher has invalid
         # references to resources
-        rospy.logerr("App Manager : failed to parse top-level args from rapp " +
+        console.logerr("Rapp Indexer : failed to parse top-level args from rapp " +
                      "launch file [" + str(e) + "]")
         return []
