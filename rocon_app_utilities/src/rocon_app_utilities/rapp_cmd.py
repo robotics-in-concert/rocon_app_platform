@@ -50,7 +50,21 @@ def _rapp_cmd_list(argv):
 
 def _rapp_cmd_info(argv):
     print("Displays rapp information")
-    pass
+    #  Parse command arguments
+    args = argv[2:]
+    parser = argparse.ArgumentParser(description='Displays list of compatible rapps')
+    parser.add_argument('resource_name', type=str, help='Rapp name')
+
+    parsed_args = parser.parse_args(args)
+    resource_name = parsed_args.resource_name
+
+    indexer = RappIndexer()
+
+    rapp = indexer.get_rapp(resource_name)
+
+    print('== %s =='%resource_name)
+    for k, v in rapp.raw_data.items():
+        print('  %s : %s'%(str(k),str(v)))
 
 
 #def _rapp_cmd_depends(argv):

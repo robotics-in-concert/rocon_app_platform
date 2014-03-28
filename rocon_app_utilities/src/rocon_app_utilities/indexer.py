@@ -54,10 +54,6 @@ class RappIndexer(object):
                 invalid_data[resource_name] = str(irfe)
             except InvalidRappException as ire:
                 invalid_data[resource_name] = str(ire)
-
-
-
-
         self.raw_data = raw_data
         self.invalid_data = invalid_data
         self.package_whitelist = package_whitelist
@@ -99,6 +95,7 @@ class RappIndexer(object):
             raise RappNotExistException(str(rapp_name) + ' does not exist')
 
         rapp = self._resolve(rapp_name)
+        rapp.load_rapp_specs_from_file()        
 
         return rapp
 
