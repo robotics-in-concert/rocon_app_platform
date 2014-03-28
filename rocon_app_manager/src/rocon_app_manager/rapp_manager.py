@@ -203,7 +203,6 @@ class RappManager(object):
 
         # Log out the rapps
         for rapp in platform_incompatible_rapps.values():
-            print(str(rapp.data))
             rospy.logwarn("App Manager : '" + str(rapp.resource_name) + "' is incompatible [" + rapp.raw_data['compatibility'] + "][" + self._rocon_uri + "]")
 
         for rapp_name, reason in capabilities_incompatible_rapps.items():
