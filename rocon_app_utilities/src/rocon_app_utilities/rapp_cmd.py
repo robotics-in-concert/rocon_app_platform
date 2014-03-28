@@ -18,7 +18,7 @@ from .indexer import RappIndexer
 # Global variables
 #################################################################################
 
-NAME = 'rapp'
+NAME = 'rocon_app'
 
 #################################################################################
 # global methods
@@ -34,21 +34,42 @@ def _rapp_cmd_list(argv):
       Command-line parsing for 'rapp list' command.
     """
     indexer = RappIndexer()
-    compatible_rapps, incompatible_rapps = indexer.get_compatible_rapps()
+    compatible_rapps, incompatible_rapps, invalid_rapps = indexer.get_compatible_rapps()
 
     print('== Available Rapp List == ')
-    for r in compatible_rapps:
-        print('  ' + str(r.resource_name))
+    for n in compatible_rapps.values():
+        print('  Resource: %s'%(str(n.resource_name)))
+        print('     - %s '%str(n.ancestor_name))
+
+
+    if len(invalid_rapps) > 0:
+        print('== Invalid Rapp List == ')
+        for k, v in invalid_rapps.items():
+            print('  ' + k + ' : ' + str(v))
 
 
 def _rapp_cmd_info(argv):
     print("Displays rapp information")
-    pass
+    #  Parse command arguments
+    args = argv[2:]
+    parser = argparse.ArgumentParser(description='Displays list of compatible rapps')
+    parser.add_argument('resource_name', type=str, help='Rapp name')
+
+    parsed_args = parser.parse_args(args)
+    resource_name = parsed_args.resource_name
+
+    indexer = RappIndexer()
+
+    rapp = indexer.get_rapp(resource_name)
+
+    print('== %s =='%resource_name)
+    for k, v in rapp.raw_data.items():
+        print('  %s : %s'%(str(k),str(v)))
 
 
-def _rapp_cmd_depends(argv):
-    print("Dependecies")
-    pass
+#def _rapp_cmd_depends(argv):
+#    print("Dependecies")
+#    pass
 
 
 def _rapp_cmd_depends_on(argv):
@@ -56,13 +77,12 @@ def _rapp_cmd_depends_on(argv):
     pass
 
 
-def _rapp_cmd_profile(argv):
-    indexer = RappIndexer()
-    pass
+#def _rapp_cmd_profile(argv):
+#    indexer = RappIndexer()
+#    pass
 
 
 def _rapp_cmd_compat(argv):
-
     #  Parse command arguments
     args = argv[2:]
     parser = argparse.ArgumentParser(description='Displays list of compatible rapps')
@@ -72,28 +92,39 @@ def _rapp_cmd_compat(argv):
     compatibility = parsed_args.compatibility
 
     indexer = RappIndexer()
-    rapp_list = indexer.get_compatible_rapps(compatibility)
+    compatible_rapps, incompatible_rapps, invalid_rapps = indexer.get_compatible_rapps(compatibility)
 
     print('== Available Rapp List for [%s] == ' % compatibility)
-    for r in rapp_list:
-        print('  ' + str(r.get_name()))
+    for r in compatible_rapps.values():
+        print('  Resource: %s'%(str(n.resource_name)))
+        print('     - %s '%str(n.ancestor_name))
 
+    print('== Incompatible Rapp List for [%s] == ' % compatibility)
+    for k, v in incompatible_rapps.items(): 
+        print('  ' + k + ' : ' + str(v.data['compatibility']))
+
+    print('== Invalid Rapp List for [%s] == ' % compatibility)
+    for k, v in incompatible_rapps.items(): 
+        print('  ' + k + ' : ' + str(v))
 
 def _fullusage():
-    print("""\nrapp is a command-line tool for printing information about Rapp
+    print("""\nrocon_app is a command-line tool for printing information about Rapp
 
 Commands:
-\trapp list\tdisplay a list of cached rapps
-\trapp info\tdisplay rapp information
-\trapp depends\tdisplay a rapp dependency list
-\trapp depends-on\tdisplay a list of rapps that depend on the given rapp
-\trapp profile\tupdate cache
-\trapp compat\tdisplay a list of rapps that are compatible with the given rocon uri
-\trapp help\tUsage
+\trocon_app list\tdisplay a list of cached rapps
+\trocon_app info\tdisplay rapp information
+\trocon_app compat\tdisplay a list of rapps that are compatible with the given rocon uri
+\trocon_app help\tUsage
 
-Type rapp <command> -h for more detailed usage, e.g. 'rapp info -h'
+Type rocon_app <command> -h for more detailed usage, e.g. 'rocon_app info -h'
 """)
     sys.exit(getattr(os, 'EX_USAGE', 1))
+
+
+# Future TODO    
+#\trocon_app depends\tdisplay a rapp dependency list
+#\trocon_app depends-on\tdisplay a list of rapps that depend on the given rapp
+#\trocon_app profile\tupdate cache
 
 
 #################################################################################

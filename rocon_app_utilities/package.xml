@@ -20,6 +20,8 @@
   <build_depend>roslint</build_depend>
   <run_depend>rocon_python_utils</run_depend>
   <run_depend>rocon_uri</run_depend>
+  <run_depend>rospkg</run_depend>
+  <run_depend>roslaunch</run_depend>
 
   <export>
     <rosdoc config="rosdoc.yaml"/>
