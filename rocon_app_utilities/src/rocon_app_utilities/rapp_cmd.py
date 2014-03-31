@@ -21,10 +21,6 @@ from .indexer import RappIndexer
 NAME = 'rocon_app'
 
 #################################################################################
-# global methods
-#################################################################################
-
-#################################################################################
 # Local methods
 #################################################################################
 
@@ -34,12 +30,12 @@ def _rapp_cmd_list(argv):
       Command-line parsing for 'rapp list' command.
     """
     indexer = RappIndexer()
-    compatible_rapps, incompatible_rapps, invalid_rapps = indexer.get_compatible_rapps()
+    compatible_rapps, incompatible_rapps, invalid_rapps = indexer.get_compatible_rapps(ancestor_share_check=False)
 
     print('== Available Rapp List == ')
     for n in compatible_rapps.values():
         print('  Resource: %s'%(str(n.resource_name)))
-        print('     - %s '%str(n.ancestor_name))
+        print('     - Ancestor: %s '%str(n.ancestor_name))
 
 
     if len(invalid_rapps) > 0:
@@ -48,11 +44,11 @@ def _rapp_cmd_list(argv):
             print('  ' + k + ' : ' + str(v))
 
 
-def _rapp_cmd_info(argv):
-    print("Displays rapp information")
+def _rapp_cmd_raw_info(argv):
+    print("Displays rapp raw information")
     #  Parse command arguments
     args = argv[2:]
-    parser = argparse.ArgumentParser(description='Displays list of compatible rapps')
+    parser = argparse.ArgumentParser(description='Displays rapp information')
     parser.add_argument('resource_name', type=str, help='Rapp name')
 
     parsed_args = parser.parse_args(args)
@@ -60,13 +56,32 @@ def _rapp_cmd_info(argv):
 
     indexer = RappIndexer()
 
-    rapp = indexer.get_rapp(resource_name)
+    rapp = indexer.get_raw_rapp(resource_name)
 
-    print('== %s =='%resource_name)
+    print('== %s =='%str(rapp))
     for k, v in rapp.raw_data.items():
         print('  %s : %s'%(str(k),str(v)))
 
+def _rapp_cmd_info(argv):
+    print("Displays rapp resolved information")
+    #  Parse command arguments
+    args = argv[2:]
+    parser = argparse.ArgumentParser(description='Displays rapp information')
+    parser.add_argument('resource_name', type=str, help='Rapp name')
 
+    parsed_args = parser.parse_args(args)
+    resource_name = parsed_args.resource_name
+
+    indexer = RappIndexer()
+    try:
+        rapp = indexer.get_rapp(resource_name)
+        print('== %s =='%str(rapp))
+        for k, v in rapp.raw_data.items():
+            print('  %s : %s'%(str(k),str(v)))
+    except Exception as e:
+        print('%s : Error - %s'%(resource_name,str(e)))
+
+        
 #def _rapp_cmd_depends(argv):
 #    print("Dependecies")
 #    pass
@@ -113,6 +128,7 @@ def _fullusage():
 Commands:
 \trocon_app list\tdisplay a list of cached rapps
 \trocon_app info\tdisplay rapp information
+\trocon_app rawinfo\tdisplay rapp raw information
 \trocon_app compat\tdisplay a list of rapps that are compatible with the given rocon uri
 \trocon_app help\tUsage
 
@@ -143,6 +159,8 @@ def main():
             _rapp_cmd_list(argv)
         elif command == 'info':
             _rapp_cmd_info(argv)
+        elif command == 'rawinfo':
+            _rapp_cmd_raw_info(argv)
         elif command == 'depends':
             _rapp_cmd_depends(argv)
         elif command == 'depends-on':
