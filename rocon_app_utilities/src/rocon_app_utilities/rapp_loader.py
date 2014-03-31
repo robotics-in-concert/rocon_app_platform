@@ -178,6 +178,6 @@ def _get_standard_args(roslaunch_file):
     except (RLException, rospkg.common.ResourceNotFound) as e:
         # The ResourceNotFound lets us catch errors when the launcher has invalid
         # references to resources
-        console.logerr("Rapp Indexer : failed to parse top-level args from rapp " +
+        console.logerror("Rapp Indexer : failed to parse top-level args from rapp " +
                      "launch file [" + str(e) + "]")
         return []
