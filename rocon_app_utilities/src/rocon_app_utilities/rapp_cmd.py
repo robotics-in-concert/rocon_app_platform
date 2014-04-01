@@ -34,13 +34,12 @@ def _rapp_cmd_list(argv):
       Command-line parsing for 'rapp list' command.
     """
     indexer = RappIndexer()
-    compatible_rapps, incompatible_rapps, invalid_rapps = indexer.get_compatible_rapps()
+    compatible_rapps, unused_incompatible_rapps, invalid_rapps = indexer.get_compatible_rapps()
 
     print('== Available Rapp List == ')
     for n in compatible_rapps.values():
-        print('  Resource: %s'%(str(n.resource_name)))
-        print('     - %s '%str(n.ancestor_name))
-
+        print('  Resource: %s' % (str(n.resource_name)))
+        print('     - %s ' % str(n.ancestor_name))
 
     if len(invalid_rapps) > 0:
         print('== Invalid Rapp List == ')
@@ -62,9 +61,9 @@ def _rapp_cmd_info(argv):
 
     rapp = indexer.get_rapp(resource_name)
 
-    print('== %s =='%resource_name)
+    print('== %s ==' % resource_name)
     for k, v in rapp.raw_data.items():
-        print('  %s : %s'%(str(k),str(v)))
+        print('  %s : %s' % (str(k), str(v)))
 
 
 #def _rapp_cmd_depends(argv):
@@ -92,20 +91,21 @@ def _rapp_cmd_compat(argv):
     compatibility = parsed_args.compatibility
 
     indexer = RappIndexer()
-    compatible_rapps, incompatible_rapps, invalid_rapps = indexer.get_compatible_rapps(compatibility)
+    compatible_rapps, incompatible_rapps, unused_invalid_rapps = indexer.get_compatible_rapps(compatibility)
 
     print('== Available Rapp List for [%s] == ' % compatibility)
     for r in compatible_rapps.values():
-        print('  Resource: %s'%(str(n.resource_name)))
-        print('     - %s '%str(n.ancestor_name))
+        print('  Resource: %s' % (str(r.resource_name)))
+        print('     - %s ' % str(r.ancestor_name))
 
     print('== Incompatible Rapp List for [%s] == ' % compatibility)
-    for k, v in incompatible_rapps.items(): 
+    for k, v in incompatible_rapps.items():
         print('  ' + k + ' : ' + str(v.data['compatibility']))
 
     print('== Invalid Rapp List for [%s] == ' % compatibility)
-    for k, v in incompatible_rapps.items(): 
+    for k, v in incompatible_rapps.items():
         print('  ' + k + ' : ' + str(v))
+
 
 def _fullusage():
     print("""\nrocon_app is a command-line tool for printing information about Rapp
@@ -121,7 +121,7 @@ Type rocon_app <command> -h for more detailed usage, e.g. 'rocon_app info -h'
     sys.exit(getattr(os, 'EX_USAGE', 1))
 
 
-# Future TODO    
+# Future TODO
 #\trocon_app depends\tdisplay a rapp dependency list
 #\trocon_app depends-on\tdisplay a list of rapps that depend on the given rapp
 #\trocon_app profile\tupdate cache
