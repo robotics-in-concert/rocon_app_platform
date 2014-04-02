@@ -167,6 +167,8 @@ def _get_standard_args(roslaunch_file):
       :returns: list of top-level arguments that match standard arguments. Empty
               list on parse failure
       :rtype: [str]
+
+      :raises RappMalformedException: if launch file format is invalid
     '''
     standard_args = ['gateway_name', 'application_namespace', 'rocon_uri', 'capability_server_nodelet_manager_name']
 
@@ -178,6 +180,5 @@ def _get_standard_args(roslaunch_file):
     except (RLException, rospkg.common.ResourceNotFound) as e:
         # The ResourceNotFound lets us catch errors when the launcher has invalid
         # references to resources
-        console.logerr("Rapp Indexer : failed to parse top-level args from rapp " +
-                     "launch file [" + str(e) + "]")
-        return []
+        reason = "failed to parse top-level args from rapp " + "launch file [" + str(e) + "]"
+        raise RappMalformedException(str(reason))
