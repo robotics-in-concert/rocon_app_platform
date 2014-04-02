@@ -129,13 +129,17 @@ class RappIndexer(object):
         invalid_rapps.update(invalid_compatible)
         invalid_rapps.update(invalid_incompatible)
 
-        for r in resolved_compatible_rapps.values():
+        for resource_name, rapp in resolved_compatible_rapps.items():
             try:
-                r.load_rapp_specs_from_file()
+                rapp.load_rapp_specs_from_file()
             except RappResourceNotExistException as e:
-                invalid_rapps[r.resource_name] = str(e)
+                invalid_rapps[resource_name] = str(e)
             except RappMalformedException as e:
-                invalid_rapps[r.resource_name] = str(e)
+                invalid_rapps[resource_name] = str(e)
+
+        for resource_name in invalid_rapps:
+            if resource_name in resolved_compatible_rapps:
+                del resolved_compatible_rapps[resource_name]
         
         if hasattr(self, 'invalid_data'):
             invalid_rapps.update(self.invalid_data)
