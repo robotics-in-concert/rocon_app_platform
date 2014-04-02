@@ -112,15 +112,15 @@ def _rapp_cmd_compat(argv):
 
     print('== Available Rapp List for [%s] == ' % compatibility)
     for r in compatible_rapps.values():
-        print('  Resource: %s'%(str(n.resource_name)))
-        print('     - %s '%str(n.ancestor_name))
+        print('  Resource: %s'%(str(r.resource_name)))
+        print('     - Ancestor : %s '%str(r.ancestor_name))
 
     print('== Incompatible Rapp List for [%s] == ' % compatibility)
     for k, v in incompatible_rapps.items(): 
-        print('  ' + k + ' : ' + str(v.data['compatibility']))
+        print('  ' + k + ' : ' + str(v.raw_data['compatibility']))
 
     print('== Invalid Rapp List for [%s] == ' % compatibility)
-    for k, v in incompatible_rapps.items(): 
+    for k, v in invalid_rapps.items(): 
         print('  ' + k + ' : ' + str(v))
 
 def _fullusage():
