@@ -35,7 +35,8 @@ def _rapp_cmd_list(argv):
     print('== Available Rapp List == ')
     for n in compatible_rapps.values():
         print('  Resource: %s'%(str(n.resource_name)))
-        print('     - Ancestor: %s '%str(n.ancestor_name))
+        print('     - Compatibility : %s '%str(n.data['compatibility']))
+        print('     - Ancestor      : %s '%str(n.ancestor_name))
 
 
     if len(invalid_rapps) > 0:
