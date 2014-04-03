@@ -99,7 +99,7 @@ class RappIndexer(object):
 
         return rapp
 
-    def get_compatible_rapps(self, uri=rocon_uri.default_uri_string):
+    def get_compatible_rapps(self, uri=rocon_uri.default_uri_string, ancestor_share_check=True):
         '''
           returns all rapps which are compatible with given URI
 
@@ -124,25 +124,28 @@ class RappIndexer(object):
             except Exception as e:
                 invalid_rapps[resource_name] = str(e)
 
-        #  TODO: Utilise invalid list later for better introspection
-        resolved_compatible_rapps, invalid_compatible = self._resolve_rapplist(compatible_rapps)
-        resolved_incompatible_rapps, invalid_incompatible = self._resolve_rapplist(incompatible_rapps)
+        resolved_compatible_rapps, invalid_compatible = self._resolve_rapplist(compatible_rapps, ancestor_share_check)
+        resolved_incompatible_rapps, invalid_incompatible = self._resolve_rapplist(incompatible_rapps, ancestor_share_check)
         invalid_rapps.update(invalid_compatible)
         invalid_rapps.update(invalid_incompatible)
 
-        for r in resolved_compatible_rapps.values():
+        for resource_name, rapp in resolved_compatible_rapps.items():
             try:
-                r.load_rapp_specs_from_file()
+                rapp.load_rapp_specs_from_file()
             except RappResourceNotExistException as e:
-                invalid_rapps[r.resource_name] = str(e)
+                invalid_rapps[resource_name] = str(e)
             except RappMalformedException as e:
-                invalid_rapps[r.resource_name] = str(e)
+                invalid_rapps[resource_name] = str(e)
+
+        for resource_name in invalid_rapps:
+            if resource_name in resolved_compatible_rapps:
+                del resolved_compatible_rapps[resource_name]
         
         if hasattr(self, 'invalid_data'):
             invalid_rapps.update(self.invalid_data)
         return resolved_compatible_rapps, resolved_incompatible_rapps, invalid_rapps
 
-    def _resolve_rapplist(self, rapps):
+    def _resolve_rapplist(self, rapps, ancestor_share_check):
         '''
           resolve full spec of given dict of rapps
 
@@ -159,7 +162,7 @@ class RappIndexer(object):
             try:
                 resolved_rapp = self._resolve(resource_name)
                 ancestor_name = resolved_rapp.ancestor_name
-                if ancestor_name in used_ancestors:
+                if ancestor_share_check and ancestor_name in used_ancestors:
                     invalid[resource_name] = "Ancestor has already been taken by other rapp"
                 else:
                     resolved[resource_name] = resolved_rapp

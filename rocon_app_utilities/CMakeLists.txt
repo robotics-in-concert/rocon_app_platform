@@ -12,6 +12,8 @@ project(rocon_app_utilities)
 find_package(catkin REQUIRED COMPONENTS roslint)
 catkin_python_setup()
 catkin_package()
+catkin_add_env_hooks(15.rocon_app SHELLS bash tcsh zsh DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/env-hooks)
+
 
 file(GLOB_RECURSE ${PROJECT_NAME}_MODULE_SOURCES RELATIVE ${PROJECT_SOURCE_DIR} src/*.py)
 file(GLOB_RECURSE ${PROJECT_NAME}_SCRIPT_SOURCES RELATIVE ${PROJECT_SOURCE_DIR} scripts/*)
