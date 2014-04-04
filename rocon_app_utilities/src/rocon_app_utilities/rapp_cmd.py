@@ -13,6 +13,7 @@ import traceback
 import argparse
 
 from .indexer import RappIndexer
+from .dependencies import DependencyChecker
 
 #################################################################################
 # Global variables
@@ -123,6 +124,32 @@ def _rapp_cmd_compat(argv):
     for k, v in invalid_rapps.items(): 
         print('  ' + k + ' : ' + str(v))
 
+
+def _rapp_cmd_install(argv):
+    #  Parse command arguments
+    args = argv[2:]
+    parser = argparse.ArgumentParser(description='Install a list of rapps')
+    parser.add_argument('rapp_names', type=str, nargs='+', help='Rocon URI')
+
+    parsed_args = parser.parse_args(args)
+    rapp_names = set(parsed_args.rapp_names)
+
+    indexer = RappIndexer()
+    compatible_rapps, incompatible_rapps, invalid_rapps = indexer.get_compatible_rapps(ancestor_share_check=False)
+
+    compatible_rapp_names = set(compatible_rapps.keys())
+    installable_rapp_names = compatible_rapp_names.intersection(rapp_names)
+    noninstallable_rapp_names = rapp_names.difference(installable_rapp_names)
+
+    if noninstallable_rapp_names:
+        print('Error - The following rapps cannot be installed: %s' % (' '.join(noninstallable_rapp_names)))
+    else:
+        # resolve deps and install them
+        print("Installing dependencies for: %s" % (' '.join(sorted(rapp_names))))
+        dependencyChecker = DependencyChecker(indexer)
+        dependencyChecker.install_rapp_dependencies(rapp_names)
+
+
 def _fullusage():
     print("""\nrocon_app is a command-line tool for printing information about Rapp
 
@@ -131,6 +158,7 @@ Commands:
 \trocon_app info\tdisplay rapp information
 \trocon_app rawinfo\tdisplay rapp raw information
 \trocon_app compat\tdisplay a list of rapps that are compatible with the given rocon uri
+\trocon_app install\tinstall a list of rapps
 \trocon_app help\tUsage
 
 Type rocon_app <command> -h for more detailed usage, e.g. 'rocon_app info -h'
@@ -170,6 +198,8 @@ def main():
             _rapp_cmd_profile(argv)
         elif command == 'compat':
             _rapp_cmd_compat(argv)
+        elif command == 'install':
+            _rapp_cmd_install(argv)
         elif command == 'help':
             _fullusage()
         else:
