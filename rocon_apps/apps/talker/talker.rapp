@@ -4,8 +4,3 @@ compatibility: rocon:/
 launch: rocon_apps/talker.launch
 public_interface: rocon_apps/talker.interface
 icon: rocon_bubble_icons/conductor.png
-pairing_clients:
- - type: android
-   manager:
-     api-level: 10
-     intent-action: com.github.rosjava.android_apps.listener.Listener
