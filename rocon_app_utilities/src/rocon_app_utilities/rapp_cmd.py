@@ -135,18 +135,23 @@ def _rapp_cmd_install(argv):
     rapp_names = set(parsed_args.rapp_names)
 
     indexer = RappIndexer()
-    compatible_rapps, incompatible_rapps, invalid_rapps = indexer.get_compatible_rapps(ancestor_share_check=False)
 
-    compatible_rapp_names = set(compatible_rapps.keys())
-    installable_rapp_names = compatible_rapp_names.intersection(rapp_names)
-    noninstallable_rapp_names = rapp_names.difference(installable_rapp_names)
+    dependencyChecker = DependencyChecker(indexer)
 
-    if noninstallable_rapp_names:
-        print('Error - The following rapps cannot be installed: %s' % (' '.join(noninstallable_rapp_names)))
+    installable_rapps, noninstallable_rapps = dependencyChecker.check_missing_rapp_dependencies(rapp_names)
+
+    missing_dependencies = []
+    for rapp_name, dependencies in noninstallable_rapps.iteritems():
+        missing_dependencies.extend(dependencies)
+    missing_dependencies = set(missing_dependencies)
+
+    if noninstallable_rapps:
+        print('Error - The following rapps cannot be installed: %s. Missing dependencies: %s' % (' '.join(noninstallable_rapps.keys()),
+                                                                                                 ' '.join(missing_dependencies)
+                                                                                                ))
     else:
         # resolve deps and install them
         print("Installing dependencies for: %s" % (' '.join(sorted(rapp_names))))
-        dependencyChecker = DependencyChecker(indexer)
         dependencyChecker.install_rapp_dependencies(rapp_names)
 
 

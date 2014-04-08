@@ -92,3 +92,10 @@ class UnsupportedPlatformException(Exception):
       If running on a platform not supported by rosdep.
     '''
     pass
+
+
+class NonInstallableRappException(Exception):
+    '''
+      If Rapp cannot be installed.
+    '''
+    pass
