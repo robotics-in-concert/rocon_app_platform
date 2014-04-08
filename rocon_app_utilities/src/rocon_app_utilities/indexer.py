@@ -167,7 +167,7 @@ class RappIndexer(object):
                 else:
                     resolved[resource_name] = resolved_rapp
             except ParentRappNotFoundException as e:
-                invalid[resource_name] = str(e)
+                invalid[resource_name] = str('Invalid parent_name [%s] in resource [%s]'%(str(e.parent_name),str(e.resource_name)))
             except RappInvalidChainException as e:
                 invalid[resource_name] = str(e)
             used_ancestors[ancestor_name] = resource_name
