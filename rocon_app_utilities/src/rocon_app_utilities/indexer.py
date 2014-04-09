@@ -7,9 +7,11 @@
 
 from __future__ import division, print_function
 import copy
+import errno
 import hashlib
 import json
 import os
+import urllib2
 
 import rocon_python_utils
 import rocon_uri
@@ -250,3 +252,29 @@ class RappIndexer(object):
                         index_contents[fname] = hasher.hexdigest()
             with open(index_path, 'w') as index_file:
                 json.dump(index_contents, index_file)
+
+    def add_remote_repository(self, url):
+        response = urllib2.urlopen(url)
+        index_data = json.load(response)
+        base_url = url.replace(".index", "")
+        rapp_name = os.path.basename(base_url)
+        # TODO hardcoded rapps directory
+        rapp_path = os.path.join('rapps', rapp_name)
+        self._mkdir_p(rapp_path)
+
+        for key, hash_value in index_data.iteritems():
+            full_url = base_url + "/" + key
+            resource_response = urllib2.urlopen(full_url)
+            contents = resource_response.read()
+            # TODO check checksum
+            with open(os.path.join(rapp_path, key), 'w') as f:
+                f.write(contents)
+
+    def _mkdir_p(self, path):
+        try:
+            os.makedirs(path)
+        except OSError as e:
+            if e.errno == errno.EEXIST and os.path.isdir(path):
+                pass
+            else:
+                raise

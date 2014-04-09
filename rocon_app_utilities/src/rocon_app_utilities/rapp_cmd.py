@@ -169,6 +169,19 @@ def _rapp_cmd_index(argv):
     indexer.write_to_disk()
 
 
+def _rapp_cmd_add_repository(argv):
+    #  Parse command arguments
+    args = argv[2:]
+    parser = argparse.ArgumentParser(description='Add a remote indexer to the local sources')
+    parser.add_argument('repository_url', type=str, help='URL to a Rapp repository')
+
+    parsed_args = parser.parse_args(args)
+    repository_url = parsed_args.repository_url
+
+    indexer = RappIndexer()
+    indexer.add_remote_repository(repository_url)
+
+
 def _fullusage():
     print("""\nrocon_app is a command-line tool for printing information about Rapp
 
@@ -178,6 +191,7 @@ Commands:
 \trocon_app rawinfo\tdisplay rapp raw information
 \trocon_app compat\tdisplay a list of rapps that are compatible with the given rocon uri
 \trocon_app install\tinstall a list of rapps
+\trocon_app add-repo\tadd a remote Rapp repository
 \trocon_app index
 \trocon_app help\tUsage
 
@@ -222,6 +236,8 @@ def main():
             _rapp_cmd_install(argv)
         elif command == 'index':
             _rapp_cmd_index(argv)
+        elif command == 'add-repo':
+            _rapp_cmd_add_repository(argv)
         elif command == 'help':
             _fullusage()
         else:
