@@ -7,6 +7,9 @@
 
 from __future__ import division, print_function
 import copy
+import hashlib
+import json
+import os
 
 import rocon_python_utils
 import rocon_uri
@@ -226,3 +229,24 @@ class RappIndexer(object):
         raise NotImplementedError()
           # TODO
         pass
+
+
+    def write_to_disk(self):
+        for resource_name, rapp in self.raw_data.items():
+            if not rapp.is_implementation:
+                continue
+         
+            rapp_path, package = self.raw_data_path[resource_name]
+            base_rapp_path = os.path.dirname(rapp_path)
+            index_path = base_rapp_path + '.index'
+            for dirname, subdir_list, file_list in os.walk(base_rapp_path):
+                index_contents = {}
+                for fname in file_list:
+                    hasher = hashlib.sha1()
+                    fullpath = os.path.join(dirname, fname)
+                    with open(fullpath, 'rb') as f:
+                        buf = f.read()
+                        hasher.update(buf)
+                        index_contents[fname] = hasher.hexdigest()
+            with open(index_path, 'w') as index_file:
+                json.dump(index_contents, index_file)

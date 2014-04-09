@@ -155,6 +155,20 @@ def _rapp_cmd_install(argv):
         dependencyChecker.install_rapp_dependencies(rapp_names)
 
 
+def _rapp_cmd_index(argv):
+    #  Parse command arguments
+    args = argv[2:]
+    parser = argparse.ArgumentParser(description='Generate and index for a Rapp tree')
+    parser.add_argument('path', type=str, nargs='?', help='Path to a Rapp tree', default='.')
+
+    parsed_args = parser.parse_args(args)
+    # TODO parse path
+    path = parsed_args.path
+
+    indexer = RappIndexer()
+    indexer.write_to_disk()
+
+
 def _fullusage():
     print("""\nrocon_app is a command-line tool for printing information about Rapp
 
@@ -164,6 +178,7 @@ Commands:
 \trocon_app rawinfo\tdisplay rapp raw information
 \trocon_app compat\tdisplay a list of rapps that are compatible with the given rocon uri
 \trocon_app install\tinstall a list of rapps
+\trocon_app index
 \trocon_app help\tUsage
 
 Type rocon_app <command> -h for more detailed usage, e.g. 'rocon_app info -h'
@@ -205,6 +220,8 @@ def main():
             _rapp_cmd_compat(argv)
         elif command == 'install':
             _rapp_cmd_install(argv)
+        elif command == 'index':
+            _rapp_cmd_index(argv)
         elif command == 'help':
             _fullusage()
         else:
