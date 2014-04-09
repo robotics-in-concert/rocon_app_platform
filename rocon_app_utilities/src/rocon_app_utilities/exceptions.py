@@ -24,7 +24,9 @@ class ParentRappNotFoundException(RappException):
     '''
         Parent Not Found Exception
     '''
-    pass
+    def __init__(self, resource_name, parent_name):
+        self.resource_name = resource_name
+        self.parent_name = parent_name
 
 
 class RappInvalidChainException(RappException):
