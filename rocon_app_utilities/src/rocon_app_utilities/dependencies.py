@@ -6,12 +6,16 @@
 #################################################################################
 
 from collections import defaultdict
+import os
 import platform
 
 from rosdep2 import RosdepLookup, create_default_installer_context, ResolutionError
 from rosdep2.installers import RosdepInstaller
 from rosdep2.sources_list import SourcesListLoader
 from rosdep2.rospkg_loader import DEFAULT_VIEW_KEY
+from rosdep2.catkin_packages import find_catkin_packages_in
+from rosdep2.catkin_packages import set_workspace_packages
+from rosdep2.catkin_packages import get_workspace_packages
 
 from .exceptions import *
 
@@ -59,17 +63,29 @@ class DependencyChecker(object):
         '''
         installable_rapps = defaultdict(list)
         noninstallable_rapps = defaultdict(list)
+        cwd = os.getcwd()
+        # NOTE assume that we're in a Catkin workspace and there's a src directory
+        path = os.path.abspath(os.path.join(cwd, 'src'))
+        if 'ROS_PACKAGE_PATH' not in os.environ:
+            os.environ['ROS_PACKAGE_PATH'] = '{0}'.format(path)
+        else:
+            os.environ['ROS_PACKAGE_PATH'] += ':{0}'.format(path)
+        pkgs = find_catkin_packages_in(path, False)
+        pkgs = set(pkgs)
+
         for rapp_name in rapp_names:
             rapp = self.indexer.get_rapp(rapp_name)
             for run_depend in rapp.package.run_depends:
-                try:
-                    d = self.view.lookup(run_depend.name)
-                    inst_key, rule = d.get_rule_for_platform(
-                        self.os_name, self.os_id, self.installer_keys, self.default_key
-                    )
-                    installable_rapps[rapp_name].extend(self.installer.resolve(rule))
-                except KeyError:
-                    noninstallable_rapps[rapp_name].append(run_depend.name)
+                # Dependency was not found in the local tree
+                if run_depend.name not in pkgs:
+                    try:
+                        d = self.view.lookup(run_depend.name)
+                        inst_key, rule = d.get_rule_for_platform(
+                            self.os_name, self.os_id, self.installer_keys, self.default_key
+                        )
+                        installable_rapps[rapp_name].extend(self.installer.resolve(rule))
+                    except KeyError:
+                        noninstallable_rapps[rapp_name].append(run_depend.name)
 
         return (installable_rapps, noninstallable_rapps)
 
