@@ -8,12 +8,12 @@ Rapps are classified as *Implementation/Virtual* and *Ancestor/Child* according 
 Rapp Types
 ----------
 
-* **Virtual Ancestor** : is meta rapp contains public interface but any platform-dependent information. not-executable. e.g) `rocon_apps/teleop`_
-* **Implementation Child** : is incomplete rapp contains platform dependent data but public APIs. It inherits parameters from parents to become a complete Rapp. e.g) `turtle_concert/teleop`_ 
-* **Implementation Ancestor** : is complete rapp contains a full infomration to execute. e.g) `turtle_concert/turtle_stroll`_ 
-* **Virtual Child** : is invalid rapp. See Design decisions for more information. 
+* **Virtual Ancestor** : is meta rapp; contains a public interface and no platform-dependent information; not-executable; example:`rocon_apps/teleop`_
+* **Implementation Child** : is incomplete rapp; contains platform dependent data but no public APIs. It inherits parameters from parents to become a complete Rapp; example: `turtle_concert/teleop`_ 
+* **Implementation Ancestor** : is complete rapp; contains a full infomration to execute; example : `turtle_concert/turtle_stroll`_ 
+* **Virtual Child** : is invalid rapp; See Design decisions for more information. 
 
-The detailed parameter specifications described in `Rapp Parameters`_.
+The detailed parameter specifications described in Rapp Parameters.
 
 .. _`Robotics in Concert`: http://www.robotconcert.org
 .. _`Rapp Manager`: http://wiki.ros.org/rocon_app_manager
@@ -55,16 +55,45 @@ The following table describes the characteristics of each rapp types and require
   +-----------------------+-------------------------+-------------------------+-------------------------+-----------------------------------+
   | parent_name           |     N                   | N                       | R                       | <package>/<rapp_name>             |
   +-----------------------+-------------------------+-------------------------+-------------------------+-----------------------------------+
-  | required_capabilities |     N                   | O                       | O                       |  TODO                             |
+  | required_capabilities |     N                   | O                       | O                       | dict(details below)               |
   +-----------------------+-------------------------+-------------------------+-------------------------+-----------------------------------+ 
 
 .. _`Rocon URI`: http://docs.ros.org/indigo/api/rocon_uri/html/
 
 
+Capability Dependencies
+-----------------------
+
+The notion of Capabilities in ROS is that there exists a higher level interface for most "capabilities" that robots posses. 
+The format follows the `Capability Interface Specification`_.
+
+.. _`Capability Interface Specification`: http://docs.ros.org/hydro/api/capabilities/html/capabilities.specs.html#module-capabilities.specs.interface 
+
+.. code-block:: yaml
+
+    - name: <capability interface name>
+        interface:
+          topics:
+            requires:
+              <interface topic>: <rapp topic>
+            provides:
+              <interface topic>: <rapp topic>
+          services:
+            requires:
+              <interface service>: <rapp service>
+            provides:
+              <interface service>: <rapp service>
+          actions:
+            requires:
+              <interface action>: <rapp action>
+            provides:
+              <interface action>: <rapp action>
+
+
 Design Decisions
 ----------------
 
-Virutal Rapp vs Rapp Implementaion
+Virutal Rapp vs Implementaion Rapp
 ``````````````````````````````````
 
 If the following two are present, it is a rapp implementation. Otherwise it is a virtual rapp.
@@ -77,7 +106,16 @@ If it is a rapp impementation, the following three parameters are optional
 * icon 
 * capabilities
 
-Child Rapps Vs Ancestor Rapp
+Parent VS Ancestor
+`````````````````
+
+Inheritance may involve multiple rapps if rapps are chained. *Parent* is a rapp where child inherits from. A child can at the same time be a parent, if anoter child inherits from it. A *Parent* not inheriting from another Child/Parent is a *Ancestor*.
+
+.. code-block:: xml
+
+    child -> parent/child -> parent/child -> parent(ancestor)
+
+Child Rapp Vs Ancestor Rapp
 ````````````````````````````
 
 If the following is present, it is a child rapp. Otherwise it is an ancestor rapp.
@@ -90,15 +128,6 @@ If the following is present, it is a child rapp. Otherwise it is an ancestor rap
 * Ancestor rapps can be either virtual or implementation rapps
 * Child rapps must be rapp implementations
 
-Parent VS Ancestor
-`````````````````
-
-Inheritance may involve multiple rapps if rapps are chained. *Parent* is a rapp where child inherits from. Ancestor is the root of parent if child is referencing another child as parent.
-In the example case below, the right most *parent* is an ancestor.
-
-.. code-block:: xml
-
-    child -> parent-child -> parent-child -> parent
 
 Why no Virtual Child? 
 `````````````````````
