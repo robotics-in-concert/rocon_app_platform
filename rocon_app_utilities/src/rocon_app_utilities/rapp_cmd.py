@@ -159,13 +159,12 @@ def _rapp_cmd_index(argv):
     #  Parse command arguments
     args = argv[2:]
     parser = argparse.ArgumentParser(description='Generate and index for a Rapp tree')
-    parser.add_argument('path', type=str, nargs='?', help='Path to a Rapp tree', default='.')
+    parser.add_argument('packages_path', type=str, nargs='?', help='Path to a Rapp tree')
 
     parsed_args = parser.parse_args(args)
-    # TODO parse path
-    path = parsed_args.path
+    packages_path = parsed_args.packages_path
 
-    indexer = RappIndexer()
+    indexer = RappIndexer(packages_path=packages_path)
     indexer.write_to_disk()
 
 
@@ -192,7 +191,7 @@ Commands:
 \trocon_app compat\tdisplay a list of rapps that are compatible with the given rocon uri
 \trocon_app install\tinstall a list of rapps
 \trocon_app add-repo\tadd a remote Rapp repository
-\trocon_app index
+\trocon_app index\tgenerate an index file of a Rapp tree
 \trocon_app help\tUsage
 
 Type rocon_app <command> -h for more detailed usage, e.g. 'rocon_app info -h'

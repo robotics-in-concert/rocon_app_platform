@@ -23,9 +23,10 @@ from .rapp import Rapp
 
 class RappIndexer(object):
 
-    __slots__ = ['raw_data_path', 'raw_data', 'invalid_data', 'package_whitelist', 'package_blacklist', 'rospack']
+    __slots__ = ['raw_data_path', 'raw_data', 'invalid_data', 'package_whitelist', 'package_blacklist', 'rospack', 'packages_path']
 
-    def __init__(self, raw_data=None, package_whitelist=None, package_blacklist=[]):
+    def __init__(self, raw_data=None, package_whitelist=None, package_blacklist=[], packages_path=None):
+        self.packages_path = packages_path
         self.raw_data_path = {}
         self.raw_data = {}
         self.package_whitelist = package_whitelist
@@ -46,8 +47,7 @@ class RappIndexer(object):
           :param package_blacklist: list of blacklisted package
           :type package_blacklist: [str]
         '''
-        self.raw_data_path, _invalid_path = rocon_python_utils.ros.resource_index_from_package_exports('rocon_app', \
-                                               None, package_whitelist, package_blacklist)
+        self.raw_data_path, _invalid_path = rocon_python_utils.ros.resource_index_from_package_exports('rocon_app', self.packages_path, package_whitelist, package_blacklist)
         raw_data = {}
         invalid_data = {}
 
@@ -234,24 +234,33 @@ class RappIndexer(object):
 
 
     def write_to_disk(self):
+        '''
+            Write contents of the index to disk. If a path containing packages is passed to
+            the indexer, the index file will be written there. Otherwise, it will be written
+            to ~/.ros/rocon/index.
+        '''
+        if self.packages_path:
+            index_contents = {}
+            rapp_index_path = os.path.abspath(self.packages_path) + 'rapp.index'
+        else:
+            home_path = os.path.expanduser('~')
+            rapp_base_path = os.path.join(home_path, '.ros', 'rocon')
+            self._mkdir_p(rapp_base_path)
+            rapp_index_path = os.path.join(rapp_base_path, 'index')
+            if os.path.isfile(rapp_index_path):
+                with open(rapp_index_path) as f:
+                    index_contents = json.loads(f.read())
+            else:
+                index_contents = {}
+
         for resource_name, rapp in self.raw_data.items():
             if not rapp.is_implementation:
                 continue
-         
-            rapp_path, package = self.raw_data_path[resource_name]
-            base_rapp_path = os.path.dirname(rapp_path)
-            index_path = base_rapp_path + '.index'
-            for dirname, subdir_list, file_list in os.walk(base_rapp_path):
-                index_contents = {}
-                for fname in file_list:
-                    hasher = hashlib.sha1()
-                    fullpath = os.path.join(dirname, fname)
-                    with open(fullpath, 'rb') as f:
-                        buf = f.read()
-                        hasher.update(buf)
-                        index_contents[fname] = hasher.hexdigest()
-            with open(index_path, 'w') as index_file:
-                json.dump(index_contents, index_file)
+            index_contents[rapp.resource_name] = rapp.raw_data
+            # NOTE we should probably store dependencies directly as a Rapp field
+            index_contents[rapp.resource_name]['dependencies'] = [run_depend.name for run_depend in rapp.package.run_depends]
+        with open(rapp_index_path, 'w') as index_file:
+            json.dump(index_contents, index_file)
 
     def add_remote_repository(self, url):
         response = urllib2.urlopen(url)
