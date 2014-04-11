@@ -45,10 +45,11 @@ class RappIndexer(object):
         raw_data = {}
         invalid_data = {}
 
-        for resource_name, path in self.raw_data_path.items():
+        for resource_name, (rapp_path, package) in self.raw_data_path.items():
             try:
                 r = Rapp(resource_name, self.rospack)
-                r.load_rapp_yaml_from_file(path)
+                r.load_rapp_yaml_from_file(rapp_path)
+                r.package = package
                 raw_data[resource_name] = r
             except InvalidRappFieldException as irfe:
                 invalid_data[resource_name] = str(irfe)
