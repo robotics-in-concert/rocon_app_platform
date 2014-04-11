@@ -13,12 +13,10 @@ from rosdep2 import RosdepLookup, create_default_installer_context, ResolutionEr
 from rosdep2.installers import RosdepInstaller
 from rosdep2.sources_list import SourcesListLoader
 from rosdep2.rospkg_loader import DEFAULT_VIEW_KEY
-from rosdep2.catkin_packages import find_catkin_packages_in
-from rosdep2.catkin_packages import set_workspace_packages
-from rosdep2.catkin_packages import get_workspace_packages
+
+from rocon_python_utils.ros.resources import _get_package_index
 
 from .exceptions import *
-
 
 class DependencyChecker(object):
 
@@ -61,22 +59,17 @@ class DependencyChecker(object):
 
         :returns: A C{tuple} of two C{list}s of installable and uninstallable ROCON URIs
         '''
+
+        package_index = _get_package_index(None)
+        pkgs = package_index.keys()
+
         installable_rapps = defaultdict(list)
         noninstallable_rapps = defaultdict(list)
-        cwd = os.getcwd()
-        # NOTE assume that we're in a Catkin workspace and there's a src directory
-        path = os.path.abspath(os.path.join(cwd, 'src'))
-        if 'ROS_PACKAGE_PATH' not in os.environ:
-            os.environ['ROS_PACKAGE_PATH'] = '{0}'.format(path)
-        else:
-            os.environ['ROS_PACKAGE_PATH'] += ':{0}'.format(path)
-        pkgs = find_catkin_packages_in(path, False)
-        pkgs = set(pkgs)
 
         for rapp_name in rapp_names:
             rapp = self.indexer.get_rapp(rapp_name)
             for run_depend in rapp.package.run_depends:
-                # Dependency was not found in the local tree
+                # Dependency was not found in either the local tree or systemwide
                 if run_depend.name not in pkgs:
                     try:
                         d = self.view.lookup(run_depend.name)
