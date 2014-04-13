@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 Rocon App Manager
-=============================================
+=================
 
 Contents:
 
@@ -13,4 +13,4 @@ Contents:
    
    rapp_manager_api
    rapp_api
-   CHANGELOG
+   ../CHANGELOG

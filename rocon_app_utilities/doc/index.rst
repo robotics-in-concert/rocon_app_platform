@@ -1,5 +1,5 @@
 ROCON App Utilities
-===============================================
+===================
 
 `rocon_app_utilities` provides python modules to manipulate ROCON app related stuffs.
 
@@ -10,12 +10,12 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-   README
+   ../README
    rapp_specification
    rapp_api
    indexer_api
    exceptions
-   CHANGELOG
+   ../CHANGELOG
 
 
 
