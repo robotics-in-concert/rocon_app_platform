@@ -160,10 +160,11 @@ Examples
     compatibility: rocon:/turtlebot
     parent_name: rocon_apps/chirp
 
-**Kobuki Random walker - Capability Enabled Rapp**
+**Kobuki Random Walker - Capability Enabled Rapp**
 
 .. code-block:: yaml
 
+    # kobuki_apps/random_walker
     display:          Random Walker
     description:      Makes Kobuki wander off and explorer the world
     compatibility:    rocon:/kobuki|turtlebot2
