@@ -22,7 +22,7 @@ class Rapp(object):
     '''
         Rocon(or Robot) App definition.
     '''
-    __slots__ = ['resource_name', 'raw_data', 'data', 'type', 'is_implementation', 'is_ancestor', 'ancestor_name', 'parent_name', 'rospack']
+    __slots__ = ['resource_name', 'raw_data', 'data', 'type', 'is_implementation', 'is_ancestor', 'ancestor_name', 'parent_name', 'rospack', 'package']
 
     def __init__(self, name, rospack=rospkg.RosPack(), filename=None):
         self.resource_name = name
@@ -36,6 +36,8 @@ class Rapp(object):
 
         if filename:
             self.load_rapp_yaml_from_file(filename)
+
+        self.package = None
 
     def __str__(self):
         return str(self.resource_name + ' - ' + self.type)
