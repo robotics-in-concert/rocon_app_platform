@@ -41,15 +41,16 @@ class RappIndexer(object):
           :param package_blacklist: list of blacklisted package
           :type package_blacklist: [str]
         '''
-        self.raw_data_path, _invalid_path = rocon_python_utils.ros.resource_index_from_package_exports('rocon_app', None, package_whitelist, package_blacklist)
+        self.raw_data_path, _invalid_path = rocon_python_utils.ros.resource_index_from_package_exports('rocon_app', \
+                                               None, package_whitelist, package_blacklist)
         raw_data = {}
         invalid_data = {}
 
         for resource_name, (path, unused_catkin_package) in self.raw_data_path.items():
             try:
                 r = Rapp(resource_name, self.rospack)
-                r.load_rapp_yaml_from_file(rapp_path)
-                r.package = package
+                r.load_rapp_yaml_from_file(path)
+                r.package = unused_catkin_package
                 raw_data[resource_name] = r
             except InvalidRappFieldException as irfe:
                 invalid_data[resource_name] = str(irfe)
@@ -96,7 +97,7 @@ class RappIndexer(object):
             raise RappNotExistException(str(rapp_name) + ' does not exist')
 
         rapp = self._resolve(rapp_name)
-        rapp.load_rapp_specs_from_file()        
+        rapp.load_rapp_specs_from_file()
 
         return rapp
 
@@ -141,7 +142,7 @@ class RappIndexer(object):
         for resource_name in invalid_rapps:
             if resource_name in resolved_compatible_rapps:
                 del resolved_compatible_rapps[resource_name]
-        
+
         if hasattr(self, 'invalid_data'):
             invalid_rapps.update(self.invalid_data)
         return resolved_compatible_rapps, resolved_incompatible_rapps, invalid_rapps
@@ -168,7 +169,7 @@ class RappIndexer(object):
                 else:
                     resolved[resource_name] = resolved_rapp
             except ParentRappNotFoundException as e:
-                invalid[resource_name] = str('Invalid parent_name [%s] in resource [%s]'%(str(e.parent_name),str(e.resource_name)))
+                invalid[resource_name] = str('Invalid parent_name [%s] in resource [%s]' % (str(e.parent_name), str(e.resource_name)))
             except RappInvalidChainException as e:
                 invalid[resource_name] = str(e)
             used_ancestors[ancestor_name] = resource_name
