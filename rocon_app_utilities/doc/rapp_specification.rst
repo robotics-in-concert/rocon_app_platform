@@ -160,6 +160,36 @@ Examples
     compatibility: rocon:/turtlebot
     parent_name: rocon_apps/chirp
 
+**Kobuki Random Walker - Capability Enabled Rapp**
+
+.. code-block:: yaml
+
+    # kobuki_apps/random_walker
+    display:          Random Walker
+    description:      Makes Kobuki wander off and explorer the world
+    compatibility:    rocon:/kobuki|turtlebot2
+    launch:           kobuki_apps/random_walker.launch.xml
+    public_interface: kobuki_apps/random_walker.interface
+    icon:         kobuki_apps/random_walker.png
+    required_capabilities:
+      - name: std_capabilities/DifferentialMobileBase
+        interface:
+          topics:
+            requires:
+              '/cmd_vel': 'kobuki_random_walker_controller/commands/velocity'
+            provides: []
+      - name: kobuki_capabilities/KobukiLED1
+        interface:
+          topics:
+            requires:
+              '/kobuki_led1': 'kobuki_random_walker_controller/commands/led1'
+            provides: []
+      - name: kobuki_capabilities/KobukiLED2
+        interface:
+          topics:
+            requires:
+              '/kobuki_led2': 'kobuki_random_walker_controller/commands/led2'
+            provides: []
 
 Export
 ------
