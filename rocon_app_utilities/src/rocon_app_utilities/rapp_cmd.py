@@ -129,6 +129,7 @@ def _rapp_cmd_install(argv):
     #  Parse command arguments
     args = argv[2:]
     parser = argparse.ArgumentParser(description='Install a list of rapps')
+    parser.add_argument('--debug', action='store_true', help='Output debug information')
     parser.add_argument('rapp_names', type=str, nargs='+', help='Rocon URI')
 
     parsed_args = parser.parse_args(args)
@@ -138,7 +139,7 @@ def _rapp_cmd_install(argv):
 
     dependencyChecker = DependencyChecker(indexer)
 
-    installable_rapps, noninstallable_rapps = dependencyChecker.check_missing_rapp_dependencies(rapp_names)
+    installable_rapps, noninstallable_rapps, installed_rapps = dependencyChecker.check_rapp_dependencies(rapp_names)
 
     missing_dependencies = []
     for rapp_name, dependencies in noninstallable_rapps.iteritems():
@@ -152,6 +153,9 @@ def _rapp_cmd_install(argv):
     else:
         # resolve deps and install them
         print("Installing dependencies for: %s" % (' '.join(sorted(rapp_names))))
+        if parsed_args.debug:
+            print("- installing the following packages: %s" % (' '.join(sorted(set([d for deps in installable_rapps.values() for d in deps])))))
+            print("- already installed packages: %s" % (' '.join(sorted(set([d for deps in installed_rapps.values() for d in deps])))))
         dependencyChecker.install_rapp_dependencies(rapp_names)
 
 

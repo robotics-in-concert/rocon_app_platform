@@ -51,13 +51,13 @@ class DependencyChecker(object):
 
         self.view = self.lookup.get_rosdep_view(DEFAULT_VIEW_KEY, verbose=False)
 
-    def check_missing_rapp_dependencies(self, rapp_names):
+    def check_rapp_dependencies(self, rapp_names):
         '''
-        Check that a given list of Rapps have all their dependencies installed.
+        Check the installation status of the dependencies for a given list of Rapps.
 
         :param rapp_names: A C{list} of ROCON URIs
 
-        :returns: A C{tuple} of two C{list}s of installable and uninstallable ROCON URIs
+        :returns: A C{tuple} of three C{list}s of installable, uninstallable and already installed ROCON URIs
         '''
 
         package_index = _get_package_index(None)
@@ -65,12 +65,13 @@ class DependencyChecker(object):
 
         installable_rapps = defaultdict(list)
         noninstallable_rapps = defaultdict(list)
+        installed_rapps = defaultdict(list)
 
         for rapp_name in rapp_names:
-            rapp = self.indexer.get_rapp(rapp_name)
+            rapp = self.indexer.get_raw_rapp(rapp_name)
             for run_depend in rapp.package.run_depends:
-                # Dependency was not found in either the local tree or systemwide
                 if run_depend.name not in pkgs:
+                    # Dependency was not found in either the local tree or systemwide
                     try:
                         d = self.view.lookup(run_depend.name)
                         inst_key, rule = d.get_rule_for_platform(
@@ -79,8 +80,10 @@ class DependencyChecker(object):
                         installable_rapps[rapp_name].extend(self.installer.resolve(rule))
                     except KeyError:
                         noninstallable_rapps[rapp_name].append(run_depend.name)
+                else:
+                    installed_rapps[rapp_name].append(run_depend.name)
 
-        return (installable_rapps, noninstallable_rapps)
+        return (installable_rapps, noninstallable_rapps, installed_rapps)
 
     def install_rapp_dependencies(self, rapp_names):
         '''
@@ -89,7 +92,7 @@ class DependencyChecker(object):
         :param rapp_name: A C{list} of ROCON URIs
         :raises: NonInstallableRappException: Any of the ROCON URIs are not installable
         '''
-        installable_rapps, uninstallable_rapps = self.check_missing_rapp_dependencies(rapp_names)
+        installable_rapps, uninstallable_rapps, _ = self.check_rapp_dependencies(rapp_names)
 
         if uninstallable_rapps:
             raise NonInstallableRappException(uninstallable_rapps.keys())
