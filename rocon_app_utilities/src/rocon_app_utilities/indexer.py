@@ -8,7 +8,6 @@
 from __future__ import division, print_function
 import copy
 import errno
-import hashlib
 import json
 import os
 import urllib2
@@ -240,62 +239,6 @@ class RappIndexer(object):
         raise NotImplementedError()
           # TODO
         pass
-
-
-    def write_to_disk(self):
-        '''
-            Write contents of the index to disk. If a path containing packages is passed to
-            the indexer, the index file will be written there. Otherwise, it will be written
-            to ~/.ros/rocon/index.
-        '''
-        if self.packages_path:
-            index_contents = {}
-            rapp_index_path = os.path.abspath(self.packages_path) + 'rapp.index'
-        else:
-            home_path = os.path.expanduser('~')
-            rapp_base_path = os.path.join(home_path, '.ros', 'rocon')
-            self._mkdir_p(rapp_base_path)
-            rapp_index_path = os.path.join(rapp_base_path, 'index')
-            if os.path.isfile(rapp_index_path):
-                with open(rapp_index_path) as f:
-                    index_contents = json.loads(f.read())
-            else:
-                index_contents = {}
-
-        for resource_name, rapp in self.raw_data.items():
-            if not rapp.is_implementation:
-                continue
-            index_contents[rapp.resource_name] = rapp.raw_data
-            # NOTE we should probably store dependencies directly as a Rapp field
-            index_contents[rapp.resource_name]['dependencies'] = [run_depend.name for run_depend in rapp.package.run_depends]
-        with open(rapp_index_path, 'w') as index_file:
-            json.dump(index_contents, index_file)
-
-    def add_remote_repository(self, url):
-        response = urllib2.urlopen(url)
-        index_data = json.load(response)
-        base_url = url.replace(".index", "")
-        rapp_name = os.path.basename(base_url)
-        # TODO hardcoded rapps directory
-        rapp_path = os.path.join('rapps', rapp_name)
-        self._mkdir_p(rapp_path)
-
-        for key, hash_value in index_data.iteritems():
-            full_url = base_url + "/" + key
-            resource_response = urllib2.urlopen(full_url)
-            contents = resource_response.read()
-            # TODO check checksum
-            with open(os.path.join(rapp_path, key), 'w') as f:
-                f.write(contents)
-
-    def _mkdir_p(self, path):
-        try:
-            os.makedirs(path)
-        except OSError as e:
-            if e.errno == errno.EEXIST and os.path.isdir(path):
-                pass
-            else:
-                raise
 
     def merge(self, other_indexer):
         self.raw_data.update(other_indexer.raw_data)
