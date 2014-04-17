@@ -241,10 +241,22 @@ class RappIndexer(object):
         pass
 
     def merge(self, other_indexer):
+        '''
+          Updates this index with the rapps from the other_indexer.
+
+          :param other_indexer: the other inder
+          :type other_indexer: rocon_app_utilities.RappIndexer
+        '''
         self.raw_data.update(other_indexer.raw_data)
         self.raw_data_path.update(other_indexer.raw_data_path)
 
     def write_tarball(self, filename_prefix):
+        '''
+          Writes the index to a gzipped tarball.
+
+          :param filename_prefix: the pathname of the archive with out the suffix '.index.tar.gz'
+          :type filename_prefix: str
+        '''
         logger.debug("write_tarball() to '%s...'" % filename_prefix)
         added = set([])
         with tarfile.open('%s.index.tar.gz' % filename_prefix, 'w:gz') as tar:
@@ -271,7 +283,23 @@ class RappIndexer(object):
                             tar.add(path)
                             added.add(path)
 
+
 def read_tarball(name=None, fileobj=None, package_whitelist=None, package_blacklist=[]):
+    '''
+      Reads an index from a gzipped tarball.
+
+      :param name: the pathname of the archive
+      :type name: str
+      :param fileobj: alternative to a file object opened for name
+      :type fileobj: file
+      :param package_whitelist: list of target package list
+      :type package_whitelist: [str]
+      :param package_blacklist: list of blacklisted package
+      :type package_blacklist: [str]
+
+      :returns: the index
+      :rtype: rocon_app_utilities.RappIndexer
+    '''
     # TODO avoid unpacking
     logger.debug('read_tarball(name=%s, fileobj=%s)' % (name, fileobj))
     tempdir = tempfile.mkdtemp(suffix='_unpacked', prefix='rapp_index_')

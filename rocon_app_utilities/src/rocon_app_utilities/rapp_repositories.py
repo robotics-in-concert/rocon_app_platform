@@ -26,6 +26,12 @@ logger.addHandler(logging.StreamHandler(sys.stderr))
 
 
 def load_uris():
+    '''
+      Loads the registered repository URIs from a configuration file.
+
+      :returns: the list of URIs
+      :rtype: [str]
+    '''
     try:
         with open(_rapp_repositories_list_file, 'r') as h:
             uris = h.read().splitlines()
@@ -36,12 +42,27 @@ def load_uris():
 
 
 def sanitize_uri(uri):
+    '''
+      Converts relative dir/file path into absolute.
+
+      :param uri: the URI
+      :type uri: str
+
+      :returns: the sanitized URI
+      :rtype: str
+    '''
     if os.path.isfile(uri) or os.path.isdir(uri):
         uri = os.path.abspath(uri)
     return uri
 
 
 def save_uris(uris):
+    '''
+      Save the repository URIs to a configuration.
+
+      :param uris: the list of URIs
+      :type uris: [str]
+    '''
     base_path = os.path.dirname(_rapp_repositories_list_file)
     if not os.path.exists(base_path):
         os.makedirs(base_path)
@@ -54,6 +75,19 @@ def save_uris(uris):
 
 
 def uri2url(uri):
+    '''
+      Converts a URI into a URL.
+
+      ROS_PACKAGE_PATH is being expanded into the actual list of directories.
+      Local paths to index archives are converted into a file:// url.
+      Single local directories are converted into a single element list.
+
+      :param uri: the URI
+      :type uri: str
+
+      :returns: the sanitized URI
+      :rtype: str
+    '''
     if uri == rospkg.environment.ROS_PACKAGE_PATH:
         return get_ros_package_paths()
     if os.path.isabs(uri):
@@ -65,10 +99,28 @@ def uri2url(uri):
 
 
 def is_index(url_or_uri):
+    '''
+      Check if the URI or URL points to an index archive.
+
+      :param url_or_uri: the URI or URL
+      :type url_or_uri: str
+
+      :returns: true, if URI or URL ends with '.index.tar.gz'
+      :rtype: bool
+    '''
     return url_or_uri.endswith('.index.tar.gz')
 
 
 def build_index(base_paths):
+    '''
+      Builds the index of rapps found under a list of base paths.
+
+      :param base_paths: the list of base paths to crawl
+      :type base_paths: [str]
+
+      :returns: the index
+      :rtype: rocon_app_utilities.RappIndexer
+    '''
     logger.debug('build_index(%s)' % base_paths)
     assert isinstance(base_paths, list)
     combined_index = RappIndexer(raw_data={})
@@ -80,12 +132,31 @@ def build_index(base_paths):
 
 
 def get_index_dest_prefix_for_base_paths(base_paths):
+    '''
+      Returns the path of the cached index archive (without the suffix '.index.tar.gz).
+
+      :param base_paths: the list of base paths
+      :type base_paths: [str]
+
+      :returns: the path prefix without the archive extension
+      :rtype: str
+    '''
     base_path = _get_rapps_index_base_path()
     filename_prefix = _get_rapps_index_filename_prefix(base_paths)
     return os.path.join(base_path, filename_prefix)
 
 
 def get_index(uri):
+    '''
+      Gets the index of the rapp repository identified by the URI.
+      If the URI is a local folder it checks for the existance of a cached archive first.
+
+      :param uri: the URI
+      :type uri: str
+
+      :returns: the index
+      :rtype: rocon_app_utilities.RappIndexer
+    '''
     logger.debug('get_index(%s)' % uri)
     if is_index(uri):
         url = uri2url(uri)
@@ -99,6 +170,15 @@ def get_index(uri):
 
 
 def has_index(base_paths):
+    '''
+      Returns the path of an existing cached index archive.
+
+      :param base_paths: the list of base paths
+      :type base_paths: [str]
+
+      :returns: the path or None if no cached index archive exists
+      :rtype: str
+    '''
     dest_prefix = get_index_dest_prefix_for_base_paths(base_paths)
     path = '%s.index.tar.gz' % dest_prefix
     if os.path.exists(path):
@@ -113,6 +193,12 @@ def has_index(base_paths):
 
 
 def get_combined_index():
+    '''
+      Gets the combined index of the all registered rapp repositories.
+
+      :returns: the index
+      :rtype: rocon_app_utilities.RappIndexer
+    '''
     logger.debug('get_combined_index()')
     combined_index = RappIndexer(raw_data={})
     uris = load_uris()
@@ -123,6 +209,15 @@ def get_combined_index():
 
 
 def load_index(index_url):
+    '''
+      Loads the index for a URL pointing to an index archive.
+
+      :param index_url: the URL
+      :type index_url: str
+
+      :returns: the index
+      :rtype: rocon_app_utilities.RappIndexer
+    '''
     logger.debug('load_index(%s)' % index_url)
     if not index_url.endswith('.index.tar.gz'):
         raise NotImplementedError("The url of the index must end with '.index.tar.gz'")
@@ -135,14 +230,35 @@ def load_index(index_url):
 
 
 def _get_rapps_index_base_path():
+    '''
+      Gets the folder in which the registered rapp repositories URIs as well as the cached index archives are stored.
+
+      :returns: the path
+      :rtype: str
+    '''
     return os.path.dirname(_rapp_repositories_list_file)
 
 
 def _get_rapps_index_filename_prefix(source):
+    '''
+      Gets filename prefix for a cached index archive (without the suffix '.index.tar.gz).
+
+      :param source: the list of paths
+      :type source: [str]
+
+      :returns: the path
+      :rtype: str
+    '''
     digest = hashlib.md5(':'.join(source)).hexdigest()
     logger.debug("_get_rapps_index_filename_prefix(%s) hash '%s'" % (source, digest))
     return digest
 
 
 def get_ros_package_paths():
+    '''
+      Get the list of paths from the ROS_PACKAGE_PATH environment variable.
+
+      :returns: the list of paths
+      :rtype: [str]
+    '''
     return rospkg.environment._compute_package_paths(None, rospkg.get_ros_package_path())
