@@ -5,6 +5,7 @@
 #
 #################################################################################
 from .exceptions import InvalidRappException, RappResourceNotExistException, RappMalformedException
+import os
 import yaml
 import rospkg
 import roslaunch.xmlloader
@@ -49,17 +50,18 @@ def load_rapp_specs_from_file(specification, rospack=rospkg.RosPack()):
       :returns Fully loaded rapp data dictionary
       :rtype: dict
     '''
+    base_path = os.path.dirname(specification.filename)
     rapp_data = specification.raw_data
     data = {}
     data['name'] = specification.ancestor_name
     data['display_name']      = rapp_data.get('display', data['name'])
     data['description']       = rapp_data.get('description', '')
     data['compatibility']     = rapp_data['compatibility']
-    data['icon']              = _find_resource(rapp_data['icon'], rospack) if 'icon' in rapp_data else None
-    data['launch']            = _find_resource(rapp_data['launch'], rospack)
+    data['icon']              = _find_resource(base_path, rapp_data['icon'], rospack) if 'icon' in rapp_data else None
+    data['launch']            = _find_resource(base_path, rapp_data['launch'], rospack)
     data['launch_args']       = _get_standard_args(data['launch'])
-    data['public_interface']  = _load_public_interface(rapp_data.get('public_interface', None), rospack)
-    data['public_parameters'] = _load_public_parameters(rapp_data.get('public_parameters', None), rospack)  # TODO : It is not tested yet.
+    data['public_interface']  = _load_public_interface(base_path, rapp_data.get('public_interface', None), rospack)
+    data['public_parameters'] = _load_public_parameters(base_path, rapp_data.get('public_parameters', None), rospack)  # TODO : It is not tested yet.
 
     if 'pairing_clients' in rapp_data:
         console.logwarn('Rapp Indexer : [%s] includes "pairing_clients". It is deprecated attribute. Please drop it'%specification.resource_name)
@@ -71,7 +73,7 @@ def load_rapp_specs_from_file(specification, rospack=rospkg.RosPack()):
     return data
 
 
-def _find_resource(resource, rospack):
+def _find_resource(base_path, resource, rospack):
     '''
       Find a rapp resource (.launch, .interface, icon) relative to the
       specified package path.
@@ -85,13 +87,16 @@ def _find_resource(resource, rospack):
 
       :raises: :exc:`.exceptions.RappResourcenotExistException` if the resource is not found
     '''
+    path = os.path.join(base_path, resource)
+    if os.path.exists(path):
+        return path
     try:
         return rocon_python_utils.ros.find_resource_from_string(resource, rospack)
     except rospkg.ResourceNotFound:
         raise RappResourceNotExistException("invalid rapp - %s does not exist" % (resource))
 
 
-def _load_public_interface(public_interface_resource, rospack):
+def _load_public_interface(base_path, public_interface_resource, rospack):
     '''
       loading public interfaces from file. If the given filepath
 
@@ -113,7 +118,7 @@ def _load_public_interface(public_interface_resource, rospack):
         d = {k: [] for k in keys}
         return d
 
-    public_interface_file_path = _find_resource(public_interface_resource, rospack)
+    public_interface_file_path = _find_resource(base_path, public_interface_resource, rospack)
     with open(public_interface_file_path, 'r') as f:
         y = yaml.load(f.read())
         y = y or {}
@@ -133,7 +138,7 @@ def _load_public_interface(public_interface_resource, rospack):
     return d
 
 
-def _load_public_parameters(public_parameters_resource, rospack):
+def _load_public_parameters(base_path, public_parameters_resource, rospack):
     '''
       :params public_parameters_resource: absolute path of public parameters file
       :type: str
@@ -149,7 +154,7 @@ def _load_public_parameters(public_parameters_resource, rospack):
         return {}
 
     d = {}
-    public_parameters_file_path = _find_resource(public_parameters_resource, rospack)
+    public_parameters_file_path = _find_resource(base_path, public_parameters_resource, rospack)
 
     # TODO: Do it!
 
