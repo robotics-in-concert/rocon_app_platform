@@ -12,8 +12,8 @@ import os
 import traceback
 import argparse
 
-from .indexer import RappIndexer
 from .dependencies import DependencyChecker
+from .rapp_repositories import build_index, get_combined_index, get_index, get_index_dest_prefix_for_base_paths, is_index, load_uris, sanitize_uri, save_uris, uri2url
 
 #################################################################################
 # Global variables
@@ -30,8 +30,20 @@ def _rapp_cmd_list(argv):
     """
       Command-line parsing for 'rapp list' command.
     """
-    indexer = RappIndexer()
-    compatible_rapps, incompatible_rapps, invalid_rapps = indexer.get_compatible_rapps(ancestor_share_check=False)
+    #  Parse command arguments
+    args = argv[2:]
+    parser = argparse.ArgumentParser(description='Displays rapp information')
+    parser.add_argument('--uri', nargs='?', help='Optional narrow down list from specific Rapp repository')
+
+    parsed_args = parser.parse_args(args)
+
+    if not parsed_args.uri:
+        index = get_combined_index()
+    else:
+        uri = sanitize_uri(parsed_args.uri)
+        index = get_index(uri)
+
+    compatible_rapps, incompatible_rapps, invalid_rapps = index.get_compatible_rapps(ancestor_share_check=False)
 
     print('== Available Rapp List == ')
     for n in compatible_rapps.values():
@@ -56,9 +68,9 @@ def _rapp_cmd_raw_info(argv):
     parsed_args = parser.parse_args(args)
     resource_name = parsed_args.resource_name
 
-    indexer = RappIndexer()
+    index = get_combined_index()
 
-    rapp = indexer.get_raw_rapp(resource_name)
+    rapp = index.get_raw_rapp(resource_name)
 
     print('== %s =='%str(rapp))
     for k, v in rapp.raw_data.items():
@@ -74,9 +86,9 @@ def _rapp_cmd_info(argv):
     parsed_args = parser.parse_args(args)
     resource_name = parsed_args.resource_name
 
-    indexer = RappIndexer()
+    index = get_combined_index()
     try:
-        rapp = indexer.get_rapp(resource_name)
+        rapp = index.get_rapp(resource_name)
         print('== %s =='%str(rapp))
         for k, v in rapp.raw_data.items():
             print('  %s : %s'%(str(k),str(v)))
@@ -108,8 +120,8 @@ def _rapp_cmd_compat(argv):
     parsed_args = parser.parse_args(args)
     compatibility = parsed_args.compatibility
 
-    indexer = RappIndexer()
-    compatible_rapps, incompatible_rapps, invalid_rapps = indexer.get_compatible_rapps(compatibility)
+    index = get_combined_index()
+    compatible_rapps, incompatible_rapps, invalid_rapps = index.get_compatible_rapps(compatibility)
 
     print('== Available Rapp List for [%s] == ' % compatibility)
     for r in compatible_rapps.values():
@@ -135,9 +147,9 @@ def _rapp_cmd_install(argv):
     parsed_args = parser.parse_args(args)
     rapp_names = set(parsed_args.rapp_names)
 
-    indexer = RappIndexer()
+    index = get_combined_index()
 
-    dependencyChecker = DependencyChecker(indexer)
+    dependencyChecker = DependencyChecker(index)
 
     installable_rapps, noninstallable_rapps, installed_rapps = dependencyChecker.check_rapp_dependencies(rapp_names)
 
@@ -162,41 +174,107 @@ def _rapp_cmd_install(argv):
 def _rapp_cmd_index(argv):
     #  Parse command arguments
     args = argv[2:]
-    parser = argparse.ArgumentParser(description='Generate and index for a Rapp tree')
-    parser.add_argument('packages_path', type=str, nargs='?', help='Path to a Rapp tree')
+    parser = argparse.ArgumentParser(description='Generate an index for a Rapp tree')
+    parser.add_argument('packages_path', type=str, help='Path to a Rapp tree')
 
     parsed_args = parser.parse_args(args)
     packages_path = parsed_args.packages_path
 
-    indexer = RappIndexer(packages_path=packages_path)
-    indexer.write_to_disk()
+    index_path(packages_path)
+
+
+def index_path(packages_path):
+    index = build_index([packages_path])
+    base_path = os.path.dirname(packages_path)
+    filename_prefix = os.path.basename(packages_path)
+    dest_prefix = os.path.join(base_path, filename_prefix)
+    index.write_tarball(dest_prefix)
 
 
 def _rapp_cmd_add_repository(argv):
     #  Parse command arguments
     args = argv[2:]
-    parser = argparse.ArgumentParser(description='Add a remote indexer to the local sources')
-    parser.add_argument('repository_url', type=str, help='URL to a Rapp repository')
+    parser = argparse.ArgumentParser(description='Add a rapp repository')
+    parser.add_argument('repository_url', type=str, help='URL of a Rapp repository index or a local folder')
 
     parsed_args = parser.parse_args(args)
     repository_url = parsed_args.repository_url
 
-    indexer = RappIndexer()
-    indexer.add_remote_repository(repository_url)
+    uris = load_uris()
+    if repository_url in uris:
+        raise RuntimeError("'%s' is already listed as a rapp repository" % repository_url)
+    repository_url = sanitize_uri(repository_url)
+    if os.path.isdir(repository_url) or os.path.isfile(repository_url):
+        repository_url = os.path.abspath(repository_url)
+    uris.append(repository_url)
+    save_uris(uris)
+
+
+def _rapp_cmd_remove_repository(argv):
+    #  Parse command arguments
+    args = argv[2:]
+    parser = argparse.ArgumentParser(description='Remove a rapp repository')
+    parser.add_argument('repository_url', type=str, help='URL of a Rapp repository index or a local folder')
+
+    parsed_args = parser.parse_args(args)
+    repository_url = parsed_args.repository_url
+
+    uris = load_uris()
+    if repository_url not in uris:
+        raise RuntimeError("'%s' is not listed as a rapp repository" % repository_url)
+    uris.remove(repository_url)
+    save_uris(uris)
+
+
+def _rapp_cmd_list_repositories(argv):
+    #  Parse command arguments
+    args = argv[2:]
+    parser = argparse.ArgumentParser(description='List rapp repositories')
+
+    parser.parse_args(args)
+
+    uris = load_uris()
+    for uri in uris:
+        print(uri)
+
+
+def _rapp_cmd_update_repository_indices(argv):
+    #  Parse command arguments
+    args = argv[2:]
+    parser = argparse.ArgumentParser(description='Update indices of rapp repositories')
+
+    parser.parse_args(args)
+
+    update_indices()
+
+
+def update_indices():
+    uris = load_uris()
+    for uri in uris:
+        # existing indices must not be updated
+        if is_index(uri):
+            continue
+        url = uri2url(uri)
+        index = build_index(url)
+        dest_prefix = get_index_dest_prefix_for_base_paths(url)
+        index.write_tarball(dest_prefix)
 
 
 def _fullusage():
     print("""\nrocon_app is a command-line tool for printing information about Rapp
 
 Commands:
-\trocon_app list\tdisplay a list of cached rapps
-\trocon_app info\tdisplay rapp information
+\trocon_app list\t\tdisplay a list of cached rapps
+\trocon_app info\t\tdisplay rapp information
 \trocon_app rawinfo\tdisplay rapp raw information
 \trocon_app compat\tdisplay a list of rapps that are compatible with the given rocon uri
 \trocon_app install\tinstall a list of rapps
-\trocon_app add-repo\tadd a remote Rapp repository
-\trocon_app index\tgenerate an index file of a Rapp tree
-\trocon_app help\tUsage
+\trocon_app add-repo\tadd a rapp repository
+\trocon_app remove-repo\tremove a rapp repository
+\trocon_app list-repos\tlist the rapp repositories
+\trocon_app update\tupdate the indices for the rapp repositories
+\trocon_app index\t\tgenerate an index file of a Rapp tree
+\trocon_app help\t\tUsage
 
 Type rocon_app <command> -h for more detailed usage, e.g. 'rocon_app info -h'
 """)
@@ -241,10 +319,19 @@ def main():
             _rapp_cmd_index(argv)
         elif command == 'add-repo':
             _rapp_cmd_add_repository(argv)
+        elif command == 'remove-repo':
+            _rapp_cmd_remove_repository(argv)
+        elif command == 'list-repos':
+            _rapp_cmd_list_repositories(argv)
+        elif command == 'update':
+            _rapp_cmd_update_repository_indices(argv)
         elif command == 'help':
             _fullusage()
         else:
             _fullusage()
+    except RuntimeError as e:
+        sys.stderr.write('%s\n' % e)
+        sys.exit(1)
     except Exception as e:
         sys.stderr.write("Error: %s\n" % str(e))
         ex, val, tb = sys.exc_info()

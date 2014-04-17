@@ -12,6 +12,8 @@ import hashlib
 import json
 import os
 import urllib2
+import tarfile
+import tempfile
 
 import rocon_python_utils
 import rocon_uri
@@ -20,20 +22,27 @@ import rospkg
 from .exceptions import *
 from .rapp import Rapp
 
+import logging
+import sys
+logger = logging.getLogger('indexer')
+logger.addHandler(logging.StreamHandler(sys.stderr))
+#logger.setLevel(logging.DEBUG)
+
 
 class RappIndexer(object):
 
-    __slots__ = ['raw_data_path', 'raw_data', 'invalid_data', 'package_whitelist', 'package_blacklist', 'rospack', 'packages_path']
+    __slots__ = ['raw_data_path', 'raw_data', 'invalid_data', 'package_whitelist', 'package_blacklist', 'rospack', 'packages_path', 'source']
 
-    def __init__(self, raw_data=None, package_whitelist=None, package_blacklist=[], packages_path=None):
+    def __init__(self, raw_data=None, package_whitelist=None, package_blacklist=[], packages_path=None, source=None):
         self.packages_path = packages_path
         self.raw_data_path = {}
         self.raw_data = {}
         self.package_whitelist = package_whitelist
         self.package_blacklist = package_blacklist
+        self.source = source
         self.rospack = rospkg.RosPack()
 
-        if raw_data:
+        if raw_data is not None:
             self.raw_data = raw_data
         else:
             self.update_index(package_whitelist, package_blacklist)
@@ -287,3 +296,48 @@ class RappIndexer(object):
                 pass
             else:
                 raise
+
+    def merge(self, other_indexer):
+        self.raw_data.update(other_indexer.raw_data)
+        self.raw_data_path.update(other_indexer.raw_data_path)
+
+    def write_tarball(self, filename_prefix):
+        logger.debug("write_tarball() to '%s...'" % filename_prefix)
+        added = set([])
+        with tarfile.open('%s.index.tar.gz' % filename_prefix, 'w:gz') as tar:
+            for rapp in self.raw_data.values():
+                # add package.xml file
+                if rapp.package.filename not in added:
+                    logger.debug("write_tarball() add package.xml '%s" % rapp.package.filename)
+                    tar.add(rapp.package.filename)
+                    added.add(rapp.package.filename)
+                # add .rapp file
+                if rapp.filename not in added:
+                    logger.debug("write_tarball() add .rapp file '%s" % rapp.filename)
+                    tar.add(rapp.filename)
+                    added.add(rapp.filename)
+
+                    base_path = os.path.dirname(rapp.filename)
+                    for value in rapp.raw_data.values():
+                        try:
+                            path = os.path.join(base_path, value)
+                        except AttributeError:
+                            continue
+                        if os.path.exists(path):
+                            logger.debug("write_index() add resource '%s" % path)
+                            tar.add(path)
+                            added.add(path)
+
+def read_tarball(name=None, fileobj=None, package_whitelist=None, package_blacklist=[]):
+    # TODO avoid unpacking
+    logger.debug('read_tarball(name=%s, fileobj=%s)' % (name, fileobj))
+    tempdir = tempfile.mkdtemp(suffix='_unpacked', prefix='rapp_index_')
+    try:
+        logger.debug("read_tarball() unpack to '%s'" % tempdir)
+        with tarfile.open(name=name, fileobj=fileobj, mode='r:gz') as tar:
+            tar.extractall(tempdir)
+        index = RappIndexer(packages_path=tempdir, package_whitelist=package_whitelist, package_blacklist=package_blacklist)
+    finally:
+        #shutil.rmtree(tempdir)
+        pass
+    return index
