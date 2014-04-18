@@ -18,7 +18,7 @@ import sys
 
 from .indexer import RappIndexer, read_tarball
 
-_rapp_repositories_list_file = os.path.join(rospkg.get_ros_home(), 'rocon/rapp.list')
+_rapp_repositories_list_file = os.path.join(rospkg.get_ros_home(), 'rocon', 'rapp', 'rapp.list')
 
 logger = logging.getLogger('rapp_repositories')
 logger.addHandler(logging.StreamHandler(sys.stderr))
