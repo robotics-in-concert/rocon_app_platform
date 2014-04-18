@@ -111,12 +111,16 @@ def is_index(url_or_uri):
     return url_or_uri.endswith('.index.tar.gz')
 
 
-def build_index(base_paths):
+def build_index(base_paths, package_whitelist=None, package_blacklist=[]):
     '''
       Builds the index of rapps found under a list of base paths.
 
       :param base_paths: the list of base paths to crawl
       :type base_paths: [str]
+      :param package_whitelist: list of target package list
+      :type package_whitelist: [str]
+      :param package_blacklist: list of blacklisted package
+      :type package_blacklist: [str]
 
       :returns: the index
       :rtype: rocon_app_utilities.RappIndexer
@@ -125,7 +129,7 @@ def build_index(base_paths):
     assert isinstance(base_paths, list)
     combined_index = RappIndexer(raw_data={})
     for base_path in reversed(base_paths):
-        index = RappIndexer(packages_path=base_path)
+        index = RappIndexer(packages_path=base_path, package_whitelist=package_whitelist, package_blacklist=package_blacklist)
         combined_index.merge(index)
     combined_index.source = ':'.join(base_paths)
     return combined_index
@@ -146,13 +150,17 @@ def get_index_dest_prefix_for_base_paths(base_paths):
     return os.path.join(base_path, filename_prefix)
 
 
-def get_index(uri):
+def get_index(uri, package_whitelist=None, package_blacklist=[]):
     '''
       Gets the index of the rapp repository identified by the URI.
       If the URI is a local folder it checks for the existance of a cached archive first.
 
       :param uri: the URI
       :type uri: str
+      :param package_whitelist: list of target package list
+      :type package_whitelist: [str]
+      :param package_blacklist: list of blacklisted package
+      :type package_blacklist: [str]
 
       :returns: the index
       :rtype: rocon_app_utilities.RappIndexer
@@ -160,13 +168,13 @@ def get_index(uri):
     logger.debug('get_index(%s)' % uri)
     if is_index(uri):
         url = uri2url(uri)
-        return load_index(url)
+        return load_index(url, package_whitelist=package_whitelist, package_blacklist=package_blacklist)
     url = uri2url(uri)
     index_path = has_index(url)
     if index_path:
         index_url = 'file://%s' % index_path
-        return load_index(index_url)
-    return build_index(url)
+        return load_index(index_url, package_whitelist=package_whitelist, package_blacklist=package_blacklist)
+    return build_index(url, package_whitelist=package_whitelist, package_blacklist=package_blacklist)
 
 
 def has_index(base_paths):
@@ -192,9 +200,18 @@ def has_index(base_paths):
     return None
 
 
-def get_combined_index():
+def get_combined_index(package_whitelist=None, package_blacklist=[]):
     '''
       Gets the combined index of the all registered rapp repositories.
+
+      :param package_whitelist: list of target package list
+      :type package_whitelist: [str]
+      :param package_blacklist: list of blacklisted package
+      :type package_blacklist: [str]
+      :param package_whitelist: list of target package list
+      :type package_whitelist: [str]
+      :param package_blacklist: list of blacklisted package
+      :type package_blacklist: [str]
 
       :returns: the index
       :rtype: rocon_app_utilities.RappIndexer
@@ -203,17 +220,21 @@ def get_combined_index():
     combined_index = RappIndexer(raw_data={})
     uris = load_uris()
     for uri in reversed(uris):
-        index = get_index(uri)
+        index = get_index(uri, package_whitelist=package_whitelist, package_blacklist=package_blacklist)
         combined_index.merge(index)
     return combined_index
 
 
-def load_index(index_url):
+def load_index(index_url, package_whitelist=None, package_blacklist=[]):
     '''
       Loads the index for a URL pointing to an index archive.
 
       :param index_url: the URL
       :type index_url: str
+      :param package_whitelist: list of target package list
+      :type package_whitelist: [str]
+      :param package_blacklist: list of blacklisted package
+      :type package_blacklist: [str]
 
       :returns: the index
       :rtype: rocon_app_utilities.RappIndexer
@@ -224,7 +245,7 @@ def load_index(index_url):
     logger.debug('load_index() load gzipped tar index')
     tar_gz_str = load_url(index_url, skip_decode=True)
     tar_gz_stream = StringIO(tar_gz_str)
-    index = read_tarball(fileobj=tar_gz_stream)
+    index = read_tarball(fileobj=tar_gz_stream, package_whitelist=package_whitelist, package_blacklist=package_blacklist)
     index.source = index_url
     return index
 
