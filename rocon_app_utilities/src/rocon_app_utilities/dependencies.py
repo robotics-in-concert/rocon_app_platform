@@ -57,7 +57,11 @@ class DependencyChecker(object):
 
         :param rapp_names: A C{list} of ROCON URIs
 
-        :returns: A C{tuple} of three C{list}s of installable, uninstallable and already installed ROCON URIs
+        :returns: A C{tuple} of three C{dicts}s.
+        The fist dictionary maps Rapp names to installer rules of packages needed to install the rapp.
+        The second dictionary maps the Rapp names to missing dependencies which are not installable.
+        The third dictionary maps the Rapp name to its already installed dependencies.
+        Note that a single rapp name might be listed in multiple if the return dictionaries.
         '''
 
         package_index = _get_package_index(None)
