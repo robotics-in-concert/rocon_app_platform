@@ -91,7 +91,7 @@ def resolve_chain_remappings(nodes):
 
         for fr, to in n.remap_args:
             if str(fr) in new_remap_args_dict:
-                rospy.logwarn("App Manager : Remapping rule for %s already exists. Ignoring remapping rule from %s to %s", str(fr), str(fr), str(to))
+                rospy.logwarn("Rapp Manager : Remapping rule for %s already exists. Ignoring remapping rule from %s to %s", str(fr), str(fr), str(to))
             else:
                 # if there is a value which matches with remap_from, the value should be replaced with the new remap_to
                 keys = [k for k, v in new_remap_args_dict.items() if v == str(fr)]
@@ -141,7 +141,7 @@ def apply_remapping_rules_from_capabilities(launch_spec, data, caps_list):
     caps_remap_from_list = []  # contains the app's topics/services/actions to be remapped
     caps_remap_to_list = []  # contains the new topic/service/action names
     for cap in data['required_capabilities']:  # get capability-specific remappings
-        rospy.loginfo("App Manager : Configuring remappings for capabilty '" + cap['name'] + "'.")
+        rospy.loginfo("Rapp Manager : Configuring remappings for capabilty '" + cap['name'] + "'.")
         if caps_list:
             caps_list.get_cap_remappings(cap, caps_remap_from_list, caps_remap_to_list)
         else:  # should not happen, since app would have been pruned
@@ -152,13 +152,13 @@ def apply_remapping_rules_from_capabilities(launch_spec, data, caps_list):
             for node_remap in node.remap_args:  # topic from - topic to pairs
                 if cap_remap in node_remap[0]:
                     node_remap[1] = unicode(caps_remap_to_list[caps_remap_from_list.index(cap_remap)])
-                    rospy.loginfo("App Manager : Will remap '" + node_remap[0]
+                    rospy.loginfo("Rapp Manager : Will remap '" + node_remap[0]
                                   + "' to '" + node_remap[1] + "'.")
                     remap_applied = True
         if not remap_applied:  # can't determine to which the remapping should be applied to
-            rospy.logwarn("App Manager : Could not determine remapping for capability topic '"
+            rospy.logwarn("Rapp Manager : Could not determine remapping for capability topic '"
                           + cap_remap + "'.")
-            rospy.logwarn("App Manager : App might not function correctly."
+            rospy.logwarn("Rapp Manager : App might not function correctly."
                           + " Add it to the remapped topics, if needed.")
 
 

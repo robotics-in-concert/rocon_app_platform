@@ -35,7 +35,7 @@ from ros_parameters import setup_ros_parameters
 from .rapp import convert_rapps_from_rapp_specs
 
 ##############################################################################
-# App Manager
+# Rapp Manager
 ##############################################################################
 
 
@@ -52,7 +52,7 @@ class RappManager(object):
         self._gateway_name = None  # Name of our local gateway (if available)
         self._gateway_ip = None  # IP/Hostname of our local gateway if available
         self._remote_name = None  # Name (gateway name) for the entity that is remote controlling this app manager
-        self._current_rapp = None  # App that is running, otherwise None
+        self._current_rapp = None  # Rapp that is running, otherwise None
         self._application_namespace = None  # Push all app connections underneath this namespace
         roslaunch.pmon._init_signal_handlers()
         self._services = {}
@@ -74,7 +74,7 @@ class RappManager(object):
         self._init_services()
 
         if self._param['auto_start_rapp']:  # None and '' are both false here
-            request = rapp_manager_srvs.StartAppRequest(self._param['auto_start_rapp'], [])
+            request = rapp_manager_srvs.StartRappRequest(self._param['auto_start_rapp'], [])
             unused_response = self._process_start_app(request)
 
         self._debug_ignores = {}  # a remote_controller_name : timestamp of the last time we logged an ignore response
@@ -154,16 +154,16 @@ class RappManager(object):
         try:
             # Advertisable services - we advertise these by default advertisement rules for the app manager's gateway.
             self._services['platform_info'] = rospy.Service(self._service_names['platform_info'], rocon_std_srvs.GetPlatformInfo, self._process_platform_info)
-            self._services['list_apps'] = rospy.Service(self._service_names['list_apps'], rapp_manager_srvs.GetAppList, self._process_get_runnable_app_list)
+            self._services['list_apps'] = rospy.Service(self._service_names['list_apps'], rapp_manager_srvs.GetRappList, self._process_get_runnable_rapp_list)
             self._services['get_status'] = rospy.Service(self._service_names['get_status'], rapp_manager_srvs.GetStatus, self._process_status)
             self._services['invite'] = rospy.Service(self._service_names['invite'], rapp_manager_srvs.Invite, self._process_invite)
             # Flippable services
-            self._services['start_app'] = rospy.Service(self._service_names['start_app'], rapp_manager_srvs.StartApp, self._process_start_app)
-            self._services['stop_app'] = rospy.Service(self._service_names['stop_app'], rapp_manager_srvs.StopApp, self._process_stop_app)
+            self._services['start_app'] = rospy.Service(self._service_names['start_app'], rapp_manager_srvs.StartRapp, self._process_start_app)
+            self._services['stop_app'] = rospy.Service(self._service_names['stop_app'], rapp_manager_srvs.StopRapp, self._process_stop_app)
             # Latched publishers
             self._publishers['status'] = rospy.Publisher(self._publisher_names['status'], rapp_manager_msgs.Status, latch=True)
-            self._publishers['app_list'] = rospy.Publisher(self._publisher_names['app_list'], rapp_manager_msgs.AppList, latch=True)
-            self._publishers['incompatible_app_list'] = rospy.Publisher(self._publisher_names['incompatible_app_list'], rapp_manager_msgs.IncompatibleAppList, latch=True)
+            self._publishers['app_list'] = rospy.Publisher(self._publisher_names['app_list'], rapp_manager_msgs.RappList, latch=True)
+            self._publishers['incompatible_app_list'] = rospy.Publisher(self._publisher_names['incompatible_app_list'], rapp_manager_msgs.IncompatibleRappList, latch=True)
             # Force an update on the gateway
             self._gateway_publishers['force_update'].publish(std_msgs.Empty())
         except Exception as unused_e:
@@ -172,7 +172,7 @@ class RappManager(object):
             return False
         # initialise the latched publishers
         self._publish_status()
-        self._publish_app_list()
+        self._publish_rapp_list()
         # TODO: Currently blacklisted apps and non-whitelisted apps are not provided yet
         self._publishers['incompatible_app_list'].publish([], [], self._platform_filtered_apps, self._capabilities_filtered_apps)
         self._initialising_services = False
@@ -235,7 +235,7 @@ class RappManager(object):
                     self.caps_list.compatibility_check(rapp)
                     runnable_apps[rapp.ancestor_name] = rapp
                 except exceptions.MissingCapabilitiesException as e:
-                    reason = "cannot be run, since some required capabilities (" + str(e.missing_caps) + ") are not installed. App will be excluded from the list of runnable apps."
+                    reason = "cannot be run, since some required capabilities (" + str(e.missing_caps) + ") are not installed. Rapp will be excluded from the list of runnable rapps."
                     capabilities_filtered_apps[rapp.ancestor_name] = reason
         return runnable_apps, capabilities_filtered_apps
 
@@ -385,21 +385,21 @@ class RappManager(object):
             app_msg_list.append(app.to_msg())
         return app_msg_list
 
-    def _process_get_runnable_app_list(self, req):
-        response = rapp_manager_srvs.GetAppListResponse()
-        response.available_apps.extend(self._get_app_msg_list(self._runnable_apps))
-        response.running_apps = []
+    def _process_get_runnable_rapp_list(self, req):
+        response = rapp_manager_srvs.GetRappListResponse()
+        response.available_rapps.extend(self._get_app_msg_list(self._runnable_apps))
+        response.running_rapps = []
         if self._current_rapp:
-            response.running_apps.append(self._current_rapp.to_msg())
+            response.running_rapps.append(self._current_rapp.to_msg())
         return response
 
     def _get_status_msg(self):
         if self._current_rapp:
-            application = self._current_rapp.to_msg()
-            application_status = rapp_manager_msgs.Constants.APP_RUNNING
+            rapp = self._current_rapp.to_msg()
+            rapp_status = rapp_manager_msgs.Status.RAPP_RUNNING
         else:
-            application = rapp_manager_msgs.App()
-            application_status = rapp_manager_msgs.Constants.APP_STOPPED
+            rapp = rapp_manager_msgs.Rapp()
+            rapp_status = rapp_manager_msgs.Status.RAPP_STOPPED
         #remote_controller = rapp_manager_msgs.Constants.NO_REMOTE_CONTROLLER if req.cancel else req.remote_target_name
         #self._private_publishers['remote_controller'].publish(std_msgs.String(remote_controller))
         if self._remote_name:
@@ -408,8 +408,8 @@ class RappManager(object):
             remote_controller = rapp_manager_msgs.Constants.NO_REMOTE_CONTROLLER
         msg = rapp_manager_msgs.Status(application_namespace=self._application_namespace,
                                        remote_controller=remote_controller,
-                                       application_status=application_status,
-                                       application=application
+                                       rapp_status=rapp_status,
+                                       rapp=rapp
                                        )
         return msg
 
@@ -420,28 +420,28 @@ class RappManager(object):
         """
         self._publishers['status'].publish(self._get_status_msg())
 
-    def _publish_app_list(self):
+    def _publish_rapp_list(self):
         '''
           Publishes an updated list of available and running apps (in that order).
         '''
-        app_list = rapp_manager_msgs.AppList()
+        rapp_list = rapp_manager_msgs.RappList()
         try:
             if self._current_rapp:
-                app_list.available_apps.extend(self._get_app_msg_list(self._runnable_apps))
-                app_list.running_apps = [self._current_rapp.to_msg()]
+                rapp_list.available_rapps.extend(self._get_app_msg_list(self._runnable_apps))
+                rapp_list.running_rapps = [self._current_rapp.to_msg()]
             else:
-                app_list.available_apps.extend(self._get_app_msg_list(self._runnable_apps))
-                app_list.running_apps = []
-            self._publishers['app_list'].publish(app_list)
+                rapp_list.available_rapps.extend(self._get_app_msg_list(self._runnable_apps))
+                rapp_list.running_rapps = []
+            self._publishers['app_list'].publish(rapp_list)
         except KeyError:
             pass
         except rospy.exceptions.ROSException:  # publishing to a closed topic.
             pass
 
     def _process_start_app(self, req):
-        resp = rapp_manager_srvs.StartAppResponse()
-        resp.app_namespace = self._application_namespace
-        rospy.loginfo("Rapp Manager : request received to start app [%s]" % req.name)
+        resp = rapp_manager_srvs.StartRappResponse()
+        resp.application_namespace = self._application_namespace
+        rospy.loginfo("Rapp Manager : request received to start rapp [%s]" % req.name)
 
         # check is the app is already running
         if self._current_rapp:
@@ -501,7 +501,7 @@ class RappManager(object):
             self._flip_connections(self._remote_name, action_servers, gateway_msgs.ConnectionType.ACTION_SERVER)
         if resp.started:
             self._current_rapp = rapp
-            self._publish_app_list()
+            self._publish_rapp_list()
             self._publish_status()
             thread.start_new_thread(self._monitor_rapp, ())
         return resp
@@ -514,7 +514,7 @@ class RappManager(object):
 
           :param req: variable configured when triggered from the service call.
         '''
-        resp = rapp_manager_srvs.StopAppResponse()
+        resp = rapp_manager_srvs.StopRappResponse()
         if not self._current_rapp:
             resp.stopped = False
             resp.error_code = rapp_manager_msgs.ErrorCodes.RAPP_IS_NOT_RUNNING
@@ -536,7 +536,7 @@ class RappManager(object):
 
         if resp.stopped:
             self._current_rapp = None
-            self._publish_app_list()
+            self._publish_rapp_list()
             self._publish_status()
             if 'required_capabilities' in self._runnable_apps[rapp_name].data:
                 rospy.loginfo("Rapp Manager : Stopping required capabilities.")

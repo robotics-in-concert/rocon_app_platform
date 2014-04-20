@@ -17,7 +17,7 @@
   <arg name="local_remote_controllers_only" default="false"/> <!-- allow remote control for local machine tests only -->
   <arg name="screen" default="false"/>  <!-- verbose output from running apps -->
 
-  <!-- ***************************** App Manager ******************************* -->
+  <!-- ***************************** Rapp Manager ******************************* -->
   <include file="$(find rocon_app_manager)/launch/paired_private.launch">
     <arg name="robot_name" value="$(arg robot_name)" />
     <arg name="robot_type" value="$(arg robot_type)" />

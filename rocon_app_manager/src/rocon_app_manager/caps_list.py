@@ -184,14 +184,14 @@ class CapsList(object):
                     caps_remap_from_list.append(cap['interface']['topics']['requires'][topic])
                     caps_remap_to_list.append(topic)
                 else:
-                    rospy.logwarn("App Manager : Capability topic '" + topic + "' not specified in rapp description."
+                    rospy.logwarn("Rapp Manager : Capability topic '" + topic + "' not specified in rapp description."
                                   + " Can't apply automatic remapping for this topic.")
             for topic in interface.provided_topics:
                 if topic in cap['interface']['topics']['provides']:
                     caps_remap_from_list.append(cap['interface']['topics']['provides'][topic])
                     caps_remap_to_list.append(topic)
                 else:
-                    rospy.logwarn("App Manager : Capability topic '" + topic + "' not specified in rapp description."
+                    rospy.logwarn("Rapp Manager : Capability topic '" + topic + "' not specified in rapp description."
                                   + " Can't apply automatic remapping for this topic.")
 
             for service in interface.required_services:
@@ -199,7 +199,7 @@ class CapsList(object):
                     caps_remap_from_list.append(cap['interface']['services']['requires'][service])
                     caps_remap_to_list.append(service)
                 else:
-                    rospy.logwarn("App Manager : Capability service '" + service
+                    rospy.logwarn("Rapp Manager : Capability service '" + service
                                   + "' not specified in rapp description."
                                   + " Can't apply automatic remapping for this service.")
             for service in interface.provided_services:
@@ -207,7 +207,7 @@ class CapsList(object):
                     caps_remap_from_list.append(cap['interface']['services']['provides'][service])
                     caps_remap_to_list.append(service)
                 else:
-                    rospy.logwarn("App Manager : Capability service '" + service
+                    rospy.logwarn("Rapp Manager : Capability service '" + service
                                   + "' not specified in rapp description."
                                   + " Can't apply automatic remapping for this service.")
 
@@ -216,14 +216,14 @@ class CapsList(object):
                     caps_remap_from_list.append(cap['interface']['actions']['requires'][action])
                     caps_remap_to_list.append(action)
                 else:
-                    rospy.logwarn("App Manager : Capability action '" + action + "' not specified in rapp description."
+                    rospy.logwarn("Rapp Manager : Capability action '" + action + "' not specified in rapp description."
                                   + " Can't apply automatic remapping for this action.")
             for action in interface.provided_actions:
                 if action in cap['interface']['actions']['provides']:
                     caps_remap_from_list.append(cap['interface']['actions']['provides'][action])
                     caps_remap_to_list.append(action)
                 else:
-                    rospy.logwarn("App Manager : Capability action '" + action + "' not specified in rapp description."
+                    rospy.logwarn("Rapp Manager : Capability action '" + action + "' not specified in rapp description."
                                   + " Can't apply automatic remapping for this action.")
         else:
             for remap in interface.remappings:
@@ -245,7 +245,7 @@ class CapsList(object):
                         caps_remap_to_list.append(semantic_remap)
                         remap_found = True
                 if not remap_found:
-                    rospy.logwarn("App Manager : Semantic capability remapping '" + semantic_remap
+                    rospy.logwarn("Rapp Manager : Semantic capability remapping '" + semantic_remap
                                   + "' not specified in rapp description. Can't apply automatic remapping for it.")
 
         # check the interface's provider for additional remappings - not yet supported
@@ -274,25 +274,25 @@ def start_capabilities_from_caps_list(capabilities, caps_list):
         try:
             start_resp = caps_list.start_capability(cap["name"])
         except rospy.ROSException as exc:
-            message = ("App Manager : service for starting capabilities is not available."
+            message = ("Rapp Manager : service for starting capabilities is not available."
                        + " Will not start app. Error:"
                        + str(exc))
-            rospy.logerr("App Manager : %s" % message)
+            rospy.logerr("Rapp Manager : %s" % message)
             return False, message
         except IOError as exc:
-            message = ("App Manager : error occurred while processing 'start_capability' service."
+            message = ("Rapp Manager : error occurred while processing 'start_capability' service."
                        + " Will not start app. Error: "
                        + str(exc))
-            rospy.logerr("App Manager : %s" % message)
+            rospy.logerr("Rapp Manager : %s" % message)
             return False, message
         if start_resp:
-            rospy.loginfo("App Manager : started required capability '" + str(cap["name"]) + "'.")
+            rospy.loginfo("Rapp Manager : started required capability '" + str(cap["name"]) + "'.")
         else:
-            message = ("App Manager : starting capability '" + str(cap["name"]) + " was not successful."
+            message = ("Rapp Manager : starting capability '" + str(cap["name"]) + " was not successful."
                        " Will not start app.")
-            rospy.logerr("App Manager : %s" % message)
+            rospy.logerr("Rapp Manager : %s" % message)
             return False, message
-    rospy.loginfo("App Manager : all required capabilities have been started.")
+    rospy.loginfo("Rapp Manager : all required capabilities have been started.")
     return True, ""
 
 
@@ -312,21 +312,21 @@ def stop_capabilities_from_caps_list(capabilities, caps_list):
         try:
             start_resp = caps_list.stop_capability(cap["name"])
         except rospy.ROSException as exc:
-            message = ("App Manager : Service for stopping capabilities is not available."
+            message = ("Rapp Manager : Service for stopping capabilities is not available."
                        + " Error:" + str(exc))
-            rospy.logerr("App Manager : %s" % message)
+            rospy.logerr("Rapp Manager : %s" % message)
             return False, message
         except IOError as exc:
-            message = ("App Manager : Error occurred while processing 'stop_capability' service."
+            message = ("Rapp Manager : Error occurred while processing 'stop_capability' service."
                        + " Error: " + str(exc))
-            rospy.logerr("App Manager : %s" % message)
+            rospy.logerr("Rapp Manager : %s" % message)
             return False, message
         if start_resp:
-            rospy.loginfo("App Manager : Stopped required capability '" + str(cap["name"]) + "'.")
+            rospy.loginfo("Rapp Manager : Stopped required capability '" + str(cap["name"]) + "'.")
         else:
-            message = ("App Manager : Stopping capability '" + str(cap["name"])
+            message = ("Rapp Manager : Stopping capability '" + str(cap["name"])
                        + " was not successful.")
-            rospy.logerr("App Manager : %s" % message)
+            rospy.logerr("Rapp Manager : %s" % message)
             return False, message
-    rospy.loginfo("App Manager : All required capabilities have been stopped.")
+    rospy.loginfo("Rapp Manager : All required capabilities have been stopped.")
     return True, ""

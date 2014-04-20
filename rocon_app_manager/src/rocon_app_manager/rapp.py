@@ -54,9 +54,9 @@ class Rapp(object):
           Converts this app definition to ros msg format.
 
           :returns: ros message format of Rapp
-          :rtype: rocon_app_manager_msgs.msg.App
+          :rtype: rocon_app_manager_msgs.Rapp
         '''
-        a = rapp_manager_msgs.App()
+        a = rapp_manager_msgs.Rapp()
         a.name = self.data['name']
         a.display_name = self.data['display_name']
         a.description = self.data['description']
@@ -117,12 +117,12 @@ class Rapp(object):
                 self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
 
         except MissingCapabilitiesException as e:
-            rospy.logerr("App Manager : Couldn't get cap remappings. Error: " + str(e))
+            rospy.logerr("Rapp Manager : couldn't get capability remappings. Error: " + str(e))
             return False, "Error while launching " + data['name'], [], [], [], [], []
         except Exception as e:
             print str(e)
             traceback.print_stack()
-            rospy.logerr("App Manager : Error while launching " + data['launch'])
+            rospy.logerr("Rapp Manager : error while launching " + data['launch'])
             data['status'] = "Error while launching " + data['launch']
             return False, "Error while launching " + data['name'], [], [], [], [], []
         finally:
@@ -138,7 +138,7 @@ class Rapp(object):
                 finally:
                     self._launch = None
                     data['status'] = 'Ready'
-                rospy.loginfo("App Manager : Stopped rapp [%s]" % data['name'] + "'.")
+                rospy.loginfo("Rapp Manager : stopped rapp [%s]" % data['name'] + "'.")
         except Exception as e:
             print str(e)
             error_msg = "Error while stopping rapp '" + data['name'] + "'."

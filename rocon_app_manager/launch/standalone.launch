@@ -13,7 +13,7 @@
   <arg name="rapp_package_blacklist" default="[]"/>
   <arg name="screen" default="true"/>  <!-- verbose output from running apps -->
   
-  <!-- ****************************** App Manager ****************************** -->
+  <!-- ****************************** Rapp Manager ****************************** -->
   <include file="$(find rocon_app_manager)/launch/includes/_app_manager.xml">
     <arg name="robot_name" value="$(arg robot_name)" />
     <arg name="robot_type" value="$(arg robot_type)" />

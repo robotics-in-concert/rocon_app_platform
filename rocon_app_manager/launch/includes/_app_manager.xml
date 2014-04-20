@@ -14,7 +14,7 @@
   <arg name="screen" default="false"/>  <!-- verbose output from running apps -->
   <arg name="capability_server_name" default="capability_server"/>  <!-- name of the capability server -->
 
-  <!-- **************************** App Manager ******************************** -->
+  <!-- **************************** Rapp Manager ******************************** -->
   <node pkg="rocon_app_manager" type="rapp_manager.py" name="app_manager">
     <rosparam command="load" file="$(find rocon_app_manager)/param/app_manager_defaults.yaml" />
     <rosparam param="rapp_package_whitelist" subst_value="True">$(arg rapp_package_whitelist)</rosparam>

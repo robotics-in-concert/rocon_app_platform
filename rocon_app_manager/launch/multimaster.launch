@@ -29,7 +29,7 @@
     <arg name="hub_whitelist" value="$(arg hub_whitelist)" />
   </include>
 
-  <!-- ****************************** App Manager ****************************** -->
+  <!-- ****************************** Rapp Manager ****************************** -->
   <include file="$(find rocon_app_manager)/launch/includes/_app_manager.xml">
     <arg name="robot_name" value="$(arg robot_name)" />
     <arg name="robot_type" value="$(arg robot_type)" />
