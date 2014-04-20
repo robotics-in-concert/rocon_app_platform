@@ -9,15 +9,15 @@ default_advertisements:
     - name: .*invite
       node: .*app_manager
       type: service
-    - name: .*list_apps
+    - name: .*list_rapps
       node: .*app_manager
       type: service
     - name: .*get_status
       node: .*app_manager
       type: service
-    - name: .*app_list
-      node: .*app_manager
-      type: publisher
+#    - name: .*rapp_list
+#      node: .*app_manager
+#      type: publisher
     - name: .*status
       node: .*app_manager
       type: publisher

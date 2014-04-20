@@ -19,7 +19,7 @@ default_pulls:
         type: service
     - gateway: .*
       rule:  
-        name: .*list_apps
+        name: .*list_rapps
         node: None
         type: service
     - gateway: .*
@@ -34,7 +34,7 @@ default_pulls:
         type: service
     - gateway: .*
       rule:  
-        name: .*app_list
+        name: .*rapp_list
         node: None
         type: publisher
         
