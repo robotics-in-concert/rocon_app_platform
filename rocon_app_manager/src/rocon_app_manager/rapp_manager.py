@@ -69,7 +69,6 @@ class RappManager(object):
         self._indexer = rocon_app_utilities.RappIndexer(package_whitelist=self._param['rapp_package_whitelist'], package_blacklist=self._param['rapp_package_blacklist'])
         self._runnable_apps, self._platform_filtered_apps, self._capabilities_filtered_apps, self._invalid_apps = self._determine_runnable_rapps()
 
-        self._private_publishers = self._init_private_publishers()
         self._init_default_service_names()
         self._init_gateway_services()
         self._init_services()
@@ -80,18 +79,6 @@ class RappManager(object):
 
         self._debug_ignores = {}  # a remote_controller_name : timestamp of the last time we logged an ignore response
         rospy.loginfo("Rapp Manager : initialised.")
-
-    def _init_private_publishers(self):
-        '''
-          Generate some private publishers for internal nodes to introspect on (these do not sit on the
-          shifting namespace used for the remote controller and never get advertised/flipped).
-        '''
-        private_publishers = {}
-        # this should merge into status at some point in the future
-        private_publishers['remote_controller'] = rospy.Publisher('~remote_controller', std_msgs.String, latch=True)
-        # initialise some of the bastards
-        private_publishers['remote_controller'].publish(std_msgs.String(rapp_manager_msgs.Constants.NO_REMOTE_CONTROLLER))
-        return private_publishers
 
     def _set_platform_info(self):
         '''
@@ -318,8 +305,6 @@ class RappManager(object):
                 response = rapp_manager_srvs.InviteResponse(False, rapp_manager_msgs.ErrorCodes.INVITING_CONTROLLER_BLACKLISTED, "this remote controller has been blacklisted")
         # publish an update locally
         if response.result:
-            remote_controller = rapp_manager_msgs.Constants.NO_REMOTE_CONTROLLER if req.cancel else req.remote_target_name
-            self._private_publishers['remote_controller'].publish(std_msgs.String(remote_controller))
             self._publish_status()
         return response
 
@@ -391,17 +376,7 @@ class RappManager(object):
           :type req: rapp_manager_srvs.GetStatusRequest
         '''
         response = rapp_manager_srvs.GetStatusResponse()
-        if self._current_rapp:
-            response.application_status = rapp_manager_msgs.Constants.APP_RUNNING
-            response.application = self._current_rapp.to_msg()
-        else:
-            response.application_status = rapp_manager_msgs.Constants.APP_STOPPED
-            response.application = rapp_manager_msgs.App()
-        if self._remote_name:
-            response.remote_controller = self._remote_name
-        else:
-            response.remote_controller = rapp_manager_msgs.Constants.NO_REMOTE_CONNECTION
-        response.application_namespace = self._application_namespace
+        response.status = self._get_status_msg()
         return response
 
     def _get_app_msg_list(self, app_list_dictionary):
@@ -418,26 +393,32 @@ class RappManager(object):
             response.running_apps.append(self._current_rapp.to_msg())
         return response
 
-    def _publish_status(self):
-        """
-         Publish status updates whenever something significant changes, e.g.
-         remote controller changed, or rapp started/stopped.
-        """
+    def _get_status_msg(self):
         if self._current_rapp:
             application = self._current_rapp.to_msg()
             application_status = rapp_manager_msgs.Constants.APP_RUNNING
         else:
             application = rapp_manager_msgs.App()
             application_status = rapp_manager_msgs.Constants.APP_STOPPED
+        #remote_controller = rapp_manager_msgs.Constants.NO_REMOTE_CONTROLLER if req.cancel else req.remote_target_name
+        #self._private_publishers['remote_controller'].publish(std_msgs.String(remote_controller))
         if self._remote_name:
             remote_controller = self._remote_name
         else:
-            remote_controller = rapp_manager_msgs.Constants.NO_REMOTE_CONNECTION
-        self._publishers['status'].publish(application_namespace=self._application_namespace,
-                                            remote_controller=remote_controller,
-                                            application_status=application_status,
-                                            application=application
-                                            )
+            remote_controller = rapp_manager_msgs.Constants.NO_REMOTE_CONTROLLER
+        msg = rapp_manager_msgs.Status(application_namespace=self._application_namespace,
+                                       remote_controller=remote_controller,
+                                       application_status=application_status,
+                                       application=application
+                                       )
+        return msg
+
+    def _publish_status(self):
+        """
+         Publish status updates whenever something significant changes, e.g.
+         remote controller changed, or rapp started/stopped.
+        """
+        self._publishers['status'].publish(self._get_status_msg())
 
     def _publish_app_list(self):
         '''
