@@ -12,9 +12,13 @@ default_advertisements:
     - name: .*list_apps
       node: .*app_manager
       type: service
-    - name: .*status
+    - name: .*get_status
       node: .*app_manager
       type: service
     - name: .*app_list
       node: .*app_manager
       type: publisher
+    - name: .*status
+      node: .*app_manager
+      type: publisher
+      
