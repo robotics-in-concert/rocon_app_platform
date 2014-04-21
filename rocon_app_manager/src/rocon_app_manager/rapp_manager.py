@@ -29,12 +29,14 @@ import rocon_uri
 import rospkg.os_detect
 import rocon_python_utils
 import rocon_app_utilities
+from rocon_app_utilities import rapp_repositories
 
 # local imports
 from . import exceptions
 from ros_parameters import setup_ros_parameters
-from .rapp import Rapp, convert_rapps_from_rapp_specs
+from .rapp import convert_rapps_from_rapp_specs
 from .utils import *
+
 ##############################################################################
 # App Manager
 ##############################################################################
@@ -66,9 +68,11 @@ class RappManager(object):
         self.caps_list = {}
         self._initialising_services = False
 
-        rospy.loginfo("App Manager : indexing rapps...")
-        self._indexer = rocon_app_utilities.RappIndexer(package_whitelist=self._param['rapp_package_whitelist'], package_blacklist=self._param['rapp_package_blacklist'])
-        self._runnable_apps, self._platform_filtered_apps, self._capabilities_filtered_apps, self._invalid_apps = self._determine_runnable_rapps()
+        rospy.loginfo("App Manager : Indexing rapps...")
+#        self._indexer = rocon_app_utilities.RappIndexer(package_whitelist=self._param['rapp_package_whitelist'], package_blacklist=self._param['rapp_package_blacklist'])
+        self._indexer = rapp_repositories.get_combined_index(package_whitelist=self._param['rapp_package_whitelist'], package_blacklist=self._param['rapp_package_blacklist'])
+        self._dependency_checker = rocon_app_utilities.DependencyChecker(self._indexer)
+        self._runnable_apps, self._installable_apps, self._noninstallable_rapps, self._platform_filtered_apps, self._capabilities_filtered_apps, self._invalid_apps = self._determine_runnable_rapps()
 
         self._private_publishers = self._init_private_publishers()
         self._init_default_service_names()
@@ -81,7 +85,7 @@ class RappManager(object):
             unused_response = self._process_start_app(request)
 
         self._debug_ignores = {}  # a remote_controller_name : timestamp of the last time we logged an ignore response
-        rospy.loginfo("App Manager : initialised.")
+        rospy.loginfo("App Manager : Initialised.")
 
     def _init_private_publishers(self):
         '''
@@ -199,25 +203,34 @@ class RappManager(object):
         rospy.loginfo("App Manager : determining runnable rapps...")
         compatible_rapps, platform_incompatible_rapps, invalid_rapps = self._indexer.get_compatible_rapps(self._rocon_uri)
         runnable_rapp_specs, capabilities_incompatible_rapps = self._filter_capability_unavailable_rapps(compatible_rapps)
+        runnable_rapp_specs, installable_rapp_specs, noninstallable_rapp_specs = self._determine_installed_rapps(runnable_rapp_specs)
+        installable_rapps = convert_rapps_from_rapp_specs(installable_rapp_specs)
         runnable_rapps = convert_rapps_from_rapp_specs(runnable_rapp_specs)
 
         # Log out the rapps
+        for rapp_name, reason in invalid_rapps.items():
+            rospy.logwarn("App Manager : '" + rapp_name + "' is invalid [" + str(reason) + "]")
+
         for rapp in platform_incompatible_rapps.values():
             rospy.logwarn("App Manager : '" + str(rapp.resource_name) + "' is incompatible [" + rapp.raw_data['compatibility'] + "][" + self._rocon_uri + "]")
 
         for rapp_name, reason in capabilities_incompatible_rapps.items():
-            rospy.logwarn("App Manager : '" + rapp_name + "' is incompatible [" + str(reason) + "]")
+            rospy.logwarn("App Manager : '" + rapp_name + "' is compatible, but is missing capabilities [" + str(reason) + "]")
 
-        for rapp_name, reason in invalid_rapps.items():
-            rospy.logwarn("App Manager : '" + rapp_name + "' is invalid [" + str(reason) + "]")
+        for rapp_name, reason in noninstallable_rapp_specs.items():
+            rospy.logwarn("App Manager : '" + rapp_name + "' is compatible, but cannot be installed.")
 
-        for rapp_name, v in runnable_rapps.items():
+        for rapp_name, unused_v in installable_rapps.items():
+            rospy.loginfo("App Manager : '" + rapp_name + "' added to the list of installable apps.")
+
+        for rapp_name, unused_v in runnable_rapps.items():
             rospy.loginfo("App Manager : '" + rapp_name + "' added to the list of runnable apps.")
 
-        platform_filtered_rapps = platform_incompatible_rapps.keys() 
+        noninstallable_rapps = noninstallable_rapp_specs.keys()
+        platform_filtered_rapps = platform_incompatible_rapps.keys()
         capabilities_filtered_rapps = capabilities_incompatible_rapps.keys()
 
-        return (runnable_rapps, platform_filtered_rapps, capabilities_filtered_rapps, invalid_rapps)
+        return (runnable_rapps, installable_rapps, noninstallable_rapps, platform_filtered_rapps, capabilities_filtered_rapps, invalid_rapps)
 
     def _filter_capability_unavailable_rapps(self, compatible_rapps):
         '''
@@ -233,8 +246,8 @@ class RappManager(object):
         capabilities_filtered_apps = {}
         runnable_apps = {}
 
-        # Then add runable apps to list
-        for rapp_name, rapp in compatible_rapps.items():
+        # Then add runnable apps to list
+        for unused_rapp_name, rapp in compatible_rapps.items():
             if not is_caps_available:
                 if 'required_capabilities' in rapp.data:
                     reason = "cannot be run, since capabilities are not available. Rapp will be excluded from the list of runnable apps."
@@ -249,6 +262,42 @@ class RappManager(object):
                     reason = "cannot be run, since some required capabilities (" + str(e.missing_caps) + ") are not installed. App will be excluded from the list of runnable apps."
                     capabilities_filtered_apps[rapp.ancestor_name] = reason
         return runnable_apps, capabilities_filtered_apps
+
+    def _determine_installed_rapps(self, rapps):
+        '''
+         Determines, which rapps have all their dependencies installed and which not.
+
+          :params rapps: a list of rapps
+          :type rapps: dict
+
+          :returns: runnable rapps, installable rapps, noninstallable rapps
+          :rtype: dict, dict, dict
+        '''
+        rospy.loginfo("App Manager : determining installed rapps...")
+
+        rapp_names = []
+        for rapp in rapps:
+            rapp_names.append(rapp)
+        installable_rapp_names, unused_noninstallable_rapp_names, installed_rapp_names = \
+        self._dependency_checker.check_rapp_dependencies(rapp_names)
+
+        # TODO: Remove this workaround for issue https://github.com/robotics-in-concert/rocon_app_platform/issues/210
+        for name in installable_rapp_names:
+            if name in installed_rapp_names:
+                del installed_rapp_names[name]
+
+        runnable_rapps = {}
+        installable_rapps = {}
+        noninstallable_rapps = {}
+        for rapp in rapps:
+            if rapp in installed_rapp_names:
+                runnable_rapps[rapp] = rapps[rapp]
+            elif rapp in installable_rapp_names:
+                installable_rapps[rapp] = rapps[rapp]
+            else:
+                noninstallable_rapps[rapp] = rapps[rapp]
+
+        return (runnable_rapps, installable_rapps, noninstallable_rapps)
 
     def _init_capabilities(self):
         try:
@@ -410,6 +459,7 @@ class RappManager(object):
     def _process_get_runnable_app_list(self, req):
         response = rapp_manager_srvs.GetAppListResponse()
         response.available_apps.extend(self._get_app_msg_list(self._runnable_apps))
+        response.available_apps.extend(self._get_app_msg_list(self._installable_apps))
         response.running_apps = []
         if self._current_rapp:
             response.running_apps.append(self._current_rapp.to_msg())
@@ -421,11 +471,11 @@ class RappManager(object):
         '''
         app_list = rapp_manager_msgs.AppList()
         try:
+            app_list.available_apps.extend(self._get_app_msg_list(self._runnable_apps))
+            app_list.available_apps.extend(self._get_app_msg_list(self._installable_apps))
             if self._current_rapp:
-                app_list.available_apps.extend(self._get_app_msg_list(self._runnable_apps))
                 app_list.running_apps = [self._current_rapp.to_msg()]
             else:
-                app_list.available_apps.extend(self._get_app_msg_list(self._runnable_apps))
                 app_list.running_apps = []
             self._publishers['app_list'].publish(app_list)
         except KeyError:
@@ -436,12 +486,12 @@ class RappManager(object):
     def _process_start_app(self, req):
         resp = rapp_manager_srvs.StartAppResponse()
         resp.app_namespace = self._application_namespace
-        rospy.loginfo("App Manager : request received to start app [%s]" % req.name)
+        rospy.loginfo("App Manager : Request received to start app '%s'" % req.name)
 
         # check is the app is already running
         if self._current_rapp:
             resp.started = False
-            resp.message = "an app is already running [%s]" % self._current_rapp.data['name']
+            resp.message = "An app is already running [%s]" % self._current_rapp.data['name']
             rospy.logwarn("App Manager : %s" % resp.message)
             return resp
 
@@ -449,33 +499,46 @@ class RappManager(object):
         try:
             rapp = self._runnable_apps[req.name]
         except KeyError:
-            resp.started = False
-
-            # check if app is installed
-            #    Since we use indexer from now, it is hard to know whether rapp is installed or not.
-            #    This will return once we see a necesity of informative message
-            #if not req.name in self._preinstalled_apps:
-            #    resp.message = ("The requested app '%s' is not installed." % req.name)
-            #    rospy.logwarn("App Manager : %s" % resp.message)
-            #    return resp
-            resp.message = ("The requested app '%s' is installed, but cannot be started"
-                            ", because its required capabilities are not available." % req.name)
-            rospy.logwarn("App Manager : %s" % resp.message)
-            return resp
+            # check if app can be installed
+            try:
+                rapp = self._installable_apps[req.name]
+                if self._param['auto_rapp_installation']:
+                    rospy.loginfo("App Manager : Installing rapp '" + rapp.data['name'] + "'")
+                    success, reason = rapp.install(self._dependency_checker)
+                    if success:
+                        rospy.loginfo("App Manager : Rapp '" + rapp.data['name'] + "'has been installed.")
+                    else:
+                        resp.started = False
+                        resp.message = "Installing rapp '" + rapp.data['name'] + "' failed. Reason: " + str(reason)
+                        rospy.logwarn("App Manager : %s" % resp.message)
+                        return resp
+                else:
+                    resp.started = False
+                    url = "'http://wiki.ros.org/rocon_app_manager/Tutorials/indigo/Automatic Rapp Installation'"
+                    resp.message = str("Rapp '" + rapp.data['name'] + "' can be installed, "
+                                       + "but automatic installation is not enabled. Please refer to " + str(url)
+                                       + " for instructions on how to set up automatic rapp installation.")
+                    rospy.logwarn("App Manager : %s" % resp.message)
+                    return resp
+            except KeyError:
+                resp.started = False
+                resp.message = ("The requested app '%s' is not among the runnable, nor installable rapps." % rapp.data['name'])
+                rospy.logwarn("App Manager : %s" % resp.message)
+                return resp
 
         # check if the app requires capabilities
-        caps_list = self.caps_list if 'required_capabilities' in self._runnable_apps[req.name].data else None
+        caps_list = self.caps_list if 'required_capabilities' in rapp.data else None
 
         if caps_list:
-            rospy.loginfo("App Manager : starting required capabilities.")
-            result, message = start_capabilities_from_caps_list(self._runnable_apps[req.name].data['required_capabilities'], self.caps_list)
+            rospy.loginfo("App Manager : Starting required capabilities.")
+            result, message = start_capabilities_from_caps_list(rapp.data['required_capabilities'], self.caps_list)
 
             if not result:  # if not none, it failed to start capabilities
                 resp.started = False
                 resp.message = message
                 return resp
 
-        rospy.loginfo("App Manager : starting app '" + req.name + "' underneath " + self._application_namespace)
+        rospy.loginfo("App Manager : Starting app '" + rapp.data['name'] + "' underneath " + self._application_namespace)
         resp.started, resp.message, subscribers, publishers, services, action_clients, action_servers = \
             rapp.start(self._application_namespace,
                        self._gateway_name,
@@ -529,15 +592,14 @@ class RappManager(object):
             self._flip_connections(self._remote_name, action_servers, gateway_msgs.ConnectionType.ACTION_SERVER, cancel_flag=True)
 
         if resp.stopped:
-            self._current_rapp = None
             self._publish_app_list()
-            if 'required_capabilities' in self._runnable_apps[rapp_name].data:
+            if 'required_capabilities' in self._current_rapp.data:
                 rospy.loginfo("App Manager : Stopping required capabilities.")
-                result, message = stop_capabilities_from_caps_list(self._runnable_apps[rapp_name].data['required_capabilities'], self.caps_list)
+                result, message = stop_capabilities_from_caps_list(self._current_rapp.data['required_capabilities'], self.caps_list)
                 if not result:  # if not none, it failed to start capabilities
                     resp.stop = False
                     resp.message = message
-                    return resp
+        self._current_rapp = None
         return resp
 
     ##########################################################################

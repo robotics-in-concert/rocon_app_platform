@@ -12,6 +12,9 @@
   <arg name="rapp_package_whitelist" default="[rocon_apps]"/> <!-- comma separated list of package names -->
   <arg name="rapp_package_blacklist" default="[]"/>
   <arg name="screen" default="true"/>  <!-- verbose output from running apps -->
+  <!-- See 'http://wiki.ros.org/rocon_app_manager/Tutorials/indigo/Automatic Rapp Installation'
+       on how to enable automatic rapp installation -->
+  <arg name="auto_rapp_installation" default="false"/>
   
   <!-- ****************************** App Manager ****************************** -->
   <include file="$(find rocon_app_manager)/launch/includes/_app_manager.xml">
@@ -22,6 +25,6 @@
     <arg name="rapp_package_blacklist" value="$(arg rapp_package_blacklist)" />
     <arg name="auto_start_rapp" value="$(arg auto_start_rapp)" />
     <arg name="screen" value="$(arg screen)" />
+    <arg name="auto_rapp_installation" value="$(arg auto_rapp_installation)" />
   </include>
-
 </launch>

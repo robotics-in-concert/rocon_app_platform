@@ -8,6 +8,7 @@
 
 import os
 import rospy
+import subprocess
 import traceback
 import rocon_python_utils
 import rocon_app_manager_msgs.msg as rapp_manager_msgs
@@ -40,7 +41,7 @@ class Rapp(object):
         '''
         self._connections = _init_connections()
         self._raw_data = rapp_specification
-        self.data = rapp_specification.data 
+        self.data = rapp_specification.data
         self.data['status'] = 'Ready'
 
     def __repr__(self):
@@ -69,6 +70,36 @@ class Rapp(object):
             a.required_capabilities = [cap['name'] for cap in self.data[key]]
 
         return a
+
+
+    def install(self, dependency_checker):
+        '''
+          Installs all dependencies of the specified rapp
+
+          :param dependency_checker: DependencyChecker object for installation of the rapp dependencies
+          :type dependency_checker: :py:class:`rocon_app_utilities.rapp_repositories.DependencyChecker`
+
+          :returns: A C{tuple} of a flag for the installation success and a string containing the reason of failure
+          :rtype: C{tuple}
+        '''
+        success = False
+
+        # Trigger the installation of all rapp dependencies
+        rapps = []
+        rapps.append(self.data['name'])
+        try:
+            dependency_checker.install_rapp_dependencies(rapps)
+        except Exception as e:
+            return success, str(e)
+
+        # Update the rospack cache
+        devnull = open(os.devnull, 'w')
+        subprocess.call(['rospack', 'profile'], stdout=devnull, stderr=subprocess.STDOUT)
+        devnull = devnull.close()
+        
+        success = True
+        
+        return success, str()
 
     def start(self, application_namespace, gateway_name, rocon_uri_string, remappings=[], force_screen=False,
               caps_list=None):
