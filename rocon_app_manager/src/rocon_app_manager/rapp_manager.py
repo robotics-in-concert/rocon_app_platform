@@ -106,7 +106,6 @@ class RappManager(object):
         self._default_service_names = {}
         self._default_service_names['platform_info'] = 'platform_info'
         self._default_service_names['list_rapps'] = 'list_rapps'
-        self._default_service_names['get_status'] = 'get_status'
         self._default_service_names['invite'] = 'invite'
         self._default_service_names['start_rapp'] = 'start_rapp'
         self._default_service_names['stop_rapp'] = 'stop_rapp'
@@ -155,7 +154,6 @@ class RappManager(object):
             # Advertisable services - we advertise these by default advertisement rules for the app manager's gateway.
             self._services['platform_info'] = rospy.Service(self._service_names['platform_info'], rocon_std_srvs.GetPlatformInfo, self._process_platform_info)
             self._services['list_rapps'] = rospy.Service(self._service_names['list_rapps'], rapp_manager_srvs.GetRappList, self._process_get_runnable_rapp_list)
-            self._services['get_status'] = rospy.Service(self._service_names['get_status'], rapp_manager_srvs.GetStatus, self._process_status)
             self._services['invite'] = rospy.Service(self._service_names['invite'], rapp_manager_srvs.Invite, self._process_invite)
             # Flippable services
             self._services['start_rapp'] = rospy.Service(self._service_names['start_rapp'], rapp_manager_srvs.StartRapp, self._process_start_app)
@@ -364,21 +362,6 @@ class RappManager(object):
                                                     icon=self._icon)
         return rocon_std_srvs.GetPlatformInfoResponse(platform_info)
 
-    def _process_status(self, req):
-        '''
-          Serve some details about the current app manager status:
-
-          - who is controlling it (i.e. who it flipped start_app etc to)
-          - the namespace it is publishing it and its apps interfaces on
-          - the current app status (runnning or stopped)
-
-          :param req: status request object (empty)
-          :type req: rapp_manager_srvs.GetStatusRequest
-        '''
-        response = rapp_manager_srvs.GetStatusResponse()
-        response.status = self._get_status_msg()
-        return response
-
     def _get_rapp_msg_list(self, app_list_dictionary):
         app_msg_list = []
         for app in app_list_dictionary.values():
@@ -393,15 +376,17 @@ class RappManager(object):
             response.running_rapps.append(self._current_rapp.to_msg())
         return response
 
-    def _get_status_msg(self):
+    def _publish_status(self):
+        """
+         Publish status updates whenever something significant changes, e.g.
+         remote controller changed, or rapp started/stopped.
+        """
         if self._current_rapp:
             rapp = self._current_rapp.to_msg()
             rapp_status = rapp_manager_msgs.Status.RAPP_RUNNING
         else:
             rapp = rapp_manager_msgs.Rapp()
             rapp_status = rapp_manager_msgs.Status.RAPP_STOPPED
-        #remote_controller = rapp_manager_msgs.Constants.NO_REMOTE_CONTROLLER if req.cancel else req.remote_target_name
-        #self._private_publishers['remote_controller'].publish(std_msgs.String(remote_controller))
         if self._remote_name:
             remote_controller = self._remote_name
         else:
@@ -411,14 +396,7 @@ class RappManager(object):
                                        rapp_status=rapp_status,
                                        rapp=rapp
                                        )
-        return msg
-
-    def _publish_status(self):
-        """
-         Publish status updates whenever something significant changes, e.g.
-         remote controller changed, or rapp started/stopped.
-        """
-        self._publishers['status'].publish(self._get_status_msg())
+        self._publishers['status'].publish(msg)
 
     def _publish_rapp_list(self):
         '''
