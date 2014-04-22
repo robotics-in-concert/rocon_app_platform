@@ -151,13 +151,14 @@ def _rapp_cmd_install(argv):
 
     dependencyChecker = DependencyChecker(index)
 
-    installable_rapps, noninstallable_rapps, installed_rapps = dependencyChecker.check_rapp_dependencies(rapp_names)
+    dependencies = dependencyChecker.check_rapp_dependencies(rapp_names)
 
     missing_dependencies = []
-    for rapp_name, dependencies in noninstallable_rapps.iteritems():
-        missing_dependencies.extend(dependencies)
+    for rapp_name, deps in dependencies.items():
+        missing_dependencies.extend(deps.noninstallable)
     missing_dependencies = set(missing_dependencies)
 
+    noninstallable_rapps = [rapp_name for rapp_name, deps in dependencies.items() if deps.noninstallable]
     if noninstallable_rapps:
         print('Error - The following rapps cannot be installed: %s. Missing dependencies: %s' % (' '.join(noninstallable_rapps.keys()),
                                                                                                  ' '.join(missing_dependencies)
@@ -166,8 +167,8 @@ def _rapp_cmd_install(argv):
         # resolve deps and install them
         print("Installing dependencies for: %s" % (' '.join(sorted(rapp_names))))
         if parsed_args.debug:
-            print("- installing the following packages: %s" % (' '.join(sorted(set([d for deps in installable_rapps.values() for d in deps])))))
-            print("- already installed packages: %s" % (' '.join(sorted(set([d for deps in installed_rapps.values() for d in deps])))))
+            print("- installing the following packages: %s" % (' '.join(sorted(set([d for deps in dependencies.values() for d in deps.installable])))))
+            print("- already installed packages: %s" % (' '.join(sorted(set([d for deps in dependencies.values() for d in deps.installed])))))
         dependencyChecker.install_rapp_dependencies(rapp_names)
 
 
