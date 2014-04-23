@@ -9,6 +9,7 @@ import roslaunch.parent
 import tempfile
 import roslib.names
 import rocon_std_msgs.msg as rocon_std_msgs
+from .exceptions import MissingCapabilitiesException
 
 ##############################################################################
 # Utilities
@@ -131,44 +132,40 @@ def apply_remapping_rules_from_capabilities(launch_spec, data, caps_list):
     '''
       applies remapping rules from capabilities
 
-      :params launch_spec: rapp launch specification
+      :param launch_spec: rapp launch specification
       :type launch_spec: roslaunch.parent.ROSLaunchParent
-      :params data: rapp data
+      :param data: rapp data
       :type data: dict
       :param caps_list: this holds the list of available capabilities, if app needs capabilities
       :type caps_list: CapsList
+      :raises MissingCapabilitiesException: One or more capabilities are unavailable
+      :raises rospy.ServiceException: Coulnd't get cap remappings from capability server
     '''
     caps_remap_from_list = []  # contains the app's topics/services/actions to be remapped
     caps_remap_to_list = []  # contains the new topic/service/action names
     for cap in data['required_capabilities']:  # get capability-specific remappings
         rospy.loginfo("App Manager : Configuring remappings for capabilty '" + cap['name'] + "'.")
-        if caps_list:
+        try:
             caps_list.get_cap_remappings(cap, caps_remap_from_list, caps_remap_to_list)
-        else:  # should not happen, since app would have been pruned
-            raise Exception("Capabilities required, but capability list not provided.")
-    for cap_remap in caps_remap_from_list:  # apply cap remappings
-        remap_applied = False
-        for node in launch_spec.config.nodes:  # look for cap remap topic is remap topics
-            for node_remap in node.remap_args:  # topic from - topic to pairs
-                if cap_remap in node_remap[0]:
-                    node_remap[1] = unicode(caps_remap_to_list[caps_remap_from_list.index(cap_remap)])
-                    rospy.loginfo("App Manager : Will remap '" + node_remap[0]
-                                  + "' to '" + node_remap[1] + "'.")
-                    remap_applied = True
-        if not remap_applied:  # can't determine to which the remapping should be applied to
-            rospy.logwarn("App Manager : Could not determine remapping for capability topic '"
-                          + cap_remap + "'.")
-            rospy.logwarn("App Manager : App might not function correctly."
-                          + " Add it to the remapped topics, if needed.")
+        except MissingCapabilitiesException as mis_cap_exc:
+            raise mis_cap_exc
+        except rospy.ServiceException as srv_exc:
+            raise srv_exc
+    for node in launch_spec.config.nodes:  # apply remappings to all nodes
+        for cap_remap in caps_remap_from_list:
+            remap = [unicode(cap_remap), unicode(caps_remap_to_list[caps_remap_from_list.index(cap_remap)])]
+            rospy.loginfo("App Manager : Will remap '" + remap[0]
+                          + "' to '" + remap[1] + "'.")
+            node.remap_args.append(remap)
 
 
 def apply_remapping_rules_from_start_app_request(launch_spec, data, remappings, application_namespace):
     '''
       applies remapping rules which are requested by start_app service
 
-      :params launch_spec: rapp launch specification
+      :param launch_spec: rapp launch specification
       :type launch_spec: roslaunch.parent.ROSLaunchParent
-      :params data: rapp data
+      :param data: rapp data
       :type data: dict
       :param remapping: rules for the app flips.
       :type remapping: list of rocon_std_msgs.msg.Remapping values.
