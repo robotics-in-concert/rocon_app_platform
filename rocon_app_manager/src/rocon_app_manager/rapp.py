@@ -96,9 +96,9 @@ class Rapp(object):
         devnull = open(os.devnull, 'w')
         subprocess.call(['rospack', 'profile'], stdout=devnull, stderr=subprocess.STDOUT)
         devnull = devnull.close()
-        
+
         success = True
-        
+
         return success, str()
 
     def start(self, application_namespace, gateway_name, rocon_uri_string, remappings=[], force_screen=False,
@@ -147,6 +147,9 @@ class Rapp(object):
             return True, "Success", self._connections['subscribers'], self._connections['publishers'], \
                 self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
 
+        except rospy.ServiceException as e:
+            rospy.logerr("App Manager : Couldn't get cap remappings. Error: " + str(e))
+            return False, "Error while launching " + data['name'], [], [], [], [], []
         except MissingCapabilitiesException as e:
             rospy.logerr("App Manager : Couldn't get cap remappings. Error: " + str(e))
             return False, "Error while launching " + data['name'], [], [], [], [], []

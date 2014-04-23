@@ -93,7 +93,7 @@ class CapsList(object):
         '''
         Checks, if all required capabilities of an app are available
 
-        :params app: app data of the app to be checked
+        :param app: app data of the app to be checked
         :type app: Rapp
         :raises MissingCapabilitiesException: One or more required capabilities are not available.
         '''
@@ -114,9 +114,9 @@ class CapsList(object):
         '''
         Triggers the start of the capability via the capability server
 
-        :params name: name of the capability to start
+        :param name: name of the capability to start
         :type name: string
-        :params preferred_provider: name of the preferred provider of the capability (optional)
+        :param preferred_provider: name of the preferred provider of the capability (optional)
         :type preferred_provider: string
         :returns: true, if using the capability succeeded, false otherwise
         :rtype: boolean
@@ -128,10 +128,10 @@ class CapsList(object):
         '''
         Triggers the stop of the capability via the capability server
 
-        :params name: name of the capability to stop
+        :param name: name of the capability to stop
         :type name: string
         :returns: true, if freeing the capability succeeded, false otherwise
-        :type: boolean
+        :rtype: boolean
         '''
 
         return self._caps_client.free_capability(name, self._default_timeout)
@@ -150,14 +150,14 @@ class CapsList(object):
          * if the provider specifies own remappings, apply them as well
         The final remapping is stored in 'caps_remap_to_list'.
 
-        :params cap: cap data as specified in the rapp description
+        :param cap: cap data as specified in the rapp description
         :type name: dict
-        :params caps_remap_from_list: topics to be remapped
+        :param caps_remap_from_list: topics to be remapped
         :type name: dict
-        :params caps_remap_to_list: new names for remapped topics
+        :param caps_remap_to_list: new names for remapped topics
         :type name: dict
-        :raises MissingCapabilitiesException: The requested capability is not available.        
-        :raises Exception: Failed to retrieve provider remappings from capability server.
+        :raises MissingCapabilitiesException: The requested capability is not available.
+        :raises rospy.ServiceException: Failed to retrieve provider remappings from capability server.
         '''
 
         interface = None
@@ -179,8 +179,8 @@ class CapsList(object):
         try:
             provider_remappings = cap_server_get_remap_srv(cap["name"])
         except rospy.ServiceException as exc:
-            raise Exception("Couldn't not get provider remappings for interface '" + cap["name"]
-                            + "'. Error: " + str(exc))
+            raise rospy.ServiceException("Couldn't not get provider remappings for interface '" + cap["name"]
+                                         + "'. Error: " + str(exc))
 
         # gather all required (semantic) interface remappings or raise warnings if data is missing
         if not semantic_interface:
@@ -190,7 +190,7 @@ class CapsList(object):
                     for remapped_topic in provider_remappings.topics:
                         if topic == remapped_topic.key:
                             topic = remapped_topic.value
-                            rospy.logdebug("Replaced interface topic '" + remapped_topic.key\
+                            rospy.logdebug("App Manager : Replaced interface topic '" + remapped_topic.key\
                                            + "' with provider remapping '" + topic)
                     caps_remap_to_list.append(topic)
                 else:
@@ -202,7 +202,7 @@ class CapsList(object):
                     for remapped_topic in provider_remappings.topics:
                         if topic == remapped_topic.key:
                             topic = remapped_topic.value
-                            rospy.logdebug("Replaced interface topic '" + remapped_topic.key\
+                            rospy.logdebug("App Manager : Replaced interface topic '" + remapped_topic.key\
                                            + "' with provider remapping '" + topic)
                     caps_remap_to_list.append(topic)
                 else:
@@ -215,7 +215,7 @@ class CapsList(object):
                     for remapped_service in provider_remappings.services:
                         if service == remapped_service.key:
                             service = remapped_service.value
-                            rospy.logdebug("Replaced interface service '" + remapped_service.key\
+                            rospy.logdebug("App Manager : Replaced interface service '" + remapped_service.key\
                                            + "' with provider remapping '" + service)
                     caps_remap_to_list.append(service)
                 else:
@@ -228,7 +228,7 @@ class CapsList(object):
                     for remapped_service in provider_remappings.services:
                         if service == remapped_service.key:
                             service = remapped_service.value
-                            rospy.logdebug("Replaced interface service '" + remapped_service.key\
+                            rospy.logdebug("App Manager : Replaced interface service '" + remapped_service.key\
                                            + "' with provider remapping '" + service)
                     caps_remap_to_list.append(service)
                 else:
@@ -242,7 +242,7 @@ class CapsList(object):
                     for remapped_action in provider_remappings.actions:
                         if action == remapped_action.key:
                             action = remapped_action.value
-                            rospy.logdebug("Replaced interface action '" + remapped_action.key\
+                            rospy.logdebug("App Manager : Replaced interface action '" + remapped_action.key\
                                            + "' with provider remapping '" + action)
                     caps_remap_to_list.append(action)
                 else:
@@ -254,7 +254,7 @@ class CapsList(object):
                     for remapped_action in provider_remappings.actions:
                         if action == remapped_action.key:
                             action = remapped_action.value
-                            rospy.logdebug("Replaced interface action '" + remapped_action.key\
+                            rospy.logdebug("App Manager : Replaced interface action '" + remapped_action.key\
                                            + "' with provider remapping '" + action)
                     caps_remap_to_list.append(action)
                 else:
@@ -270,7 +270,7 @@ class CapsList(object):
                         for remapped_topic in provider_remappings.topics:
                             if semantic_remap == remapped_topic.key:
                                 semantic_remap = remapped_topic.value
-                                rospy.logdebug("Replaced interface topic '" + remapped_topic.key\
+                                rospy.logdebug("App Manager : Replaced interface topic '" + remapped_topic.key\
                                                + "' with provider remapping '" + semantic_remap)
                         caps_remap_to_list.append(semantic_remap)
                         remap_found = True
@@ -280,7 +280,7 @@ class CapsList(object):
                         for remapped_service in provider_remappings.services:
                             if semantic_remap == remapped_service.key:
                                 semantic_remap = remapped_service.value
-                                rospy.logdebug("Replaced interface service '" + remapped_service.key\
+                                rospy.logdebug("App Manager : Replaced interface service '" + remapped_service.key\
                                                + "' with provider remapping '" + semantic_remap)
                         caps_remap_to_list.append(semantic_remap)
                         remap_found = True
@@ -290,7 +290,7 @@ class CapsList(object):
                         for remapped_action in provider_remappings.actions:
                             if semantic_remap == remapped_action.key:
                                 semantic_remap = remapped_action.value
-                                rospy.logdebug("Replaced interface action '" + remapped_action.key\
+                                rospy.logdebug("App Manager : Replaced interface action '" + remapped_action.key\
                                                + "' with provider remapping '" + semantic_remap)
                         caps_remap_to_list.append(semantic_remap)
                         remap_found = True
@@ -312,32 +312,32 @@ def start_capabilities_from_caps_list(capabilities, caps_list):
     '''
       Starts up all required capaibilities
 
-      :params capaibilities: list of starting capabilities
+      :param capaibilities: list of starting capabilities
       :type: list of capabilities
-      :params caps_list: capability list
+      :param caps_list: capability list
       :type: CapsList
       :returns: True if successful. False with reason if it fails
-      :rtype: bool, str
+      :rtype: boolean, string
     '''
     for cap in capabilities:
         try:
             start_resp = caps_list.start_capability(cap["name"])
         except rospy.ROSException as exc:
-            message = ("App Manager : service for starting capabilities is not available."
+            message = ("Service for starting capabilities is not available."
                        + " Will not start app. Error:"
                        + str(exc))
             rospy.logerr("App Manager : %s" % message)
             return False, message
         except IOError as exc:
-            message = ("App Manager : error occurred while processing 'start_capability' service."
+            message = ("Error occurred while processing 'start_capability' service."
                        + " Will not start app. Error: "
                        + str(exc))
             rospy.logerr("App Manager : %s" % message)
             return False, message
         if start_resp:
-            rospy.loginfo("App Manager : started required capability '" + str(cap["name"]) + "'.")
+            rospy.loginfo("App Manager : Started required capability '" + str(cap["name"]) + "'.")
         else:
-            message = ("App Manager : starting capability '" + str(cap["name"]) + " was not successful."
+            message = ("Starting capability '" + str(cap["name"]) + " was not successful."
                        " Will not start app.")
             rospy.logerr("App Manager : %s" % message)
             return False, message
@@ -349,30 +349,30 @@ def stop_capabilities_from_caps_list(capabilities, caps_list):
     '''
       Starts up all required capaibilities
 
-      :params capaibilities: list of starting capabilities
+      :param capaibilities: list of starting capabilities
       :type: list of capabilities
-      :params caps_list: capability list
+      :param caps_list: capability list
       :type: CapsList
       :returns: True if successful. False with reason if it fails
-      :rtype: bool, str
+      :rtype: boolean, string
     '''
     for cap in capabilities:
         try:
             start_resp = caps_list.stop_capability(cap["name"])
         except rospy.ROSException as exc:
-            message = ("App Manager : Service for stopping capabilities is not available."
+            message = ("Service for stopping capabilities is not available."
                        + " Error:" + str(exc))
             rospy.logerr("App Manager : %s" % message)
             return False, message
         except IOError as exc:
-            message = ("App Manager : Error occurred while processing 'stop_capability' service."
+            message = ("Error occurred while processing 'stop_capability' service."
                        + " Error: " + str(exc))
             rospy.logerr("App Manager : %s" % message)
             return False, message
         if start_resp:
             rospy.loginfo("App Manager : Stopped required capability '" + str(cap["name"]) + "'.")
         else:
-            message = ("App Manager : Stopping capability '" + str(cap["name"])
+            message = ("Stopping capability '" + str(cap["name"])
                        + " was not successful.")
             rospy.logerr("App Manager : %s" % message)
             return False, message
