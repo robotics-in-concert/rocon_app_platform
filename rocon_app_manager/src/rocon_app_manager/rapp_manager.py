@@ -278,24 +278,18 @@ class RappManager(object):
         rapp_names = []
         for rapp in rapps:
             rapp_names.append(rapp)
-        installable_rapp_names, unused_noninstallable_rapp_names, installed_rapp_names = \
-        self._dependency_checker.check_rapp_dependencies(rapp_names)
-
-        # TODO: Remove this workaround for issue https://github.com/robotics-in-concert/rocon_app_platform/issues/210
-        for name in installable_rapp_names:
-            if name in installed_rapp_names:
-                del installed_rapp_names[name]
+        rapp_deps = self._dependency_checker.check_rapp_dependencies(rapp_names)
 
         runnable_rapps = {}
         installable_rapps = {}
         noninstallable_rapps = {}
-        for rapp in rapps:
-            if rapp in installed_rapp_names:
+        for rapp in rapp_deps:
+            if rapp_deps[rapp].all_installed():
                 runnable_rapps[rapp] = rapps[rapp]
-            elif rapp in installable_rapp_names:
-                installable_rapps[rapp] = rapps[rapp]
-            else:
+            elif rapp_deps[rapp].any_not_installable():
                 noninstallable_rapps[rapp] = rapps[rapp]
+            else:
+                installable_rapps[rapp] = rapps[rapp]
 
         return (runnable_rapps, installable_rapps, noninstallable_rapps)
 
