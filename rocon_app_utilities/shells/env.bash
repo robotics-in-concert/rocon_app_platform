@@ -4,7 +4,7 @@ function _rocon_app_complete_exe {
     arg="${COMP_WORDS[COMP_CWORD]}"
 
     if [[ $COMP_CWORD == 1 ]]; then
-        opts="compat info rawinfo list"
+        opts="add-repo compat index info install list list-repos update rawinfo remove-repo"
         COMPREPLY=($(compgen -W "$opts" -- ${arg}))
     fi
 }
