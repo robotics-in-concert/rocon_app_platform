@@ -550,12 +550,11 @@ class RappManager(object):
         if not self._current_rapp:
             resp.stopped = False
             resp.error_code = rapp_manager_msgs.ErrorCodes.RAPP_IS_NOT_RUNNING
-            resp.message = "tried to stop a rapp, but no rapp found running"
-            rospy.logwarn("Rapp Manager : Received a request to stop a rapp, but no rapp found running.")
+            resp.message = "Tried to stop rapp '%s', but no rapp found running." % self._current_rapp.data['name']
+            rospy.logwarn("Rapp Manager : %s" % resp.message)
             return resp
 
-        rapp_name = self._current_rapp.data['name']
-        rospy.loginfo("Rapp Manager : Stopping rapp '" + rapp_name + "'.")
+        rospy.loginfo("Rapp Manager : Stopping rapp '" + self._current_rapp.data['name'] + "'.")
 
         resp.stopped, resp.message, subscribers, publishers, services, action_clients, action_servers = self._current_rapp.stop()
 
@@ -567,21 +566,15 @@ class RappManager(object):
             self._flip_connections(self._remote_name, action_servers, gateway_msgs.ConnectionType.ACTION_SERVER, cancel_flag=True)
 
         if resp.stopped:
-            self._current_rapp = None
-            self._publish_rapp_list()
-            self._publish_status()
-            if 'required_capabilities' in self._runnable_apps[rapp_name].data:
-                rospy.loginfo("Rapp Manager : Stopping required capabilities.")
-                result, message = stop_capabilities_from_caps_list(self._runnable_apps[rapp_name].data['required_capabilities'], self.caps_list)
-            self._publish_rapp_list()
-            self._publish_status()
             if 'required_capabilities' in self._current_rapp.data:
-                rospy.loginfo("Rapp Manager : stopping required capabilities.")
+                rospy.loginfo("Rapp Manager : Stopping required capabilities.")
                 result, message = stop_capabilities_from_caps_list(self._current_rapp.data['required_capabilities'], self.caps_list)
                 if not result:  # if not none, it failed to start capabilities
                     resp.stop = False
                     resp.message = message
             self._current_rapp = None
+            self._publish_rapp_list()
+            self._publish_status()
         return resp
 
     ##########################################################################
