@@ -496,7 +496,7 @@ class RappManager(object):
                     return resp
             except KeyError:
                 resp.started = False
-                resp.message = ("The requested app '%s' is not among the runnable, nor installable rapps." % rapp.data['name'])
+                resp.message = ("The requested app '%s' is not among the runnable, nor installable rapps." % req.name)
                 rospy.logwarn("App Manager : %s" % resp.message)
                 return resp
 
