@@ -18,7 +18,10 @@
   <arg name="local_remote_controllers_only" default="false"/> <!-- allow remote control for local machine tests only -->
   <arg name="screen" default="false"/>  <!-- verbose output from running apps -->
   <arg name="capability_server_name" default="capability_server"/>  <!-- name of the capability server -->
-
+  <!-- See 'http://wiki.ros.org/rocon_app_manager/Tutorials/indigo/Automatic Rapp Installation'
+       on how to enable automatic rapp installation -->
+  <arg name="auto_rapp_installation" default="false"/>
+  
   <!-- ******************************* Zeroconf ******************************** -->
   <node ns="zeroconf" pkg="zeroconf_avahi" type="zeroconf" name="zeroconf"/>
 
@@ -42,5 +45,6 @@
     <arg name="local_remote_controllers_only" value="$(arg local_remote_controllers_only)" />
     <arg name="screen" value="$(arg screen)" />
     <arg name="capability_server_name" default="$(arg capability_server_name)"/>
+    <arg name="auto_rapp_installation" value="$(arg auto_rapp_installation)" />
   </include>
 </launch>
