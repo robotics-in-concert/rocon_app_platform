@@ -453,9 +453,7 @@ class RappManager(object):
                 rapp_list.running_rapps = [self._current_rapp.to_msg()]
             else:
                 rapp_list.running_rapps = []
-            self._publishers['app_list'].publish(rapp_list)
-        except KeyError:
-            pass  # spank - you should not hide this error, it means something has gone wrong.
+            self._publishers['rapp_list'].publish(rapp_list)
         except rospy.exceptions.ROSException:  # publishing to a closed topic.
             pass
 
