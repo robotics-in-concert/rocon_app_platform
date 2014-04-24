@@ -7,15 +7,16 @@
 ##############################################################################
 
 import os
+import subprocess
+import tempfile
+
 import rospy
 import traceback
 import rocon_python_utils
 import rocon_app_manager_msgs.msg as rapp_manager_msgs
-import rocon_std_msgs.msg as rocon_std_msgs
 from .exceptions import MissingCapabilitiesException
 
-# Local Imports
-from .utils import *
+from . import utils
 
 ##############################################################################
 # Class
@@ -40,7 +41,7 @@ class Rapp(object):
         '''
         self._connections = _init_connections()
         self._raw_data = rapp_specification
-        self.data = rapp_specification.data 
+        self.data = rapp_specification.data
         self.data['status'] = 'Ready'
 
     def __repr__(self):
@@ -69,6 +70,35 @@ class Rapp(object):
             a.required_capabilities = [cap['name'] for cap in self.data[key]]
 
         return a
+
+    def install(self, dependency_checker):
+        '''
+          Installs all dependencies of the specified rapp
+
+          :param dependency_checker: DependencyChecker object for installation of the rapp dependencies
+          :type dependency_checker: :py:class:`rocon_app_utilities.rapp_repositories.DependencyChecker`
+
+          :returns: A C{tuple} of a flag for the installation success and a string containing the reason of failure
+          :rtype: C{tuple}
+        '''
+        success = False
+
+        # Trigger the installation of all rapp dependencies
+        rapps = []
+        rapps.append(self.data['name'])
+        try:
+            dependency_checker.install_rapp_dependencies(rapps)
+        except Exception as e:
+            return success, str(e)
+
+        # Update the rospack cache
+        devnull = open(os.devnull, 'w')
+        subprocess.call(['rospack', 'profile'], stdout=devnull, stderr=subprocess.STDOUT)
+        devnull = devnull.close()
+
+        success = True
+
+        return success, str()
 
     def start(self, application_namespace, gateway_name, rocon_uri_string, remappings=[], force_screen=False,
               caps_list=None):
@@ -101,21 +131,24 @@ class Rapp(object):
             nodelet_manager_name = caps_list.nodelet_manager_name if caps_list else None
 
             temp = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
-            self._launch = prepare_launcher(data, application_namespace, gateway_name, rocon_uri_string, nodelet_manager_name, force_screen, temp)
+            self._launch = utils.prepare_launcher(data, application_namespace, gateway_name, rocon_uri_string, nodelet_manager_name, force_screen, temp)
 
             # Better logic for the future, 1) get remap rules from capabilities. 2) get remap rules from requets. 3) apply them all. It would be clearer to understand the logic and easily upgradable
             if 'required_capabilities' in data:  # apply capability-specific remappings needed
-                apply_remapping_rules_from_capabilities(self._launch, data, caps_list)
+                utils.apply_remapping_rules_from_capabilities(self._launch, data, caps_list)
 
-            self._connections = apply_remapping_rules_from_start_app_request(self._launch, data, remappings, application_namespace)
+            self._connections = utils.apply_remapping_rules_from_start_app_request(self._launch, data, remappings, application_namespace)
 
-            resolve_chain_remappings(self._launch.config.nodes)
+            utils.resolve_chain_remappings(self._launch.config.nodes)
             self._launch.start()
 
             data['status'] = 'Running'
             return True, "Success", self._connections['subscribers'], self._connections['publishers'], \
                 self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
 
+        except rospy.ServiceException as e:
+            rospy.logerr("App Manager : Couldn't get cap remappings. Error: " + str(e))
+            return False, "Error while launching " + data['name'], [], [], [], [], []
         except MissingCapabilitiesException as e:
             rospy.logerr("Rapp Manager : couldn't get capability remappings. Error: " + str(e))
             return False, "Error while launching " + data['name'], [], [], [], [], []

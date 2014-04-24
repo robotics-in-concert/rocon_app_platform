@@ -8,3 +8,4 @@
 from .dependencies import DependencyChecker
 from .indexer import RappIndexer
 from .rapp import Rapp
+import rapp_repositories
