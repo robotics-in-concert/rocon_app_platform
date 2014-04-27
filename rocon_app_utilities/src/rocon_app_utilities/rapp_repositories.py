@@ -208,10 +208,6 @@ def get_combined_index(package_whitelist=None, package_blacklist=[]):
       :type package_whitelist: [str]
       :param package_blacklist: list of blacklisted package
       :type package_blacklist: [str]
-      :param package_whitelist: list of target package list
-      :type package_whitelist: [str]
-      :param package_blacklist: list of blacklisted package
-      :type package_blacklist: [str]
 
       :returns: the index
       :rtype: rocon_app_utilities.RappIndexer
