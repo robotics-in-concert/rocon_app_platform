@@ -484,6 +484,7 @@ class RappManager(object):
                         # move rapp from installable to runnable
                         self._runnable_apps[req.name] = rapp
                         del self._installable_apps[req.name]
+                        # consider calling publish_rapp_list if we split publishing runnable and installed there.
                     else:
                         resp.started = False
                         resp.message = "Installing rapp '" + rapp.data['name'] + "' failed. Reason: " + str(reason)
@@ -556,7 +557,7 @@ class RappManager(object):
         except AttributeError:
             resp.stopped = False
             resp.error_code = rapp_manager_msgs.ErrorCodes.RAPP_IS_NOT_RUNNING
-            resp.message = "Tried to stop rapp '%s', but no rapp found running." % rapp_name
+            resp.message = "Tried to stop a rapp, but no rapp found running."
             rospy.logwarn("Rapp Manager : %s" % resp.message)
             return resp
 
