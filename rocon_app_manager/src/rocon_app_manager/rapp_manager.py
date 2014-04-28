@@ -481,6 +481,9 @@ class RappManager(object):
                     success, reason = rapp.install(self._dependency_checker)
                     if success:
                         rospy.loginfo("App Manager : Rapp '" + rapp.data['name'] + "'has been installed.")
+                        # move rapp from installable to runnable
+                        self._runnable_apps[req.name] = rapp
+                        del self._installable_apps[req.name]
                     else:
                         resp.started = False
                         resp.message = "Installing rapp '" + rapp.data['name'] + "' failed. Reason: " + str(reason)
@@ -553,11 +556,11 @@ class RappManager(object):
         except AttributeError:
             resp.stopped = False
             resp.error_code = rapp_manager_msgs.ErrorCodes.RAPP_IS_NOT_RUNNING
-            resp.message = "Tried to stop a rapp, but no rapp found running."
+            resp.message = "Tried to stop rapp '%s', but no rapp found running." % rapp_name
             rospy.logwarn("Rapp Manager : %s" % resp.message)
             return resp
 
-        rospy.loginfo("Rapp Manager : stopping rapp '" + rapp_name + "'.")
+        rospy.loginfo("Rapp Manager : Stopping rapp '" + rapp_name + "'.")
 
         resp.stopped, resp.message, subscribers, publishers, services, action_clients, action_servers = self._runnable_apps[rapp_name].stop()
 
@@ -573,7 +576,7 @@ class RappManager(object):
                 rospy.loginfo("Rapp Manager : Stopping required capabilities.")
                 result, message = stop_capabilities_from_caps_list(self._runnable_apps[rapp_name].data['required_capabilities'], self.caps_list)
                 if not result:  # if not none, it failed to stop capabilities
-                    resp.stop = False
+                    resp.stopped = False
                     resp.message = message
             self._publish_rapp_list()
             self._publish_status()
