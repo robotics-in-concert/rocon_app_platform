@@ -481,6 +481,9 @@ class RappManager(object):
                     success, reason = rapp.install(self._dependency_checker)
                     if success:
                         rospy.loginfo("App Manager : Rapp '" + rapp.data['name'] + "'has been installed.")
+                        # move rapp from installable to runnable
+                        self._runnable_apps[req.name] = rapp
+                        del self._installable_apps[req.name]
                     else:
                         resp.started = False
                         resp.message = "Installing rapp '" + rapp.data['name'] + "' failed. Reason: " + str(reason)
@@ -547,16 +550,19 @@ class RappManager(object):
           :param req: variable configured when triggered from the service call.
         '''
         resp = rapp_manager_srvs.StopRappResponse()
-        if not self._current_rapp:
+        try:  # use a try-except block here so the check is atomic
+            rapp_name = self._current_rapp.data['name']
+            self._current_rapp = None  # immediately prevent it from trying to stop the app again
+        except AttributeError:
             resp.stopped = False
             resp.error_code = rapp_manager_msgs.ErrorCodes.RAPP_IS_NOT_RUNNING
-            resp.message = "Tried to stop rapp '%s', but no rapp found running." % self._current_rapp.data['name']
+            resp.message = "Tried to stop rapp '%s', but no rapp found running." % rapp_name
             rospy.logwarn("Rapp Manager : %s" % resp.message)
             return resp
 
-        rospy.loginfo("Rapp Manager : Stopping rapp '" + self._current_rapp.data['name'] + "'.")
+        rospy.loginfo("Rapp Manager : Stopping rapp '" + rapp_name + "'.")
 
-        resp.stopped, resp.message, subscribers, publishers, services, action_clients, action_servers = self._current_rapp.stop()
+        resp.stopped, resp.message, subscribers, publishers, services, action_clients, action_servers = self._runnable_apps[rapp_name].stop()
 
         if self._remote_name:
             self._flip_connections(self._remote_name, subscribers, gateway_msgs.ConnectionType.SUBSCRIBER, cancel_flag=True)
@@ -566,13 +572,12 @@ class RappManager(object):
             self._flip_connections(self._remote_name, action_servers, gateway_msgs.ConnectionType.ACTION_SERVER, cancel_flag=True)
 
         if resp.stopped:
-            if 'required_capabilities' in self._current_rapp.data:
+            if 'required_capabilities' in self._runnable_apps[rapp_name].data:
                 rospy.loginfo("Rapp Manager : Stopping required capabilities.")
-                result, message = stop_capabilities_from_caps_list(self._current_rapp.data['required_capabilities'], self.caps_list)
-                if not result:  # if not none, it failed to start capabilities
-                    resp.stop = False
+                result, message = stop_capabilities_from_caps_list(self._runnable_apps[rapp_name].data['required_capabilities'], self.caps_list)
+                if not result:  # if not none, it failed to stop capabilities
+                    resp.stopped = False
                     resp.message = message
-            self._current_rapp = None
             self._publish_rapp_list()
             self._publish_status()
         return resp
