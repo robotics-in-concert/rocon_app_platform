@@ -1,0 +1,20 @@
+<!--
+  Enable a capability server in support of the rocon app manager.
+  This is only necessary if you do not start capabilities yourself elsewhere. 
+ -->
+<launch>
+  <arg name="debug"                 default="false" />                                             <!-- dev variable only, not publicly exposed further up -->
+  <arg name="blacklist"             default="[]" />                                                <!-- blacklist specific capabilities -->
+  <arg name="name"                  default="capability_server"/>
+  <arg name="nodelet_manager_name"  default="capability_server_nodelet_manager" />
+  <arg name="package_whitelist"     default="[std_capabilities]" />                                <!-- get capabilities from these packages only -->
+  <arg name="parameters"            default="$(find rocon_app_manager)/param/capabilities.yaml" /> <!-- detailed parameter configuration for the providers -->
+
+  <node pkg="capabilities" name="$(arg name)" type="capability_server" required="true">
+    <param name="debug" value="true" if="$(arg debug)" />
+    <rosparam command="load" file="$(arg parameters)" />
+    <rosparam param="blacklist"            subst_value="True">$(arg blacklist)</rosparam>
+    <rosparam param="nodelet_manager_name" subst_value="True">$(arg nodelet_manager_name)</rosparam>
+    <rosparam param="package_whitelist"    subst_value="True">$(arg package_whitelist)</rosparam>
+  </node>
+</launch>

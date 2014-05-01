@@ -1,0 +1,12 @@
+<!--
+  Configure an interactions server to work in tandem with the rocon app manager. This is
+  especially useful if you want to enable pairing of interactions with rapps. 
+ -->
+<launch>
+  <arg name="interactions_list" default="[]"/>  <!-- list of resource names pointing to yaml interaction configurations, e.g. [rocon_app_manager_tutorials/pairing] -->
+  
+  <node pkg="rocon_interactions" type="interactions_manager.py" name="interactions">
+    <rosparam param="interactions" subst_value="true">$(arg interactions_list)</rosparam>
+    <rosparam param="pairing">true</rosparam>
+  </node>
+</launch>

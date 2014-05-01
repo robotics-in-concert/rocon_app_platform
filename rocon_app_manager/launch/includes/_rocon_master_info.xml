@@ -1,0 +1,10 @@
+<launch>
+  <arg name="name"        default="Cybernetic Pirate"/>
+  <arg name="description" default="To err is human, to 'arr is pirate."/>
+  <arg name="icon"        default="rocon_icons/cybernetic_pirate.png"/>
+
+  <param name="name" value="$(arg name)"/>
+  <param name="description" value="$(arg description)"/>
+  <param name="icon" value="$(arg icon)"/>
+  <node pkg="rocon_master_info" type="master.py" name="master"/>
+</launch>
