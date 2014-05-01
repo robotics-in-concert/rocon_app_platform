@@ -32,6 +32,9 @@
 
   <arg name="interactions"          default="false"/>
   <arg name="interactions_list"     default="[]"/>
+
+  <!-- ************************* Rarely Used Variables ************************** -->
+  <arg name="firewall" default="false"/> <!-- typically false (don't let anything in), only for simulation clients -->
   
   <!-- ******************************* Launcher ********************************* -->
 
@@ -44,7 +47,7 @@
     <arg name="capabilities_parameters"        value="$(arg capabilities_parameters)" />
     <arg name="interactions"                   value="$(arg interactions)"/>
     <arg name="interactions_list"              value="$(arg interactions_list)"/>
-    <arg name="gateway_firewall"               value="true"/>
+    <arg name="gateway_firewall"               value="$(arg firewall)"/>
     <arg name="gateway_uuids"                  value="$(arg robot_unique_name)" />
     <arg name="gateway_watch_loop_period"      value="$(arg concert_watch_period)" />
     <arg name="hub_whitelist"                  value="$(arg concert_whitelist)"/>
