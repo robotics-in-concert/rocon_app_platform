@@ -89,8 +89,8 @@ class RappManager(object):
         '''
         # This might be naive and only work well on ubuntu...
         os_codename = rospkg.os_detect.OsDetect().get_codename()
-        rocon_uri = "rocon:/" + self._param['robot_type'] + \
-                    "/" + self._param['robot_name'] + \
+        rocon_uri = "rocon:/" + self._param['robot_type'].lower().replace(' ', '_') + \
+                    "/" + self._param['robot_name'].lower().replace(' ', '_') + \
                     "/" + rocon_python_utils.ros.get_rosdistro() + \
                     "/" + os_codename
         try:
