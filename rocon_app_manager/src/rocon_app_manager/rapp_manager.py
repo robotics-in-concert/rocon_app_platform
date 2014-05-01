@@ -49,7 +49,6 @@ class RappManager(object):
     # Initialisation
     ##########################################################################
     def __init__(self):
-        self._namespace = None  # Namespace that gets used as default namespace for rapp connections
         self._gateway_name = None  # Name of our local gateway (if available)
         self._gateway_ip = None  # IP/Hostname of our local gateway if available
         self._remote_name = None  # Name (gateway name) for the entity that is remote controlling this app manager
@@ -147,7 +146,7 @@ class RappManager(object):
             self._publishers = {}
         self._service_names = {}
         self._publisher_names = {}
-        base_name = self._gateway_name if self._gateway_name else self._param['robot_name']  # latter option is for standalone mode
+        base_name = self._gateway_name if self._gateway_name else self._param['robot_name'].lower().replace(' ', '_')  # latter option is for standalone mode
         for name in self._default_service_names:
             self._service_names[name] = '/' + base_name + '/' + self._default_service_names[name]
         for name in self._default_publisher_names:
