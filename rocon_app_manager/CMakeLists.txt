@@ -21,7 +21,6 @@ catkin_python_setup()
 install(
     PROGRAMS 
         scripts/rapp_manager.py
-        scripts/pairing_master.py
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
     )
 

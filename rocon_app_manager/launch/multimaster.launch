@@ -1,35 +1,52 @@
 <!--
-  Launch configuration for an app manager in multimaster mode.
+  Launch configuration for an app manager in multimaster mode. This exposes all
+  the bells and whistles available for configuration. See concert_client.launch
+  for an example which tunes it for a particular usage.
  -->
 <launch>
-  <!-- ************************* Public Arguments ****************************** -->
-  <arg name="robot_name" default="cybernetic_pirate"/>
-  <arg name="robot_type" default="pc"/>
-  <arg name="robot_icon" default="rocon_app_manager/cybernetic_pirate.png"/>
-  <arg name="gateway_watch_loop_period" default="10"/> <!-- Polling period for multimaster advertising/flipping -->
-  <arg name="gateway_firewall" default="true"/> <!-- Typically nothing comes in! -->
-  <arg name="hub_whitelist" default=""/> <!-- semi-colon separated hub names/regex patterns -->
-  <arg name="disable_uuids" default="false"/>
-  <arg name="rapp_package_whitelist" default="[rocon_apps]"/> <!-- comma separated list of package names -->
-  <arg name="rapp_package_blacklist" default="[]"/>
-  <arg name="auto_start_rapp" default=""/> <!-- autostart a rapp, e.g. rocon_apps/chirp -->
-  <arg name="local_remote_controllers_only" default="false"/> <!-- allow remote control for local machine tests only -->
-  <arg name="screen" default="false"/>  <!-- verbose output from running apps -->
-  <arg name="capability_server_name" default="capability_server"/>  <!-- name of the capability server -->
-
-  <!-- ******************************* Zeroconf ******************************** -->
-  <node ns="zeroconf" pkg="zeroconf_avahi" type="zeroconf" name="zeroconf"/>
-
   <!-- ******************************** Gateway ******************************** -->
-  <include file="$(find rocon_app_manager)/launch/includes/_app_manager_gateway.xml">
+  <arg name="gateway_firewall"          default="true"/> <!-- default is not to let anything come into the robot -->
+  <arg name="gateway_uuids"             default="true"/> <!-- all gateways represent their robots with unique uuid's postfixed to the name -->
+  <arg name="gateway_watch_loop_period" default="10"/>   <!-- the polling period for multimaster advertising/flipping -->
+  <arg name="hub_whitelist"             default=""/>     <!-- semi-colon separated hub names/regex patterns -->
+
+  <include file="$(find rocon_app_manager)/launch/includes/_gateway.xml">
     <arg name="gateway_name" value="$(arg robot_name)" />
     <arg name="gateway_firewall" value="$(arg gateway_firewall)" />
-    <arg name="disable_uuids" value="$(arg disable_uuids)"/>
+    <arg name="disable_uuids" value="true" unless="$(arg gateway_uuids)" />
     <arg name="gateway_watch_loop_period" value="$(arg gateway_watch_loop_period)" />
     <arg name="hub_whitelist" value="$(arg hub_whitelist)" />
   </include>
 
+  <!-- ****************************** Capabilities ****************************** -->
+  <arg name="capabilities"                       default="false"/>                                              <!-- enable/disable a capability server -->
+  <arg name="capabilities_parameters"            default="$(find rocon_app_manager)/param/capabilities.yaml" /> <!-- detailed parameter configuration for the providers -->
+  <arg name="capabilities_blacklist"             default="[]" />                                                <!-- blacklist specific capabilities -->
+  <arg name="capabilities_nodelet_manager_name"  default="capability_server_nodelet_manager" />
+  <arg name="capabilities_package_whitelist"     default="[std_capabilities]" />                                <!-- get capabilities from these packages only -->
+  <arg name="capabilities_server_name"           default="capability_server"/>
+
+  <group if="$(arg capabilities)">
+    <include file="$(find rocon_app_manager)/launch/includes/_capabilities.xml">
+      <arg name="blacklist"            value="$(arg capabilities_blacklist)" />
+      <arg name="nodelet_manager_name" value="$(arg capabilities_nodelet_manager_name)" />
+      <arg name="name"                 value="$(arg capabilities_server_name)" />
+      <arg name="package_whitelist"    value="$(arg capabilities_package_whitelist)" />
+      <arg name="parameters"           value="$(arg capabilities_parameters)" />
+    </include>
+  </group>
+
   <!-- ****************************** Rapp Manager ****************************** -->
+  <arg name="auto_rapp_installation"        default="false"/>             <!-- http://wiki.ros.org/rocon_app_manager/Tutorials/indigo/Automatic Rapp Installation -->
+  <arg name="auto_start_rapp"               default=""/>                  <!-- autostart a rapp, e.g. rocon_apps/chirp -->
+  <arg name="local_remote_controllers_only" default="false"/>             <!-- allow remote control for local machine tests only -->
+  <arg name="rapp_package_whitelist"        default="[rocon_apps]"/>      <!-- comma separated list of package names -->
+  <arg name="rapp_package_blacklist"        default="[]"/>
+  <arg name="robot_name"                    default="Cybernetic Pirate"/>
+  <arg name="robot_type"                    default="pc"/>
+  <arg name="robot_icon"                    default="rocon_icons/cybernetic_pirate.png"/> 
+  <arg name="screen"                        default="false"/>             <!-- verbose output from running apps -->
+
   <include file="$(find rocon_app_manager)/launch/includes/_app_manager.xml">
     <arg name="robot_name" value="$(arg robot_name)" />
     <arg name="robot_type" value="$(arg robot_type)" />
@@ -39,6 +56,31 @@
     <arg name="auto_start_rapp" value="$(arg auto_start_rapp)" />
     <arg name="local_remote_controllers_only" value="$(arg local_remote_controllers_only)" />
     <arg name="screen" value="$(arg screen)" />
-    <arg name="capability_server_name" default="$(arg capability_server_name)"/>
+    <arg name="capability_server_name" value="$(arg capabilities_server_name)" if="$(arg capabilities)"/>
+    <arg name="auto_rapp_installation" value="$(arg auto_rapp_installation)" />
   </include>
+
+  <!-- ***************************** Rocon Master Info ************************** -->
+  <arg name="robot_description"      default="To err is human, to 'arr is pirate."/>
+
+  <include file="$(find rocon_app_manager)/launch/includes/_rocon_master_info.xml">
+    <arg name="name" value="$(arg robot_name)" />
+    <arg name="description" value="$(arg robot_description)" />
+    <arg name="icon" value="$(arg robot_icon)" />
+  </include>
+
+  <!-- ***************************** Interactions ******************************* -->
+  <arg name="interactions"          default="false"/>
+  <arg name="interactions_list"     default="[]"/>
+
+  <group if="$(arg interactions)">
+    <include file="$(find rocon_app_manager)/launch/includes/_interactions.xml">
+      <arg name="interactions_list" value="$(arg interactions_list)"/>
+    </include>
+  </group>
+
+  <!-- ******************************* Zeroconf ******************************** -->
+  <!-- We might like to advertise our ros master sometimes here, like for standalone -->
+  <node ns="zeroconf" pkg="zeroconf_avahi" type="zeroconf" name="zeroconf"/>
+
 </launch>

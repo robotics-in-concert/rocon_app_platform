@@ -28,6 +28,7 @@
   <run_depend>rocon_gateway_utils</run_depend>
   <run_depend>rocon_gateway</run_depend>
   <run_depend>rocon_hub</run_depend>
+  <run_depend>rocon_master_info</run_depend>
   <run_depend>rocon_python_comms</run_depend>
   <run_depend>rocon_python_utils</run_depend>
   <run_depend>rocon_std_msgs</run_depend>
