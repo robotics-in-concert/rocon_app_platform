@@ -16,12 +16,15 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
+  <run_depend>gateway_msgs</run_depend>
+  <run_depend>rocon_app_manager_msgs</run_depend>
+  <run_depend>rocon_bubble_icons</run_depend>
   <run_depend>roslib</run_depend>
   <run_depend>rospy</run_depend>
   <run_depend>rospy_tutorials</run_depend>
-  <run_depend>rocon_app_manager_msgs</run_depend>
-  <run_depend>gateway_msgs</run_depend>
-  <run_depend>rocon_bubble_icons</run_depend>
+  <run_depend>topic_tools</run_depend>
+  <run_depend>yocs_velocity_smoother</run_depend>
+  
   <export>
     <rosdoc config="rosdoc.yaml"/>
     <rocon_app>apps/chirp/chirp.rapp</rocon_app>
