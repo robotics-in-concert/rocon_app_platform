@@ -1,35 +1,21 @@
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Changelog for package rocon_app_platform
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Changelog
+=========
 
-0.6.1 (2013-09-11)
+0.7.0 (2014-05-06)
 ------------------
-
-0.6.0 (2013-08-30)
-------------------
-
-0.5.4 (2013-08-07)
-------------------
-
-0.5.3 (2013-07-22)
-------------------
-
-0.5.2 (2013-07-17)
-------------------
-
-0.5.1 (2013-06-10)
-------------------
-* removing www
-* 0.5.0
+* pairing responsibility removed from the rapp platform (now handled by `rocon_interactions <http://wiki.ros.org/rocon_interactions>`_).
+* platform tuples upgraded to rocon_uri's in every component
+* capabilities support inside the rapp manager
+* rapp upgrade - initial implementation of rapp heirarchies
+* rapp upgrade - support for remote package caching
+* rapp upgrade - support for local package indexing
+* updated maintainers and authors.
+* Contributors: Daniel Stonier
 
 0.5.0 (2013-05-27)
 ------------------
 * addig buildtool in the meta pkg
-* 0.4.0
 * adding CMake for meta pkg
-
-0.3.0 (2013-02-05 15:23)
-------------------------
 
 0.2.0 (2013-02-05 13:18)
 ------------------------
