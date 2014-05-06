@@ -1,20 +1,4 @@
 display:          Teleop
-description:      Teleoperate your robot 
-icon:             joystick.png
-compatibility:    rocon:/
-public_interface: teleop.interface
-launch:           teleop.launch.xml
-required_capabilities:
-  - name: std_capabilities/DifferentialMobileBase
-    interface:
-      topics:
-        requires:
-          '/cmd_vel': '/cmd_vel'
-        provides:
-          '/odom': '/odom'
-  - name: std_capabilities/RGBDSensor
-    interface:
-      topics:
-        requires: []
-        provides:
-          '/rgbd_sensor/rgb/image_color': '/rgbd_sensor/rgb/image_color'
+description:      Teleoperate ...
+icon:             rocon_apps/joystick.png
+public_interface: rocon_apps/teleop.interface

@@ -31,5 +31,6 @@
     <rocon_app>apps/listener/listener.rapp</rocon_app>
     <rocon_app>apps/talker/talker.rapp</rocon_app>
     <rocon_app>apps/teleop/teleop.rapp</rocon_app>
+    <rocon_app>apps/robot_teleop/robot_teleop.rapp</rocon_app>
   </export>
 </package>

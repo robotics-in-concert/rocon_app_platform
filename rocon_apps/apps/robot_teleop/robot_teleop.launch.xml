@@ -9,7 +9,7 @@
   
   <node pkg="nodelet" type="nodelet" name="teleop_velocity_smoother"
         args="load yocs_velocity_smoother/VelocitySmootherNodelet $(arg capability_server_nodelet_manager_name)">
-    <rosparam file="$(find turtlebot_bringup)/param/defaults/smoother.yaml" command="load"/>
+    <rosparam file="$(find rocon_apps)/apps/robot_teleop/vel_smoother.yaml" command="load"/>
 <!--     <remap from="teleop_velocity_smoother/raw_cmd_vel" to=""/> -->
     <remap from="teleop_velocity_smoother/smooth_cmd_vel" to="/cmd_vel"/>
     <remap from="teleop_velocity_smoother/odometry" to="/odom"/>
@@ -29,7 +29,7 @@
   </node>
   
   <!-- Relay for the video feedback -->
-  <node pkg="topic_tools" type="throttle" name="relay_video" args="messages /rgbd_sensor/rgb/image_color 5 /teleop/compressed_image" required="true">
+  <node pkg="topic_tools" type="throttle" name="relay_video" args="messages /rgbd_sensor/rgb/image_color/compressed 5 /teleop/compressed_image" required="true">
     <param name="lazy" value="false"/>
   </node>
 </launch>
