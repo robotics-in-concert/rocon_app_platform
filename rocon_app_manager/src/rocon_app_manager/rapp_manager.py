@@ -515,7 +515,7 @@ class RappManager(object):
                 resp.message = message
                 return resp
 
-        rospy.loginfo("Rapp Manager : starting app '" + req.name + "' underneath " + self._application_namespace)
+        rospy.loginfo("Rapp Manager : Starting rapp '" + req.name + "' underneath " + self._application_namespace)
         resp.started, resp.message, subscribers, publishers, services, action_clients, action_servers = \
             rapp.start(self._application_namespace,
                        self._gateway_name,
@@ -523,6 +523,14 @@ class RappManager(object):
                        req.remappings,
                        self._param['app_output_to_screen'],
                        self.caps_list)
+
+        if not resp.started:
+            rospy.logerr("Rapp Manager : Starting rapp '" + req.name + "' failed. Stopping started capabilities.")
+            result, message = stop_capabilities_from_caps_list(
+                                           self._runnable_apps[req.name].data['required_capabilities'], self.caps_list)
+            if not result:  # if not none, it failed to stop capabilities
+                resp.message += message
+            return resp
 
         rospy.loginfo("Rapp Manager : %s" % self._remote_name)
         # small pause (convenience only) to let connections to come up
