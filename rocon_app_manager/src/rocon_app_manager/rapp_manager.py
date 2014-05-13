@@ -125,7 +125,10 @@ class RappManager(object):
         self._gateway_services['advertise'] = rospy.ServiceProxy('~advertise', gateway_srvs.Advertise)
         self._gateway_services['pull'] = rospy.ServiceProxy('~pull', gateway_srvs.Remote)
         self._gateway_publishers = {}
-        self._gateway_publishers['force_update'] = rospy.Publisher("~force_update", std_msgs.Empty)
+        self._gateway_publishers['force_update'] = rospy.Publisher("~force_update",
+                                                                   std_msgs.Empty,
+                                                                   queue_size=5
+                                                                   )
 
     def _init_services(self):
         '''
@@ -161,9 +164,9 @@ class RappManager(object):
             self._services['start_rapp'] = rospy.Service(self._service_names['start_rapp'], rapp_manager_srvs.StartRapp, self._process_start_app)
             self._services['stop_rapp'] = rospy.Service(self._service_names['stop_rapp'], rapp_manager_srvs.StopRapp, self._process_stop_app)
             # Latched publishers
-            self._publishers['status'] = rospy.Publisher(self._publisher_names['status'], rapp_manager_msgs.Status, latch=True)
-            self._publishers['rapp_list'] = rospy.Publisher(self._publisher_names['rapp_list'], rapp_manager_msgs.RappList, latch=True)
-            self._publishers['incompatible_rapp_list'] = rospy.Publisher(self._publisher_names['incompatible_rapp_list'], rapp_manager_msgs.IncompatibleRappList, latch=True)
+            self._publishers['status'] = rospy.Publisher(self._publisher_names['status'], rapp_manager_msgs.Status, latch=True, queue_size=5)
+            self._publishers['rapp_list'] = rospy.Publisher(self._publisher_names['rapp_list'], rapp_manager_msgs.RappList, latch=True, queue_size=1)
+            self._publishers['incompatible_rapp_list'] = rospy.Publisher(self._publisher_names['incompatible_rapp_list'], rapp_manager_msgs.IncompatibleRappList, latch=True, queue_size=1)
             # Force an update on the gateway
             self._gateway_publishers['force_update'].publish(std_msgs.Empty())
         except Exception as unused_e:
