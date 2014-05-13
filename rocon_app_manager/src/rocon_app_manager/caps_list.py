@@ -112,29 +112,47 @@ class CapsList(object):
 
     def start_capability(self, name, preferred_provider=None):
         '''
-        Triggers the start of the capability via the capability server
+        Triggers the start of the capability via the capability server. This is actually only "using" it,
+        i.e. increasing the reference count. If the capability hasn't been started yet, it will be.
 
         :param name: name of the capability to start
         :type name: string
         :param preferred_provider: name of the preferred provider of the capability (optional)
         :type preferred_provider: string
-        :returns: true, if using the capability succeeded, false otherwise
+        :returns: true, if starting the capability succeeded, false otherwise
         :rtype: boolean
         '''
+        message = ""
+        result = False
 
-        return self._caps_client.use_capability(name, preferred_provider, self._default_timeout)
+        try:
+            result = self._caps_client.use_capability(name, preferred_provider, self._default_timeout)
+        except rospy.service.ServiceException as exc:
+            result = False
+            message = "Exception raised while starting cap '" + name + "': " + str(exc)
+
+        return result, message
 
     def stop_capability(self, name):
         '''
-        Triggers the stop of the capability via the capability server
+        Triggers the stop of the capability via the capability server. This is actually only freeing the capability,
+        i.e. decreasing the reference count. In case no one else is using the capability, it will be stopped.
 
         :param name: name of the capability to stop
         :type name: string
-        :returns: true, if freeing the capability succeeded, false otherwise
+        :returns: true, if stopping the capability succeeded, false otherwise
         :rtype: boolean
         '''
+        message = ""
+        result = False
 
-        return self._caps_client.free_capability(name, self._default_timeout)
+        try:
+            result = self._caps_client.free_capability(name, self._default_timeout)
+        except rospy.service.ServiceException as exc:
+            result = False
+            message = "Exception raised while stopping cap '" + name + "': " + str(exc)
+
+        return result, message
 
     def get_cap_remappings(self, cap, caps_remap_from_list, caps_remap_to_list):
         '''
@@ -319,30 +337,24 @@ def start_capabilities_from_caps_list(capabilities, caps_list):
       :returns: True if successful. False with reason if it fails
       :rtype: boolean, string
     '''
+    starting_error = False
+    error_msgs = []
+
     for cap in capabilities:
-        try:
-            start_resp = caps_list.start_capability(cap["name"])
-        except rospy.ROSException as exc:
-            message = ("Rapp Manager : service for starting capabilities is not available."
-                       + " Will not start app. Error:"
-                       + str(exc))
-            rospy.logerr("Rapp Manager : %s" % message)
-            return False, message
-        except IOError as exc:
-            message = ("Rapp Manager : error occurred while processing 'start_capability' service."
-                       + " Will not start app. Error: "
-                       + str(exc))
-            rospy.logerr("Rapp Manager : %s" % message)
-            return False, message
-        if start_resp:
-            rospy.loginfo("Rapp Manager : started required capability '" + str(cap["name"]) + "'.")
+        result, message = caps_list.start_capability(cap["name"])
+        if result:
+            rospy.loginfo("Rapp Manager : Started required capability '" + cap["name"] + "'.")
         else:
-            message = ("Rapp Manager : starting capability '" + str(cap["name"]) + " was not successful."
-                       " Will not start app.")
-            rospy.logerr("Rapp Manager : %s" % message)
-            return False, message
-    rospy.loginfo("Rapp Manager : all required capabilities have been started.")
-    return True, ""
+            starting_error = True
+            error_msgs.append("Error occurred while starting capability'" + cap["name"] + "': " + message)
+
+    if starting_error:
+        message = ("Failed to start capabilities. Errors: " + str(error_msgs))
+        rospy.logerr("Rapp Manager : %s" % message)
+        return False, message
+    else:
+        rospy.loginfo("Rapp Manager : All required capabilities have been started.")
+        return True, ""
 
 
 def stop_capabilities_from_caps_list(capabilities, caps_list):
@@ -356,25 +368,21 @@ def stop_capabilities_from_caps_list(capabilities, caps_list):
       :returns: True if successful. False with reason if it fails
       :rtype: boolean, string
     '''
+    stopping_error = False
+    error_msgs = []
+
     for cap in capabilities:
-        try:
-            start_resp = caps_list.stop_capability(cap["name"])
-        except rospy.ROSException as exc:
-            message = ("Rapp Manager : Service for stopping capabilities is not available."
-                       + " Error:" + str(exc))
-            rospy.logerr("Rapp Manager : %s" % message)
-            return False, message
-        except IOError as exc:
-            message = ("Rapp Manager : error occurred while processing 'stop_capability' service."
-                       + " Error: " + str(exc))
-            rospy.logerr("Rapp Manager : %s" % message)
-            return False, message
-        if start_resp:
-            rospy.loginfo("Rapp Manager : Stopped required capability '" + str(cap["name"]) + "'.")
+        result, message = caps_list.stop_capability(cap["name"])
+        if result:
+            rospy.loginfo("Rapp Manager : Stopped required capability '" + cap["name"] + "'.")
         else:
-            message = ("Rapp Manager : stopping capability '" + str(cap["name"])
-                       + " was not successful.")
-            rospy.logerr("Rapp Manager : %s" % message)
-            return False, message
-    rospy.loginfo("Rapp Manager : All required capabilities have been stopped.")
-    return True, ""
+            stopping_error = True
+            error_msgs.append("Error occurred while stopping capability '" + cap["name"] + "': " + message)
+
+    if stopping_error:
+        message = ("Failed to stop capabilities. Errors: " + str(error_msgs))
+        rospy.logerr("Rapp Manager : %s" % message)
+        return False, message
+    else:
+        rospy.loginfo("Rapp Manager : All required capabilities have been stopped.")
+        return True, ""
