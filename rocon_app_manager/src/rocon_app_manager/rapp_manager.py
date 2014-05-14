@@ -441,7 +441,10 @@ class RappManager(object):
                                        rapp_status=rapp_status,
                                        rapp=rapp
                                        )
-        self._publishers['status'].publish(msg)
+        try:
+            self._publishers['status'].publish(msg)
+        except rospy.ROSException:  # publisher has unregistered - ros shutting down
+            pass
 
     def _publish_rapp_list(self):
         '''
