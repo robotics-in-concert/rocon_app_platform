@@ -17,7 +17,7 @@
   <arg name="rapp_package_blacklist" default="[]"/>
 
   <!-- ******************************* Connectivity ***************************** -->
-  <arg name="concert_whitelist"     default=""/>      <!-- semi colon separated list of concert names this robot will work with -->
+  <arg name="concert_whitelist"     default="[]"/>    <!-- list of concert names this robot will work with -->
   <arg name="local_machine_only"    default="false"/> <!-- only work with local concerts (testing, simulations) -->
   <arg name="concert_watch_period"  default="10"/>    <!-- the period used by gateways for watching concert connections -->
 
