@@ -15,8 +15,6 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>python-catkin-pkg</build_depend>
-  <build_depend>rocon_python_utils</build_depend>
-  <build_depend>rocon_uri</build_depend>
   <build_depend>roslint</build_depend>
   <run_depend>rocon_python_utils</run_depend>
   <run_depend>rocon_uri</run_depend>
