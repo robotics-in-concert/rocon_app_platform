@@ -9,7 +9,7 @@ project(rocon_app_manager)
 # Catkin
 ##############################################################################
 
-find_package(catkin REQUIRED roslint)
+find_package(catkin REQUIRED COMPONENTS roslint)
 catkin_package()
 
 catkin_python_setup()
