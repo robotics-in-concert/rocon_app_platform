@@ -1,6 +1,14 @@
 Changelog
 =========
 
+0.7.1 (2014-05-26)
+------------------
+* use lists instead of semi-colon separated strings for hub/concert whitelists/blacklists now roslaunch can handle it.
+* don't try and direct connect to a local hub by default.
+* catch and handle a shutdown exception.
+* update publisher queue_size to avoid warning in indigo.
+* Contributors: Daniel Stonier
+
 0.7.0 (2014-05-06)
 ------------------
 * support for rapp indexing over a remote repository's cached tarball.
