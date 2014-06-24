@@ -137,6 +137,8 @@ class Rapp(object):
             if 'required_capabilities' in data:  # apply capability-specific remappings needed
                 utils.apply_remapping_rules_from_capabilities(self._launch, data, caps_list)
 
+
+            rospy.logerr("Application_namespace is: " + application_namespace)
             self._connections = utils.apply_remapping_rules_from_start_app_request(self._launch, data, remappings, application_namespace)
 
             utils.resolve_chain_remappings(self._launch.config.nodes)

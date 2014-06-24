@@ -149,12 +149,23 @@ class RappManager(object):
             self._publishers = {}
         self._service_names = {}
         self._publisher_names = {}
-        base_name = self._gateway_name if self._gateway_name else self._param['robot_name'].lower().replace(' ', '_')  # latter option is for standalone mode
+        base_name = self._gateway_name if self._gateway_name else ""  # latter option is for standalone mode
         for name in self._default_service_names:
-            self._service_names[name] = '/' + base_name + '/' + self._default_service_names[name]
+            if (base_name == ""):
+                rospy.loginfo("Base_name was empty setting service names to leave out base name")
+                self._service_names[name] = '/' + self._default_service_names[name]
+            else:
+                rospy.loginfo("Base_name was NOT empty setting publisher names to leave out base name")
+                self._service_names[name] = '/' + base_name + '/' + self._default_service_names[name]
         for name in self._default_publisher_names:
-            self._publisher_names[name] = '/' + base_name + '/' + self._default_publisher_names[name]
-        self._application_namespace = base_name
+            if(base_name == ""):
+                rospy.loginfo("Base_name was empty setting publisher names to leave out base name")
+                self._publisher_names[name] = '/' + self._default_publisher_names[name]
+                self._application_namespace = ""
+            else:
+                rospy.loginfo("Base_name was NOT empty setting publisher names to leave out base name")
+                self._publisher_names[name] = '/' + base_name + '/' + self._default_publisher_names[name]
+                self._application_namespace = base_name
         try:
             # Advertisable services - we advertise these by default advertisement rules for the app manager's gateway.
             self._services['platform_info'] = rospy.Service(self._service_names['platform_info'], rocon_std_srvs.GetPlatformInfo, self._process_platform_info)
@@ -374,6 +385,7 @@ class RappManager(object):
                 return rapp_manager_srvs.InviteResponse(False, rapp_manager_msgs.ErrorCodes.ALREADY_REMOTE_CONTROLLED, "already remote controlled from %s" % self._remote_name)
         # Variable setting
         if req.application_namespace == '':
+            rospy.loginfo("Derp you forgot to change this")
             self._application_namespace = self._gateway_name if self._gateway_name else self._param['robot_name']
         else:
             self._application_namespace = req.application_namespace
