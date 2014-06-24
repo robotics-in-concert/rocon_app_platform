@@ -3,7 +3,7 @@
   especially useful if you want to enable pairing of interactions with rapps. 
  -->
 <launch>
-  <arg name="interactions_list" default="[turtlebot_bringup/admin.interactions, turtlebot_bringup/documentation.interactions, turtlebot_bringup/pairing.interactions]"/>  <!-- list of resource names pointing to yaml interaction configurations, e.g. [rocon_app_manager_tutorials/pairing] -->
+  <arg name="interactions_list" default="[]"/>  <!-- list of resource names pointing to yaml interaction configurations, e.g. [rocon_app_manager_tutorials/pairing] -->
   
   <node pkg="rocon_interactions" type="interactions_manager.py" name="interactions">
     <rosparam param="interactions" subst_value="true">$(arg interactions_list)</rosparam>
