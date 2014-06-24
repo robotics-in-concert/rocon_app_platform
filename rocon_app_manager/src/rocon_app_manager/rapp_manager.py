@@ -152,18 +152,14 @@ class RappManager(object):
         base_name = self._gateway_name if self._gateway_name else ""  # latter option is for standalone mode
         for name in self._default_service_names:
             if (base_name == ""):
-                rospy.loginfo("Base_name was empty setting service names to leave out base name")
                 self._service_names[name] = '/' + self._default_service_names[name]
             else:
-                rospy.loginfo("Base_name was NOT empty setting publisher names to leave out base name")
                 self._service_names[name] = '/' + base_name + '/' + self._default_service_names[name]
         for name in self._default_publisher_names:
             if(base_name == ""):
-                rospy.loginfo("Base_name was empty setting publisher names to leave out base name")
                 self._publisher_names[name] = '/' + self._default_publisher_names[name]
                 self._application_namespace = ""
             else:
-                rospy.loginfo("Base_name was NOT empty setting publisher names to leave out base name")
                 self._publisher_names[name] = '/' + base_name + '/' + self._default_publisher_names[name]
                 self._application_namespace = base_name
         try:
@@ -385,7 +381,6 @@ class RappManager(object):
                 return rapp_manager_srvs.InviteResponse(False, rapp_manager_msgs.ErrorCodes.ALREADY_REMOTE_CONTROLLED, "already remote controlled from %s" % self._remote_name)
         # Variable setting
         if req.application_namespace == '':
-            rospy.loginfo("Derp you forgot to change this")
             self._application_namespace = self._gateway_name if self._gateway_name else self._param['robot_name']
         else:
             self._application_namespace = req.application_namespace
