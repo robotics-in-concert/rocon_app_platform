@@ -127,9 +127,9 @@ class CapsList(object):
 
         try:
             result = self._caps_client.use_capability(name, preferred_provider, self._default_timeout)
-        except rospy.service.ServiceException as exc:
+        except Exception as exc:
             result = False
-            message = "Exception raised while starting cap '" + name + "': " + str(exc)
+            message = "Exception raised while starting capability '" + name + "': " + str(exc)
 
         return result, message
 
@@ -148,9 +148,15 @@ class CapsList(object):
 
         try:
             result = self._caps_client.free_capability(name, self._default_timeout)
-        except rospy.service.ServiceException as exc:
+        except client.CapabilityNotRunningException as exc:
+            result = True
+            message = "Capability '" + name + "' has already been stopped ('" + str(exc) + "')."
+        except client.CapabilityNotInUseException as exc:
+            result = True
+            message = "Capability '" + name + "' has not been used ('" + str(exc) + "')."
+        except Exception as exc:
             result = False
-            message = "Exception raised while stopping cap '" + name + "': " + str(exc)
+            message = "Exception raised while stopping capability '" + name + "': " + str(exc)
 
         return result, message
 
