@@ -1,3 +1,2 @@
-parameters:
-  - message
-  - frequency
+message: hello world
+frequency: 10
