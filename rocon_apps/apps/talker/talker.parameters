@@ -1,2 +1,3 @@
-message: 'hello world' 
-frequency: 10
+parameters:
+  - message
+  - frequency
