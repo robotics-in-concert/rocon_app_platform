@@ -46,9 +46,9 @@ class Rapp(object):
         self.data['status'] = 'Ready'
 
     def __repr__(self):
-        string = ""
+        string = ''
         for d in self.data:
-            string += d + " : " + str(self.data[d]) + "\n"
+            string += d + ' : ' + str(self.data[d]) + '\n'
         return string
 
     def to_msg(self):
@@ -129,7 +129,7 @@ class Rapp(object):
           :type rocon_uri_string: str - a rocon uri string
           :param remapping: rules for the app flips.
           :type remapping: list of rocon_std_msgs.msg.Remapping values.
-          :param parameters: roslaunch args from public_parameters
+          :param parameters: requested public_parameters
           :type parameters: list of rocon_std_msgs.msg.KeyValue
           :param force_screen: whether to roslaunch the app with --screen or not
           :type force_screen: boolean
@@ -139,10 +139,12 @@ class Rapp(object):
         data = self.data
 
         try:
-            nodelet_manager_name = caps_list.nodelet_manager_name if caps_list else None
+            capability_nodelet_manager_name = caps_list.nodelet_manager_name if caps_list else None
+
+            public_parameters = utils.apply_requested_public_parameters(data['public_parameters'], parameters)
 
             temp = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
-            self._launch = utils.prepare_launcher(data, application_namespace, gateway_name, rocon_uri_string, nodelet_manager_name, force_screen, temp)
+            self._launch = utils.prepare_launcher(data, public_parameters, application_namespace, gateway_name, rocon_uri_string, capability_nodelet_manager_name, force_screen, temp)
 
             # Better logic for the future, 1) get remap rules from capabilities. 2) get remap rules from requets. 3) apply them all. It would be clearer to understand the logic and easily upgradable
             if 'required_capabilities' in data:  # apply capability-specific remappings needed
