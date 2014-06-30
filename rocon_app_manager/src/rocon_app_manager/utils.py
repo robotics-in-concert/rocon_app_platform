@@ -8,7 +8,6 @@ import rospy
 import roslaunch.parent
 import roslib.names
 import rocon_std_msgs.msg as rocon_std_msgs
-import copy
 from .exceptions import MissingCapabilitiesException
 
 ##############################################################################
