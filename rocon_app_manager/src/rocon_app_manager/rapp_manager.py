@@ -534,6 +534,7 @@ class RappManager(object):
                        self._gateway_name,
                        self._rocon_uri,
                        req.remappings,
+                       req.parameters,
                        self._param['app_output_to_screen'],
                        self.caps_list)
 

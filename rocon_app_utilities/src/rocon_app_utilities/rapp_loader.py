@@ -153,12 +153,12 @@ def _load_public_parameters(base_path, public_parameters_resource, rospack):
     if not public_parameters_resource:
         return {}
 
-    d = {}
     public_parameters_file_path = _find_resource(base_path, public_parameters_resource, rospack)
-
-    # TODO: Do it!
-
-    return d
+    with open(public_parameters_file_path, 'r') as f:
+        y = yaml.load(f.read())
+        y = y or {}
+        
+    return y
 
 
 def _get_standard_args(roslaunch_file):

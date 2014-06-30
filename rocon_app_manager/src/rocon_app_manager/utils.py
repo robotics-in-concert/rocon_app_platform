@@ -31,7 +31,7 @@ def dict_to_KeyValue(d):
     return l
 
 
-def _prepare_launch_text(launch_file, launch_args, application_namespace,
+def _prepare_launch_text(launch_file, launch_args, public_parameters, application_namespace,
                          gateway_name, rocon_uri_string, capability_server_nodelet_manager_name=None):
     '''
       Prepare the launch file text. This essentially wraps the rapp launcher
@@ -72,15 +72,14 @@ def _prepare_launch_text(launch_file, launch_args, application_namespace,
     launch_arg_mapping['capability_server_nodelet_manager_name'] = capability_server_nodelet_manager_name
 
     if(application_namespace == ""):
-      launch_text = '<launch>\n  <include file="%s">\n' % (launch_file)
+        launch_text = '<launch>\n  <include file="%s">\n' % (launch_file)
     else:
-      launch_text = '<launch>\n  <include ns="%s" file="%s">\n' % (application_namespace, launch_file)
+        launch_text = '<launch>\n  <include ns="%s" file="%s">\n' % (application_namespace, launch_file)
 
     for arg in launch_args:
         launch_text += '    <arg name="%s" value="%s"/>' % (arg, launch_arg_mapping[arg])
-        
     for name, value in public_parameters.items():
-    	launch_text += '    <arg name="%s" value="%s"/>' % (name, value)
+        launch_text += '    <arg name="%s" value="%s"/>' % (name, value)
 
     launch_text += '  </include>\n</launch>\n'
     return launch_text
@@ -110,7 +109,7 @@ def resolve_chain_remappings(nodes):
         n.remap_args = new_remap_args_dict.items()
 
 
-def prepare_launcher(data, application_namespace, gateway_name, rocon_uri_string, nodelet_manager_name, force_screen, temp):
+def prepare_launcher(data, public_parameters, application_namespace, gateway_name, rocon_uri_string, capability_nodelet_manager_name, force_screen, temp):
     '''
       prepare roslaunch to start rapp.
     '''
@@ -118,10 +117,11 @@ def prepare_launcher(data, application_namespace, gateway_name, rocon_uri_string
 
     launch_text = _prepare_launch_text(data['launch'],
                                        data['launch_args'],
+                                       public_parameters,
                                        application_namespace,
                                        gateway_name,
                                        rocon_uri_string,
-                                       nodelet_manager_name)
+                                       capability_nodelet_manager_name)
     temp.write(launch_text)
     temp.close()  # unlink it later
 
@@ -214,3 +214,31 @@ def apply_remapping_rules_from_start_app_request(launch_spec, data, remappings, 
                     flipped_name = '/' + application_namespace + '/' + t
                 connections[connection_type].append(flipped_name)
     return connections
+
+
+def apply_requested_public_parameters(default_parameters, requested_parameters):
+    '''
+    validate the requested public parameters, and apply them
+
+    :param default_parameters: default public parameters written in rapp specification
+    :type default_parameters: dict
+    :param requested_parameters: given from start_rapp request
+    :type requested_parameters: [rocon_std_msgs.KeyValue]
+    
+    :returns: A resolved public_parameters
+    :rtype: {name: value}
+    '''
+
+    public_parameters = copy.deepcopy(default_parameters)
+
+    # validate whether requested parameters are in public parameter list
+    valid_params = {param.key:param.value for param in requested_parameters if param.key in default_parameters}
+    invalid_params = [param for param in requested_parameters if not param.key in default_parameters]
+
+    if invalid_params:
+        rospy.logwarn('Rapp Manager : Skipping invalid public parameters[%s]'%str(invalid_params))
+
+    for key, val in valid_params.items():
+        public_parameters[key] = val
+
+    return public_parameters
