@@ -226,9 +226,7 @@ def apply_requested_public_parameters(default_parameters, requested_parameters):
     :rtype: {name: value}
     '''
 
-    public_parameters = {}
-    for key, val in default_parameters.items():
-        public_parameters[key] = val
+    public_parameters = copy.deepcopy(default_parameters)
 
     # validate whether requested parameters are in public parameter list
     valid_params = {param.key:param.value for param in requested_parameters if param.key in default_parameters}
