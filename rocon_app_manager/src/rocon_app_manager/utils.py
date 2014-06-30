@@ -4,6 +4,7 @@
 #
 ##############################################################################
 
+import copy
 import rospy
 import roslaunch.parent
 import roslib.names
