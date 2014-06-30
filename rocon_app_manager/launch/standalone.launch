@@ -25,7 +25,7 @@
   <!-- ****************************** Rapp Manager ****************************** -->
   <arg name="auto_rapp_installation" default="false"/>              <!-- http://wiki.ros.org/rocon_app_manager/Tutorials/indigo/Automatic Rapp Installation -->
   <arg name="auto_start_rapp"        default=""/>                   <!-- autostart a rapp, e.g. rocon_apps/talker -->
-  <arg name="rapp_package_whitelist" default="[rocon_apps, turtlebot_rapps]"/>       <!-- comma separated list of package names -->
+  <arg name="rapp_package_whitelist" default="[rocon_apps]"/>       <!-- comma separated list of package names -->
   <arg name="rapp_package_blacklist" default="[]"/>
   <arg name="robot_name"             default="Cybernetic Pirate"/>
   <arg name="robot_type"             default="pc"/>
@@ -54,7 +54,7 @@
   </include>
 
   <!-- ***************************** Interactions ******************************* -->
-  <arg name="interactions"          default="true"/>
+  <arg name="interactions"          default="false"/>
   <arg name="interactions_list"     default="[]"/>
 
   <group if="$(arg interactions)">
