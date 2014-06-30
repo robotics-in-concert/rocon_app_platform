@@ -73,15 +73,16 @@ def _prepare_launch_text(launch_file, launch_args, application_namespace,
 
     if(application_namespace == ""):
       launch_text = '<launch>\n  <include file="%s">\n' % (launch_file)
-      for arg in launch_args:
-        launch_text += '    <arg name="%s" value="%s"/>' % (arg, launch_arg_mapping[arg])
-      launch_text += '  </include>\n</launch>\n'
     else:
       launch_text = '<launch>\n  <include ns="%s" file="%s">\n' % (application_namespace, launch_file)
-      for arg in launch_args:
+
+    for arg in launch_args:
         launch_text += '    <arg name="%s" value="%s"/>' % (arg, launch_arg_mapping[arg])
-      launch_text += '  </include>\n</launch>\n'
-    
+        
+    for name, value in public_parameters.items():
+    	launch_text += '    <arg name="%s" value="%s"/>' % (name, value)
+
+    launch_text += '  </include>\n</launch>\n'
     return launch_text
 
 
