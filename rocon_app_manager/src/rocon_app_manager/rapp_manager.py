@@ -152,12 +152,12 @@ class RappManager(object):
         base_name = self._gateway_name if self._gateway_name else ""  # latter option is for standalone mode
         for name in self._default_service_names:
             if (base_name == ""):
-                self._service_names[name] = '/' + self._default_service_names[name]
+                self._service_names[name] = '~' + self._default_service_names[name]
             else:
                 self._service_names[name] = '/' + base_name + '/' + self._default_service_names[name]
         for name in self._default_publisher_names:
             if(base_name == ""):
-                self._publisher_names[name] = '/' + self._default_publisher_names[name]
+                self._publisher_names[name] = '~' + self._default_publisher_names[name]
                 self._application_namespace = ""
             else:
                 self._publisher_names[name] = '/' + base_name + '/' + self._default_publisher_names[name]
