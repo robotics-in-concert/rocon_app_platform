@@ -1,4 +1,6 @@
 <launch>
+  <!-- Rapp Parameters : Defaults are set by rapp parameter configuration. 
+       This is not standard, the defaults below are given as standard reference-->
   <arg name="message" default="hello world"/>
   <arg name="frequency" default="10"/>
   <node name="talker" pkg="rocon_apps" type="talker" required="true">
