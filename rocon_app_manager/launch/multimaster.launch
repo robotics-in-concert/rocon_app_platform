@@ -8,7 +8,7 @@
   <arg name="gateway_firewall"          default="true"/> <!-- default is not to let anything come into the robot -->
   <arg name="gateway_uuids"             default="true"/> <!-- all gateways represent their robots with unique uuid's postfixed to the name -->
   <arg name="gateway_watch_loop_period" default="10"/>   <!-- the polling period for multimaster advertising/flipping -->
-  <arg name="hub_whitelist"             default=""/>     <!-- semi-colon separated hub names/regex patterns -->
+  <arg name="hub_whitelist"             default="[]"/>     <!-- list of hub names/regex patterns -->
 
   <include file="$(find rocon_app_manager)/launch/includes/_gateway.xml">
     <arg name="gateway_name" value="$(arg robot_name)" />

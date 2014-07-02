@@ -17,7 +17,7 @@
   <arg name="rapp_package_blacklist" default="[]"/>
 
   <!-- ******************************* Connectivity ***************************** -->
-  <arg name="concert_whitelist"     default=""/>      <!-- semi colon separated list of concert names this robot will work with -->
+  <arg name="concert_whitelist"     default="[]"/>    <!-- list of concert names this robot will work with -->
   <arg name="local_machine_only"    default="false"/> <!-- only work with local concerts (testing, simulations) -->
   <arg name="concert_watch_period"  default="10"/>    <!-- the period used by gateways for watching concert connections -->
 
@@ -51,7 +51,7 @@
     <arg name="gateway_uuids"                  value="$(arg robot_unique_name)" />
     <arg name="gateway_watch_loop_period"      value="$(arg concert_watch_period)" />
     <arg name="hub_whitelist"                  value="$(arg concert_whitelist)"/>
-    <arg name="local_remote_controllers_only"  value="$(arg local_machine_only" />
+    <arg name="local_remote_controllers_only"  value="$(arg local_machine_only)" />
     <arg name="rapp_package_whitelist"         value="$(arg rapp_package_whitelist)" />
     <arg name="rapp_package_blacklist"         value="$(arg rapp_package_blacklist)" />
     <arg name="robot_description"              value="$(arg robot_description)" />

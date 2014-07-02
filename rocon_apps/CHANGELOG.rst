@@ -1,14 +1,27 @@
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Changelog for package rocon_apps
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Changelog
+=========
+
+0.7.0 (2014-05-06)
+------------------
+* added local index generator.
+* remove legacy pairing information (now handled by `rocon_interactions <http://wiki.ros.org/rocon_interactions>`_).
+* new icons, new teleop ancestor rapp.
+* upgrade from tuples to rocon uri's for compatibility checks.
+* rename interface into public_interface
+* remove required from chirp launcher - creates alot of bleeding when it naturally dies!
+* make use of required roslaunch tag in rapps, closes `#127 <https://github.com/robotics-in-concert/rocon_app_platform/issues/127>`_.
+* rapps now loading from package manifest exports instead of rapp lists, `#121 <https://github.com/robotics-in-concert/rocon_app_platform/issues/121>`_.
+* updated maintainers and authors.
+* capability suport
+* limit sharing of the listener.
+* share option for infinite shares, closes `#94 <https://github.com/robotics-in-concert/rocon_app_platform/issues/94>`_
+* deprecate the old platform info message, `#88 <https://github.com/robotics-in-concert/rocon_app_platform/issues/88>`_
+* capability integration: adds retrievel of available capabilities from the server
+* Contributors: Daniel Stonier, Dirk Thomas, Esteve Fernandez, Jihoon Lee, Marcus Liebhardt
 
 0.6.1 (2013-09-11)
 ------------------
 * don't delete listener - chatter_concert uses it.
-* android apps moved from ros_java -> rosjava
-
-0.6.0 (2013-08-30)
-------------------
 
 0.5.4 (2013-08-07)
 ------------------
@@ -24,17 +37,6 @@ Changelog for package rocon_apps
 * listener android app moved to android_apps repo.
 * pairing clients infra.
 * new icons
-
-0.5.1 (2013-06-10)
-------------------
-* 0.5.0
-
-0.5.0 (2013-05-27)
-------------------
-* 0.4.0
-
-0.3.0 (2013-02-05 15:23)
-------------------------
 
 0.2.0 (2013-02-05 13:18)
 ------------------------

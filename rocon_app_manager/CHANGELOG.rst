@@ -1,6 +1,24 @@
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Changelog for package rocon_app_manager
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Changelog
+=========
+
+0.7.1 (2014-05-26)
+------------------
+* use lists instead of semi-colon separated strings for hub/concert whitelists/blacklists now roslaunch can handle it.
+* don't try and direct connect to a local hub by default.
+* catch and handle a shutdown exception.
+* update publisher queue_size to avoid warning in indigo.
+* Contributors: Daniel Stonier
+
+0.7.0 (2014-05-06)
+------------------
+* support for rapp indexing over a remote repository's cached tarball.
+* support for rapp indexing over the local ROS_PACKAGE_PATH.
+* complete capability support for rapps.
+* relieve rapp_manager of pairing responsibilities, now done via `rocon_interactions <http://wiki.ros.org/rocon_interactions>`_.
+* revamped launcher file configuration for standalone, multimaster.
+* move from tuples to rocon_uri's for platform specifications.
+* support for rapp remappings.
+* Contributors: Daniel Stonier, Jihoon Lee, Marcus Liebhardt, Piyush Khandelwal, Yujin
 
 0.6.1 (2013-09-11)
 ------------------
