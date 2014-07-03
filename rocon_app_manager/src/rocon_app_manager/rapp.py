@@ -14,6 +14,7 @@ import rospy
 import traceback
 import rocon_python_utils
 import rocon_app_manager_msgs.msg as rapp_manager_msgs
+import rocon_std_msgs.msg as rocon_std_msgs
 from .exceptions import MissingCapabilitiesException
 
 from . import utils
@@ -45,9 +46,9 @@ class Rapp(object):
         self.data['status'] = 'Ready'
 
     def __repr__(self):
-        string = ""
+        string = ''
         for d in self.data:
-            string += d + " : " + str(self.data[d]) + "\n"
+            string += d + ' : ' + str(self.data[d]) + '\n'
         return string
 
     def to_msg(self):
@@ -64,6 +65,14 @@ class Rapp(object):
         a.compatibility = self.data['compatibility']
         a.status = self.data['status']
         a.icon = rocon_python_utils.ros.icon_to_msg(self.data['icon'])
+
+        key = 'public_interface'
+        if key in self.data:
+            a.public_interface = [rocon_std_msgs.KeyValue(key, str(val)) for key, val in self.data[key].items()]
+
+        key = 'public_parameters'
+        if key in self.data:
+            a.public_parameters = [rocon_std_msgs.KeyValue(str(key), str(val)) for key, val in self.data[key].items()]
 
         key = 'required_capabilities'
         if key in self.data:
@@ -100,7 +109,7 @@ class Rapp(object):
 
         return success, str()
 
-    def start(self, application_namespace, gateway_name, rocon_uri_string, remappings=[], force_screen=False,
+    def start(self, application_namespace, gateway_name, rocon_uri_string, remappings=[], parameters=[], force_screen=False,
               caps_list=None):
         '''
           Some important jobs here.
@@ -120,6 +129,8 @@ class Rapp(object):
           :type rocon_uri_string: str - a rocon uri string
           :param remapping: rules for the app flips.
           :type remapping: list of rocon_std_msgs.msg.Remapping values.
+          :param parameters: requested public_parameters
+          :type parameters: list of rocon_std_msgs.msg.KeyValue
           :param force_screen: whether to roslaunch the app with --screen or not
           :type force_screen: boolean
           :param caps_list: this holds the list of available capabilities, if app needs capabilities
@@ -128,10 +139,12 @@ class Rapp(object):
         data = self.data
 
         try:
-            nodelet_manager_name = caps_list.nodelet_manager_name if caps_list else None
+            capability_nodelet_manager_name = caps_list.nodelet_manager_name if caps_list else None
+
+            public_parameters = utils.apply_requested_public_parameters(data['public_parameters'], parameters)
 
             temp = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
-            self._launch = utils.prepare_launcher(data, application_namespace, gateway_name, rocon_uri_string, nodelet_manager_name, force_screen, temp)
+            self._launch = utils.prepare_launcher(data, public_parameters, application_namespace, gateway_name, rocon_uri_string, capability_nodelet_manager_name, force_screen, temp)
 
             # Better logic for the future, 1) get remap rules from capabilities. 2) get remap rules from requets. 3) apply them all. It would be clearer to understand the logic and easily upgradable
             if 'required_capabilities' in data:  # apply capability-specific remappings needed
