@@ -440,25 +440,17 @@ class RappManager(object):
 
     def _get_available_rapp_list(self):
         avail = {}
+        for name, rapp in self._virtual_apps.items():
+            avail[name] = rapp.to_msg()
+            avail[name].name = name
+            
         for name, rapp in self._runnable_apps.items():
             ancestor_name = rapp.data['ancestor_name']
-
-            if not ancestor_name in avail:
-                avail[ancestor_name] = rapp.to_msg()
-                avail[ancestor_name].name = ancestor_name
-                avail[ancestor_name].implementations.append(name)
-            else:
-                avail[ancestor_name].implementations.append(name)
+            avail[ancestor_name].implementations.append(name)
 
         for name, rapp in self._installable_apps.items():
             ancestor_name = rapp.data['ancestor_name']
-
-            if not ancestor_name in avail:
-                avail[ancestor_name] = rapp.to_msg()
-                avail[ancestor_name].name = ancestor_name
-                avail[ancestor_name].implementations.append(name)
-            else:
-                avail[ancestor_name].implementations.append(name)
+            avail[ancestor_name].implementations.append(name)
 
         return avail.values()
 
