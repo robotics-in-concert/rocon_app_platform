@@ -40,3 +40,16 @@ def setup_ros_parameters():
     param['auto_rapp_installation'] = rospy.get_param('~auto_rapp_installation', False)
 
     return param
+
+
+def get_default_apps_from_params(apps):
+    '''
+      Returns default app selections
+    '''
+    prefix = '~default/'
+    param = {}
+
+    for name in apps:
+        param[name] = rospy.get_param(prefix + name, None)
+
+    return param

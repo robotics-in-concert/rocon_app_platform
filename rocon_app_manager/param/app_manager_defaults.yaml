@@ -20,3 +20,8 @@ local_remote_controllers_only: false
 # rapp_lists: '/home/jihoonl/ros/groovy/turtlebot/turtlebot_apps/turtlebot_core_apps/turtlebot.rapps'
 
 app_store_url: []
+
+
+# Set the default(or preferred) rapp configration for virutal rapps
+# default/<virtual_rapp_name>: <implementation_rapp_name>
+default/rocon_apps/chirp: rocon_apps/moo

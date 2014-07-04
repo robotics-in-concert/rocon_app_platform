@@ -32,7 +32,7 @@ import rocon_app_utilities.rapp_repositories as rapp_repositories
 
 # local imports
 from . import exceptions
-from ros_parameters import setup_ros_parameters
+from ros_parameters import setup_ros_parameters, get_default_apps_from_params
 from .rapp import convert_rapps_from_rapp_specs
 
 ##############################################################################
@@ -70,7 +70,7 @@ class RappManager(object):
         self._dependency_checker = rocon_app_utilities.DependencyChecker(self._indexer)
         self._runnable_apps, self._installable_apps, self._noninstallable_rapps, self._platform_filtered_apps, self._capabilities_filtered_apps, self._invalid_apps = self._determine_runnable_rapps()
 
-        self._configure_default_rapp_for_virutals()
+        self._configure_default_rapp_for_virtuals()
 
         self._init_default_service_names()
         self._init_gateway_services()
@@ -229,20 +229,33 @@ class RappManager(object):
 
         return (runnable_rapps, installable_rapps, noninstallable_rapps, platform_filtered_rapps, capabilities_filtered_rapps, invalid_rapps)
 
-    def _configure_default_rapp_for_virutals(self):
+    def _configure_default_rapp_for_virtuals(self):
         virtual_apps = {}
+        #default_apps = setup_default_app_from_params()
+        full_apps = {}
+        full_apps.update(self._runnable_apps)
+        full_apps.update(self._installable_apps)
 
-        for name, rapp in self._runnable_apps.items():
+        for name, rapp in full_apps.items():
             ancestor_name = rapp.data['ancestor_name']
             if not ancestor_name in virtual_apps.keys():
                 virtual_apps[ancestor_name] = rapp
 
-        for name, rapp in self._installable_apps.items():
-            ancestor_name = rapp.data['ancestor_name']
-            if not ancestor_name in virtual_apps.keys():
-                virtual_apps[ancestor_name] = rapp
+        # Get default rapp configurations from parameter server and use
+        defaults = get_default_apps_from_params(virtual_apps.keys())
 
-        # TODO: Get default rapp configurations from parameter server and use
+        for rapp_name, default_rapp_name in defaults.items():
+            selected_rapp_name = virtual_apps[rapp_name].data['name']
+
+            if not default_rapp_name:
+                rospy.logwarn("Rapp Manager : No default rapp for '" + rapp_name + "'.  '" + selected_rapp_name + "' has been selected.")
+                continue
+
+            if not default_rapp_name in full_apps.keys():
+                rospy.logwarn("Rapp Manager : Given default app '" + default_rapp_name + "' for '" + rapp_name + "' does not exist. '" + selected_rapp_name + "' has been selected.")        
+                continue
+
+            virtual_apps[rapp_name] = full_apps[default_rapp_name]            
 
         self._virtual_apps = virtual_apps
 
