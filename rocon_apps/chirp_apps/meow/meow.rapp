@@ -1,0 +1,5 @@
+display: Meow Chirp
+description: Make an audible "meow" sound.
+compatibility: rocon:/
+launch: rocon_apps/meow.launch
+parent_name: rocon_apps/chirp

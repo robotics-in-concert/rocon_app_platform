@@ -28,5 +28,9 @@
     <rocon_app>apps/listener/listener.rapp</rocon_app>
     <rocon_app>apps/talker/talker.rapp</rocon_app>
     <rocon_app>apps/teleop/teleop.rapp</rocon_app>
+    <rocon_app>chirp_apps/lion/lion.rapp</rocon_app>
+    <rocon_app>chirp_apps/angry_cat/angry_cat.rapp</rocon_app>
+    <rocon_app>chirp_apps/meow/meow.rapp</rocon_app>
+    <rocon_app>chirp_apps/moo/moo.rapp</rocon_app>
   </export>
 </package>

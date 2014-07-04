@@ -44,6 +44,7 @@ class Rapp(object):
         self._raw_data = rapp_specification
         self.data = rapp_specification.data
         self.data['status'] = 'Ready'
+        self.data['implementations'] = []
 
     def __repr__(self):
         string = ''
@@ -65,6 +66,7 @@ class Rapp(object):
         a.compatibility = self.data['compatibility']
         a.status = self.data['status']
         a.icon = rocon_python_utils.ros.icon_to_msg(self.data['icon'])
+        a.implementations = []
 
         key = 'public_interface'
         if key in self.data:
@@ -73,10 +75,6 @@ class Rapp(object):
         key = 'public_parameters'
         if key in self.data:
             a.public_parameters = [rocon_std_msgs.KeyValue(str(key), str(val)) for key, val in self.data[key].items()]
-
-        key = 'required_capabilities'
-        if key in self.data:
-            a.required_capabilities = [cap['name'] for cap in self.data[key]]
 
         return a
 
@@ -235,9 +233,10 @@ def convert_rapps_from_rapp_specs(rapp_specs):
 
     for name, spec in rapp_specs.items():
         r = Rapp(spec)
+        r.data['ancestor_name'] = spec.ancestor_name
         runnable_rapps[name] = r
-    return runnable_rapps
 
+    return runnable_rapps
 
 def _init_connections():
     '''

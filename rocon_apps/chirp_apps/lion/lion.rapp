@@ -1,0 +1,5 @@
+display: Lion Chirp
+description: Make an audible "lion" sound.
+compatibility: rocon:/
+launch: rocon_apps/lion.launch
+parent_name: rocon_apps/chirp

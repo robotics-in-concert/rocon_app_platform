@@ -53,7 +53,8 @@ def load_rapp_specs_from_file(specification, rospack=rospkg.RosPack()):
     base_path = os.path.dirname(specification.filename)
     rapp_data = specification.raw_data
     data = {}
-    data['name'] = specification.ancestor_name
+    data['name'] = specification.resource_name
+    data['ancestor_name'] = specification.ancestor_name
     data['display_name']      = rapp_data.get('display', data['name'])
     data['description']       = rapp_data.get('description', '')
     data['compatibility']     = rapp_data['compatibility']
@@ -61,7 +62,7 @@ def load_rapp_specs_from_file(specification, rospack=rospkg.RosPack()):
     data['launch']            = _find_resource(base_path, rapp_data['launch'], rospack)
     data['launch_args']       = _get_standard_args(data['launch'])
     data['public_interface']  = _load_public_interface(base_path, rapp_data.get('public_interface', None), rospack)
-    data['public_parameters'] = _load_public_parameters(base_path, rapp_data.get('public_parameters', None), rospack)  # TODO : It is not tested yet.
+    data['public_parameters'] = _load_public_parameters(base_path, rapp_data.get('public_parameters', None), rospack)
 
     if 'pairing_clients' in rapp_data:
         console.logwarn('Rapp Indexer : [%s] includes "pairing_clients". It is deprecated attribute. Please drop it'%specification.resource_name)
