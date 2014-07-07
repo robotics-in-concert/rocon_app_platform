@@ -1,5 +1,5 @@
 display: Angry Cat Chirp
 description: Make an audible "angry cat" sound.
 compatibility: rocon:/
-launch: rocon_apps/angry_cat.launch
+launch: rocon_apps/angry_cat_chirp.launch
 parent_name: rocon_apps/chirp
