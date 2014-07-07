@@ -242,20 +242,21 @@ class RappManager(object):
                 virtual_apps[ancestor_name] = rapp
 
         # Get default rapp configurations from parameter server and use
-        defaults = get_default_apps_from_params(virtual_apps.keys())
+        defaults = {}
+        for pair in self._param['defaults']:
+            defaults.update(pair)
 
-        for rapp_name, default_rapp_name in defaults.items():
-            selected_rapp_name = virtual_apps[rapp_name].data['name']
-
-            if not default_rapp_name:
+        for rapp_name, selected_rapp in virtual_apps.items():
+            selected_rapp_name = selected_rapp.data['name']
+            if not rapp_name in defaults:
                 rospy.logwarn("Rapp Manager : No default rapp for '" + rapp_name + "'.  '" + selected_rapp_name + "' has been selected.")
                 continue
-
-            if not default_rapp_name in full_apps.keys():
-                rospy.logwarn("Rapp Manager : Given default app '" + default_rapp_name + "' for '" + rapp_name + "' does not exist. '" + selected_rapp_name + "' has been selected.")        
+            default_rapp_name = defaults[rapp_name]
+            if not default_rapp_name in full_apps:
+                rospy.logwarn("Rapp Manager : Given default app '" + default_rapp_name + "' for '" + rapp_name + "' does not exist. '" + selected_rapp_name + "' has been selected.")
                 continue
-
-            virtual_apps[rapp_name] = full_apps[default_rapp_name]            
+            rospy.loginfo("Rapp Manager: '%s' -> '%s'"%(rapp_name, default_rapp_name))
+            virtual_apps[rapp_name] = full_apps[default_rapp_name]
 
         self._virtual_apps = virtual_apps
 
@@ -455,6 +456,7 @@ class RappManager(object):
         avail = {}
         for name, rapp in self._virtual_apps.items():
             avail[name] = rapp.to_msg()
+            avail[name].selected = avail[name].name
             avail[name].name = name
             
         for name, rapp in self._runnable_apps.items():

@@ -21,7 +21,8 @@ local_remote_controllers_only: false
 
 app_store_url: []
 
-
 # Set the default(or preferred) rapp configration for virutal rapps
-# default/<virtual_rapp_name>: <implementation_rapp_name>
-default/rocon_apps/chirp: rocon_apps/moo
+# Uncomment below to explicitly set default rapps 
+#defaults:
+#  - rocon_apps/chirp: 'rocon_apps/moo_chirp'
+#  - rocon_apps/talker: 'rocon_apps/talker'
