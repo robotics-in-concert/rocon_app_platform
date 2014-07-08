@@ -19,4 +19,8 @@ local_remote_controllers_only: false
 # Semi colon separated string. This is very non-portable, use launchers where you can use $(find..) instead
 # rapp_lists: '/home/jihoonl/ros/groovy/turtlebot/turtlebot_apps/turtlebot_core_apps/turtlebot.rapps'
 
-app_store_url: []
+# Uncomment and modify below to explicitly set the preferred
+# implementation for an ancestor rapp specification:
+#  - rocon_apps/chirp: 'rocon_apps/moo'
+# and when an ancestor is an implementation...
+#  - rocon_apps/talker: 'rocon_apps/talker'

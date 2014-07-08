@@ -1,0 +1,3 @@
+<launch>
+  <node name="chirp" pkg="rocon_apps" type="chirp.bash" args="$(find rocon_apps)/sounds/angry_cat.wav"/>
+</launch>

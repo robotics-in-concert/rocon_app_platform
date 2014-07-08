@@ -60,8 +60,6 @@ class RappManager(object):
         self._param = setup_ros_parameters()
         (self._rocon_uri, self._icon) = self._set_platform_info()
 
-        self.apps = {}
-        self.app_list_file = {}
         self.caps_list = {}
         self._initialising_services = False
 
@@ -69,6 +67,9 @@ class RappManager(object):
         self._indexer = rapp_repositories.get_combined_index(package_whitelist=self._param['rapp_package_whitelist'], package_blacklist=self._param['rapp_package_blacklist'])
         self._dependency_checker = rocon_app_utilities.DependencyChecker(self._indexer)
         self._runnable_apps, self._installable_apps, self._noninstallable_rapps, self._platform_filtered_apps, self._capabilities_filtered_apps, self._invalid_apps = self._determine_runnable_rapps()
+
+        self._preferred = {}
+        self._configure_preferred_rapp_for_virtuals()
 
         self._init_default_service_names()
         self._init_gateway_services()
@@ -196,7 +197,7 @@ class RappManager(object):
          :rtype: {rocon_app_manager.Rapp}, [str], [str]
         '''
         rospy.loginfo("Rapp Manager : determining runnable rapps...")
-        compatible_rapps, platform_incompatible_rapps, invalid_rapps = self._indexer.get_compatible_rapps(self._rocon_uri)
+        compatible_rapps, platform_incompatible_rapps, invalid_rapps = self._indexer.get_compatible_rapps(uri=self._rocon_uri, ancestor_share_check=False)
         runnable_rapp_specs, capabilities_incompatible_rapps = self._filter_capability_unavailable_rapps(compatible_rapps)
         runnable_rapp_specs, installable_rapp_specs, noninstallable_rapp_specs = self._determine_installed_rapps(runnable_rapp_specs)
         installable_rapps = convert_rapps_from_rapp_specs(installable_rapp_specs)
@@ -204,7 +205,7 @@ class RappManager(object):
 
         # Log out the rapps
         for rapp_name, reason in invalid_rapps.items():
-            rospy.logwarn("App Manager : '" + rapp_name + "' is invalid [" + str(reason) + "]")
+            rospy.logwarn("Rapp Manager : '" + rapp_name + "' is invalid [" + str(reason) + "]")
 
         for rapp in platform_incompatible_rapps.values():
             rospy.logwarn("Rapp Manager : '" + str(rapp.resource_name) + "' is incompatible [" + rapp.raw_data['compatibility'] + "][" + self._rocon_uri + "]")
@@ -227,6 +228,37 @@ class RappManager(object):
 
         return (runnable_rapps, installable_rapps, noninstallable_rapps, platform_filtered_rapps, capabilities_filtered_rapps, invalid_rapps)
 
+    def _configure_preferred_rapp_for_virtuals(self):
+        virtual_apps = {}
+        #default_apps = setup_default_app_from_params()
+        full_apps = {}
+        full_apps.update(self._runnable_apps)
+        full_apps.update(self._installable_apps)
+
+        for name, rapp in full_apps.items():
+            ancestor_name = rapp.data['ancestor_name']
+            if not ancestor_name in virtual_apps.keys():
+                virtual_apps[ancestor_name] = rapp
+
+        # Get preferred rapp configurations from parameter server and use
+        preferred = {}
+        for pair in self._param['preferred']:
+            preferred.update(pair)
+
+        for rapp_name, selected_rapp in virtual_apps.items():
+            selected_rapp_name = selected_rapp.data['name']
+            if not rapp_name in preferred:
+                rospy.logwarn("Rapp Manager : No preferred rapp for '" + rapp_name + "'.  '" + selected_rapp_name + "' has been selected.")
+                continue
+            preferred_rapp_name = preferred[rapp_name]
+            if not preferred_rapp_name in full_apps:
+                rospy.logwarn("Rapp Manager : Given preferred rapp '" + preferred_rapp_name + "' for '" + rapp_name + "' does not exist. '" + selected_rapp_name + "' has been selected.")
+                continue
+            rospy.loginfo("Rapp Manager: '%s' -> '%s'"%(rapp_name, preferred_rapp_name))
+            virtual_apps[rapp_name] = full_apps[preferred_rapp_name]
+        self._virtual_apps = virtual_apps
+        self._preferred = preferred
+
     def _filter_capability_unavailable_rapps(self, compatible_rapps):
         '''
           Filters out rapps which does not meet the platform's capability
@@ -242,20 +274,20 @@ class RappManager(object):
         runnable_apps = {}
 
         # Then add runnable apps to list
-        for unused_rapp_name, rapp in compatible_rapps.items():
+        for rapp_name, rapp in compatible_rapps.items():
             if not is_caps_available:
                 if 'required_capabilities' in rapp.data:
                     reason = "cannot be run, since capabilities are not available. Rapp will be excluded from the list of runnable apps."
-                    capabilities_filtered_apps[rapp.ancestor_name] = reason
+                    capabilities_filtered_apps[rapp_name] = reason
                 else:
-                    runnable_apps[rapp.ancestor_name] = rapp
+                    runnable_apps[rapp_name] = rapp
             else:
                 try:
                     self.caps_list.compatibility_check(rapp)
-                    runnable_apps[rapp.ancestor_name] = rapp
+                    runnable_apps[rapp_name] = rapp
                 except exceptions.MissingCapabilitiesException as e:
                     reason = "cannot be run, since some required capabilities (" + str(e.missing_caps) + ") are not installed. Rapp will be excluded from the list of runnable rapps."
-                    capabilities_filtered_apps[rapp.ancestor_name] = reason
+                    capabilities_filtered_apps[rapp_name] = reason
         return runnable_apps, capabilities_filtered_apps
 
     def _determine_installed_rapps(self, rapps):
@@ -268,7 +300,7 @@ class RappManager(object):
           :returns: runnable rapps, installable rapps, noninstallable rapps
           :rtype: dict, dict, dict
         '''
-        rospy.loginfo("App Manager : determining installed rapps...")
+        rospy.loginfo("Rapp Manager : determining installed rapps...")
 
         rapp_names = []
         for rapp in rapps:
@@ -419,10 +451,29 @@ class RappManager(object):
             app_msg_list.append(app.to_msg())
         return app_msg_list
 
+    def _get_available_rapp_list(self):
+        avail = {}
+        for name, rapp in self._virtual_apps.items():
+            avail[name] = rapp.to_msg()
+            avail[name].name = name
+
+        for name, rapp in avail.items():
+            if name in self._preferred:
+                rapp.preferred = self._preferred[name]
+            
+        for name, rapp in self._runnable_apps.items():
+            ancestor_name = rapp.data['ancestor_name']
+            avail[ancestor_name].implementations.append(name)
+
+        for name, rapp in self._installable_apps.items():
+            ancestor_name = rapp.data['ancestor_name']
+            avail[ancestor_name].implementations.append(name)
+
+        return avail.values()
+
     def _process_get_runnable_rapp_list(self, req):
         response = rapp_manager_srvs.GetRappListResponse()
-        response.available_rapps.extend(self._get_rapp_msg_list(self._runnable_apps))
-        response.available_rapps.extend(self._get_rapp_msg_list(self._installable_apps))
+        response.available_rapps = self._get_available_rapp_list()
         response.running_rapps = []
         if self._current_rapp:
             response.running_rapps.append(self._current_rapp.to_msg())
@@ -459,8 +510,7 @@ class RappManager(object):
         '''
         rapp_list = rapp_manager_msgs.RappList()
         try:
-            rapp_list.available_rapps.extend(self._get_rapp_msg_list(self._runnable_apps))
-            rapp_list.available_rapps.extend(self._get_rapp_msg_list(self._installable_apps))
+            rapp_list.available_rapps = self._get_available_rapp_list()
             if self._current_rapp:
                 rapp_list.running_rapps = [self._current_rapp.to_msg()]
             else:
@@ -482,43 +532,16 @@ class RappManager(object):
             return resp
 
         # check if the app can be run
-        try:
-            rapp = self._runnable_apps[req.name]
-        except KeyError:
-            # check if app can be installed
-            try:
-                rapp = self._installable_apps[req.name]
-                if self._param['auto_rapp_installation']:
-                    rospy.loginfo("App Manager : Installing rapp '" + rapp.data['name'] + "'")
-                    success, reason = rapp.install(self._dependency_checker)
-                    if success:
-                        rospy.loginfo("App Manager : Rapp '" + rapp.data['name'] + "'has been installed.")
-                        # move rapp from installable to runnable
-                        self._runnable_apps[req.name] = rapp
-                        del self._installable_apps[req.name]
-                        # consider calling publish_rapp_list if we split publishing runnable and installed there.
-                    else:
-                        resp.started = False
-                        resp.message = "Installing rapp '" + rapp.data['name'] + "' failed. Reason: " + str(reason)
-                        rospy.logwarn("App Manager : %s" % resp.message)
-                        return resp
-                else:
-                    resp.started = False
-                    url = "'http://wiki.ros.org/rocon_app_manager/Tutorials/indigo/Automatic Rapp Installation'"
-                    resp.message = str("Rapp '" + rapp.data['name'] + "' can be installed, "
-                                       + "but automatic installation is not enabled. Please refer to " + str(url)
-                                       + " for instructions on how to set up automatic rapp installation.")
-                    rospy.logwarn("App Manager : %s" % resp.message)
-                    return resp
-            except KeyError:
-                resp.started = False
-                resp.message = ("The requested app '%s' is not among the runnable, nor installable rapps." % req.name)
-                rospy.logwarn("App Manager : %s" % resp.message)
-                return resp
+        success, reason, rapp = self._check_runnable(req.name)
+
+        if not success:
+            resp.started = False
+            resp.message = reason
+            rospy.logwarn("Rapp Manager : %s" % reason)
+            return resp
 
         # check if the app requires capabilities
         caps_list = self.caps_list if 'required_capabilities' in rapp.data else None
-
         if caps_list:
             rospy.loginfo("Rapp Manager : Starting required capabilities.")
             result, message = start_capabilities_from_caps_list(rapp.data['required_capabilities'], self.caps_list)
@@ -664,6 +687,58 @@ class RappManager(object):
                 rospy.logwarn("Rapp Manager : failed to cancel flips (probably remote hub intentionally went down as well) [%s, %s]" % (resp.result, resp.error_message))
             else:
                 rospy.logerr("Rapp Manager : failed to flip [%s, %s]" % (resp.result, resp.error_message))
+
+    def _check_runnable(self, requested_rapp_name):
+        success = False
+        message = ""
+        rapp = None
+
+        if requested_rapp_name in self._virtual_apps.keys():  # Virtual rapp
+            rapp = self._virtual_apps[requested_rapp_name]
+            success = True
+            message = ""
+        elif requested_rapp_name in self._runnable_apps.keys():  # Implementation Rapp
+            rapp = self._runnable_apps[requested_rapp_name]
+            success = True
+            message = ""
+        elif requested_rapp_name in self._installable_apps.keys():  # Installable Rapp
+            success, message, rapp = self._install_rapp(requested_rapp_name)
+        else:
+            success = False
+            message = ("The requested app '%s' is not among the runnable, nor installable rapps." % requested_rapp_name)
+
+        return success, message, rapp
+
+    def _install_rapp(self, requested_rapp_name):
+        '''
+        check if app can be installed
+        '''
+        success = False
+        message = ""
+        rapp = self._installable_apps[requested_rapp_name]
+
+        if self._param['auto_rapp_installation']:
+            rospy.loginfo("Rapp Manager : Installing rapp '" + rapp.data['name'] + "'")
+            success, reason = rapp.install(self._dependency_checker)
+            if success:
+                rospy.loginfo("Rapp Manager : Rapp '" + rapp.data['name'] + "'has been installed.")
+                # move rapp from installable to runnable
+                self._runnable_apps[requested_rapp_name] = rapp
+                del self._installable_apps[requested_rapp_name]
+                # TODO : consider calling publish_rapp_list if we split publishing runnable and installed there.
+
+                success = True
+                message = ""
+            else:
+                success = False
+                message = "Installing rapp '" + rapp.data['name'] + "' failed. Reason: " + str(reason)
+        else:
+            success = False
+            url = "'http://wiki.ros.org/rocon_app_manager/Tutorials/indigo/Automatic Rapp Installation'"
+            message = str("Rapp '" + rapp.data['name'] + "' can be installed, "
+                          + "but automatic installation is not enabled. Please refer to " + str(url)
+                          + " for instructions on how to set up automatic rapp installation.")
+        return success, message, rapp
 
     def spin(self):
         while not rospy.is_shutdown():

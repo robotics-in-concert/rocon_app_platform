@@ -39,4 +39,7 @@ def setup_ros_parameters():
     param['app_output_to_screen'] = rocon_screen or app_manager_screen
     param['auto_rapp_installation'] = rospy.get_param('~auto_rapp_installation', False)
 
+    # Preferred rapp configuration
+    param['preferred'] = rospy.get_param('~preferred',[])
+
     return param
