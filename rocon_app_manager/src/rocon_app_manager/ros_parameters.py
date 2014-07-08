@@ -22,7 +22,6 @@ def setup_ros_parameters():
     param['robot_name'] = rospy.get_param('~robot_name', 'app_manager')  #@IgnorePep8
     # image filename
     param['robot_icon'] = rospy.get_param('~robot_icon', '')  #  #@IgnorePep8
-    param['app_store_url'] = rospy.get_param('~app_store_url', '')  #@IgnorePep8
     param['auto_start_rapp'] = rospy.get_param('~auto_start_rapp', None)  #@IgnorePep8
     param['rapp_package_whitelist'] = rospy.get_param('~rapp_package_whitelist', [])
     param['rapp_package_blacklist'] = rospy.get_param('~rapp_package_blacklist', [])
@@ -39,20 +38,7 @@ def setup_ros_parameters():
     param['app_output_to_screen'] = rocon_screen or app_manager_screen
     param['auto_rapp_installation'] = rospy.get_param('~auto_rapp_installation', False)
 
-    # Default app selections 
-    param['defaults'] = rospy.get_param('~defaults',[])
-
-    return param
-
-
-def get_default_apps_from_params(apps):
-    '''
-      Returns default app selections
-    '''
-    prefix = '~default/'
-    param = {}
-
-    for name in apps:
-        param[name] = rospy.get_param(prefix + name, None)
+    # Preferred rapp configuration
+    param['preferred'] = rospy.get_param('~preferred',[])
 
     return param
