@@ -114,7 +114,7 @@ class RappIndexer(object):
 
         return rapp
 
-    def get_compatible_rapps(self, uri=rocon_uri.default_uri_string, ancestor_share_check=True):
+    def get_compatible_rapps(self, uri=rocon_uri.default_uri_string, ancestor_share_check=False):
         '''
           returns all rapps which are compatible with given URI
 

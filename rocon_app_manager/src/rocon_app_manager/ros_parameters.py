@@ -39,4 +39,20 @@ def setup_ros_parameters():
     param['app_output_to_screen'] = rocon_screen or app_manager_screen
     param['auto_rapp_installation'] = rospy.get_param('~auto_rapp_installation', False)
 
+    # Default app selections 
+    param['defaults'] = rospy.get_param('~defaults',[])
+
+    return param
+
+
+def get_default_apps_from_params(apps):
+    '''
+      Returns default app selections
+    '''
+    prefix = '~default/'
+    param = {}
+
+    for name in apps:
+        param[name] = rospy.get_param(prefix + name, None)
+
     return param
