@@ -32,7 +32,7 @@ import rocon_app_utilities.rapp_repositories as rapp_repositories
 
 # local imports
 from . import exceptions
-from ros_parameters import setup_ros_parameters, get_default_apps_from_params
+from ros_parameters import setup_ros_parameters
 from .rapp import convert_rapps_from_rapp_specs
 
 ##############################################################################
@@ -60,8 +60,6 @@ class RappManager(object):
         self._param = setup_ros_parameters()
         (self._rocon_uri, self._icon) = self._set_platform_info()
 
-        self.apps = {}
-        self.app_list_file = {}
         self.caps_list = {}
         self._initialising_services = False
 
@@ -70,7 +68,8 @@ class RappManager(object):
         self._dependency_checker = rocon_app_utilities.DependencyChecker(self._indexer)
         self._runnable_apps, self._installable_apps, self._noninstallable_rapps, self._platform_filtered_apps, self._capabilities_filtered_apps, self._invalid_apps = self._determine_runnable_rapps()
 
-        self._configure_default_rapp_for_virtuals()
+        self._preferred = {}
+        self._configure_preferred_rapp_for_virtuals()
 
         self._init_default_service_names()
         self._init_gateway_services()
@@ -206,7 +205,7 @@ class RappManager(object):
 
         # Log out the rapps
         for rapp_name, reason in invalid_rapps.items():
-            rospy.logwarn("App Manager : '" + rapp_name + "' is invalid [" + str(reason) + "]")
+            rospy.logwarn("Rapp Manager : '" + rapp_name + "' is invalid [" + str(reason) + "]")
 
         for rapp in platform_incompatible_rapps.values():
             rospy.logwarn("Rapp Manager : '" + str(rapp.resource_name) + "' is incompatible [" + rapp.raw_data['compatibility'] + "][" + self._rocon_uri + "]")
@@ -229,7 +228,7 @@ class RappManager(object):
 
         return (runnable_rapps, installable_rapps, noninstallable_rapps, platform_filtered_rapps, capabilities_filtered_rapps, invalid_rapps)
 
-    def _configure_default_rapp_for_virtuals(self):
+    def _configure_preferred_rapp_for_virtuals(self):
         virtual_apps = {}
         #default_apps = setup_default_app_from_params()
         full_apps = {}
@@ -241,24 +240,24 @@ class RappManager(object):
             if not ancestor_name in virtual_apps.keys():
                 virtual_apps[ancestor_name] = rapp
 
-        # Get default rapp configurations from parameter server and use
-        defaults = {}
-        for pair in self._param['defaults']:
-            defaults.update(pair)
+        # Get preferred rapp configurations from parameter server and use
+        preferred = {}
+        for pair in self._param['preferred']:
+            preferred.update(pair)
 
         for rapp_name, selected_rapp in virtual_apps.items():
             selected_rapp_name = selected_rapp.data['name']
-            if not rapp_name in defaults:
-                rospy.logwarn("Rapp Manager : No default rapp for '" + rapp_name + "'.  '" + selected_rapp_name + "' has been selected.")
+            if not rapp_name in preferred:
+                rospy.logwarn("Rapp Manager : No preferred rapp for '" + rapp_name + "'.  '" + selected_rapp_name + "' has been selected.")
                 continue
-            default_rapp_name = defaults[rapp_name]
-            if not default_rapp_name in full_apps:
-                rospy.logwarn("Rapp Manager : Given default app '" + default_rapp_name + "' for '" + rapp_name + "' does not exist. '" + selected_rapp_name + "' has been selected.")
+            preferred_rapp_name = preferred[rapp_name]
+            if not preferred_rapp_name in full_apps:
+                rospy.logwarn("Rapp Manager : Given preferred rapp '" + preferred_rapp_name + "' for '" + rapp_name + "' does not exist. '" + selected_rapp_name + "' has been selected.")
                 continue
-            rospy.loginfo("Rapp Manager: '%s' -> '%s'"%(rapp_name, default_rapp_name))
-            virtual_apps[rapp_name] = full_apps[default_rapp_name]
-
+            rospy.loginfo("Rapp Manager: '%s' -> '%s'"%(rapp_name, preferred_rapp_name))
+            virtual_apps[rapp_name] = full_apps[preferred_rapp_name]
         self._virtual_apps = virtual_apps
+        self._preferred = preferred
 
     def _filter_capability_unavailable_rapps(self, compatible_rapps):
         '''
@@ -456,8 +455,11 @@ class RappManager(object):
         avail = {}
         for name, rapp in self._virtual_apps.items():
             avail[name] = rapp.to_msg()
-            avail[name].selected = avail[name].name
             avail[name].name = name
+
+        for name, rapp in avail.items():
+            if name in self._preferred:
+                rapp.preferred = self._preferred[name]
             
         for name, rapp in self._runnable_apps.items():
             ancestor_name = rapp.data['ancestor_name']
