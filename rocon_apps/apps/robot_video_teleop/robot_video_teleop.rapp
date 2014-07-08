@@ -1,4 +1,4 @@
-display:          Robot Teleop
+display:          Robot Video Teleop
 description:      Teleoperate your robot
 compatibility:    rocon:/kobuki|gopher|robosem|turtlebot2|waiterbot/
 parent_name:      rocon_apps/video_teleop
