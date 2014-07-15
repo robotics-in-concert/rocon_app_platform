@@ -31,9 +31,10 @@
     <rocon_app>apps/listener/listener.rapp</rocon_app>
     <rocon_app>apps/talker/talker.rapp</rocon_app>
     <rocon_app>apps/teleop/teleop.rapp</rocon_app>
-    <rocon_app>apps/video_teleop/video_teleop.rapp</rocon_app>
-    <rocon_app>apps/robot_teleop/robot_teleop.rapp</rocon_app>
-    <rocon_app>apps/robot_video_teleop/robot_video_teleop.rapp</rocon_app>
+<!--    Hold until resolve turtlebot capabilities -->
+<!--    <rocon_app>apps/video_teleop/video_teleop.rapp</rocon_app> -->
+<!--    <rocon_app>apps/robot_teleop/robot_teleop.rapp</rocon_app>-->
+<!--    <rocon_app>apps/robot_video_teleop/robot_video_teleop.rapp</rocon_app>-->
     <rocon_app>chirp_apps/lion/lion_chirp.rapp</rocon_app>
     <rocon_app>chirp_apps/angry_cat/angry_cat_chirp.rapp</rocon_app>
     <rocon_app>chirp_apps/meow/meow_chirp.rapp</rocon_app>
