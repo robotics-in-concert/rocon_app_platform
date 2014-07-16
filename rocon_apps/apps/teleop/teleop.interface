@@ -1,5 +1,4 @@
-publishers:
-  - /teleop/compressed_image
+publishers: []
 subscribers:
   - /teleop/cmd_vel
 services: []
