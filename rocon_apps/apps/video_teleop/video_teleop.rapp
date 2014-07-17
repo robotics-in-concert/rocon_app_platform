@@ -1,0 +1,4 @@
+display:          VideoTeleop
+description:      Teleoperate with image stream...
+icon:             rocon_apps/video_teleop.png
+public_interface: rocon_apps/video_teleop.interface
