@@ -4,9 +4,14 @@
  -->
 <launch>
   <arg name="interactions_list" default="[]"/>  <!-- list of resource names pointing to yaml interaction configurations, e.g. [rocon_app_manager_tutorials/pairing] -->
+  <arg name="rosbridge_address" default="localhost"/>
+  <arg name="rosbridge_port"    default="9090"/>
   
   <node pkg="rocon_interactions" type="interactions_manager.py" name="interactions">
     <rosparam param="interactions" subst_value="true">$(arg interactions_list)</rosparam>
     <rosparam param="pairing">true</rosparam>
+    <rosparam param="rosbridge_address" subst_value="true">$(arg rosbridge_address)</rosparam>
+    <rosparam param="rosbridge_port" subst_value="true">$(arg rosbridge_port)</rosparam>
+
   </node>
 </launch>
