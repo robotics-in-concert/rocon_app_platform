@@ -56,10 +56,14 @@
   <!-- ***************************** Interactions ******************************* -->
   <arg name="interactions"          default="false"/>
   <arg name="interactions_list"     default="[]"/>
+  <arg name="rosbridge_address" default="localhost"/>
+  <arg name="rosbridge_port" default="9090"/>
 
   <group if="$(arg interactions)">
     <include file="$(find rocon_app_manager)/launch/includes/_interactions.xml">
       <arg name="interactions_list" value="$(arg interactions_list)"/>
+      <arg name="rosbridge_address" value="$(arg rosbridge_address)"/>
+      <arg name="rosbridge_port" value="$(arg rosbridge_port)"/>
     </include>
   </group>
 
