@@ -37,6 +37,8 @@ def _rapp_cmd_list(argv):
 
     parsed_args = parser.parse_args(args)
 
+    print('Parsing...')
+
     if not parsed_args.uri:
         index = get_combined_index()
     else:
