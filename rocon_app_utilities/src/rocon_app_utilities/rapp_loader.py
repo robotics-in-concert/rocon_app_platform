@@ -24,7 +24,7 @@ def load_rapp_yaml_from_file(filename):
       :returns: dict of loaded rapp
       :rtype: dict
 
-      :raises: InvalidRappFieldException: Rapp includes invalid filed
+      :raises: InvalidRappException: Rapp includes invalid filed
     '''
     RAPP_ATTRIBUTES = ['display', 'description', 'icon', 'public_interface', 'public_parameters', 'compatibility', 'launch', 'parent_name', 'pairing_clients', 'required_capabilities']
 
@@ -56,13 +56,21 @@ def load_rapp_specs_from_file(specification, rospack=rospkg.RosPack()):
     data['name'] = specification.resource_name
     data['ancestor_name'] = specification.ancestor_name
     data['display_name']      = rapp_data.get('display', data['name'])
-    data['description']       = rapp_data.get('description', '')
-    data['compatibility']     = rapp_data['compatibility']
-    data['icon']              = _find_resource(base_path, rapp_data['icon'], rospack) if 'icon' in rapp_data else None
-    data['launch']            = _find_resource(base_path, rapp_data['launch'], rospack)
-    data['launch_args']       = _get_standard_args(data['launch'])
+
+    if 'description' in rapp_data:
+        data['description']       = rapp_data.get('description', '')
+
+    if 'compatibility' in rapp_data:
+        data['compatibility']     = rapp_data['compatibility']
+
+    if 'launch' in rapp_data:
+        data['launch']            = _find_resource(base_path, rapp_data['launch'], rospack)
+        data['launch_args']       = _get_standard_args(data['launch'])
+
     data['public_interface']  = _load_public_interface(base_path, rapp_data.get('public_interface', None), rospack)
     data['public_parameters'] = _load_public_parameters(base_path, rapp_data.get('public_parameters', None), rospack)
+
+    data['icon']              = _find_resource(base_path, rapp_data['icon'], rospack) if 'icon' in rapp_data else None
 
     if 'pairing_clients' in rapp_data:
         console.logwarn('Rapp Indexer : [%s] includes "pairing_clients". It is deprecated attribute. Please drop it'%specification.resource_name)
@@ -91,9 +99,7 @@ def _find_resource(base_path, resource, rospack):
     path = os.path.join(base_path, resource)
     if os.path.exists(path):
         return path
-    try:
-        return rocon_python_utils.ros.find_resource_from_string(resource, rospack)
-    except rospkg.ResourceNotFound:
+    else:
         raise RappResourceNotExistException("invalid rapp - %s does not exist" % (resource))
 
 
