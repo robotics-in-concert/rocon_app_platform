@@ -1,7 +1,7 @@
 display: Talker
 description: Default ros style talker tutorial
 compatibility: rocon:/
-launch: rocon_apps/talker.launch
-public_interface: rocon_apps/talker.interface
-public_parameters: rocon_apps/talker.parameters
-icon: rocon_bubble_icons/conductor.png
+launch: talker.launch
+public_interface: talker.interface
+public_parameters: talker.parameters
+icon: ../../icons/conductor.png

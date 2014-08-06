@@ -1,4 +1,4 @@
 display:          Teleop
 description:      Teleoperate ...
-icon:             rocon_apps/joystick.png
-public_interface: rocon_apps/teleop.interface
+icon:             joystick.png
+public_interface: teleop.interface
