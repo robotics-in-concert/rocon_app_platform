@@ -36,6 +36,7 @@ class RappIndexer(object):
         self.packages_path = packages_path
         self.raw_data_path = {}
         self.raw_data = {}
+        self.invalid_data = {}
         self.package_whitelist = package_whitelist
         self.package_blacklist = package_blacklist
         self.source = source
@@ -69,6 +70,8 @@ class RappIndexer(object):
                 invalid_data[resource_name] = str(irfe)
             except InvalidRappException as ire:
                 invalid_data[resource_name] = str(ire)
+            except RappResourceNotExistException as e:
+                invalid_data[resource_name] = str(e)
         self.raw_data = raw_data
         self.invalid_data = invalid_data
         self.package_whitelist = package_whitelist
@@ -158,6 +161,7 @@ class RappIndexer(object):
 
         if hasattr(self, 'invalid_data'):
             invalid_rapps.update(self.invalid_data)
+
         return resolved_compatible_rapps, resolved_incompatible_rapps, invalid_rapps
 
     def _resolve_rapplist(self, rapps, ancestor_share_check):
@@ -249,6 +253,10 @@ class RappIndexer(object):
         '''
         self.raw_data.update(other_indexer.raw_data)
         self.raw_data_path.update(other_indexer.raw_data_path)
+
+        # Cleanup 'invalid' invalid data before merge
+        self.invalid_data = {k : v for k,v in self.invalid_data.items() if k not in self.raw_data}
+        self.invalid_data.update(other_indexer.invalid_data)
 
     def write_tarball(self, filename_prefix):
         '''

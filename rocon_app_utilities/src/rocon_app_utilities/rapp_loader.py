@@ -44,7 +44,6 @@ def load_rapp_yaml_from_file(filename):
             app_data['public_parameters']  = _load_public_parameters(base_path, app_data['public_parameters'])
         if 'icon' in app_data:
             app_data['icon'] = _find_resource(base_path, app_data['icon'])
-
     return app_data
 
 
@@ -93,13 +92,17 @@ def _find_resource(base_path, resource):
       :param resource: a typical resource identifier to look for
       :type resource: pkg_name/file pair in str format.
 
-      :raises: :exc:`.exceptions.RappResourcenotExistException` if the resource is not found
+      :raises: :exc:`.exceptions.RappResourceNotExistException` if the resource is not found
     '''
     path = os.path.join(base_path, resource)
     if os.path.exists(path):
         return path
     else:
-        raise RappResourceNotExistException("invalid rapp - %s does not exist" % (resource))
+        try:
+            found = rocon_python_utils.ros.find_resource_from_string(resource)
+        except rospkg.ResourceNotFound:
+            raise RappResourceNotExistException("invalid rapp - %s does not exist" % (resource))
+        raise RappResourceNotExistException("invalid rapp - %s is 'tuple based rapp resource'. It is deprecated attribute. Please fix it as relative path to .rapp file" % (resource))
 
 
 def _default_public_interface():

@@ -36,7 +36,7 @@ class Rapp(object):
         self.filename = None
 
         if filename:
-            self.load_rapp_from_file(filename)
+            self.load_rapp_yaml_from_file(filename)
 
         self.package = None
 
