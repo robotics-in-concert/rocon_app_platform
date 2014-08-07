@@ -73,7 +73,7 @@ class Rapp(object):
         self.parent_name = self.raw_data['parent_name'] if 'parent_name' in self.raw_data else None
         self.is_implementation, self.is_ancestor, self.type = classify_rapp_type(self.raw_data)
 
-    def load_rapp_from_file(self, filename):
+    def load_rapp_yaml_from_file(self, filename):
         '''
           loads rapp data from file. and classifies itself.
 
@@ -84,7 +84,6 @@ class Rapp(object):
         try:
             self.raw_data = load_rapp_yaml_from_file(filename)
             self.filename = filename
-            self.load_rapp_specs_from_file()
             self.classify()
         except RappResourceNotExistException as e:
             raise InvalidRappException(str(self.resource_name) + ' : ' + str(e))
@@ -93,7 +92,7 @@ class Rapp(object):
         '''
            Specification consists of resource which is file pointer. This function loads those files in memeory
         '''
-        self.data = load_rapp_specs_from_file(self, self.rospack)
+        self.data = load_rapp_specs_from_file(self)
 
     def inherit(self, rapp):
         '''

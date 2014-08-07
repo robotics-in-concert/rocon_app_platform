@@ -27,6 +27,7 @@ def load_rapp_yaml_from_file(filename):
       :raises: InvalidRappException: Rapp includes invalid filed
     '''
     RAPP_ATTRIBUTES = ['display', 'description', 'icon', 'public_interface', 'public_parameters', 'compatibility', 'launch', 'parent_name', 'pairing_clients', 'required_capabilities']
+    base_path = os.path.dirname(filename)
 
     with open(filename, 'r') as f:
         app_data = yaml.load(f.read())
@@ -35,42 +36,42 @@ def load_rapp_yaml_from_file(filename):
             if d not in RAPP_ATTRIBUTES:
                 raise InvalidRappException('Invalid Field : [' + str(d) + '] Valid Fields : [' + str(RAPP_ATTRIBUTES) + ']')
 
+        if 'launch' in app_data:
+            app_data['launch'] = _find_resource(base_path, app_data['launch'])
+        if 'public_interface' in app_data:
+            app_data['public_interface']  = _load_public_interface(base_path, app_data['public_interface'])
+        if 'public_parameters' in app_data:
+            app_data['public_parameters']  = _load_public_parameters(base_path, app_data['public_parameters'])
+        if 'icon' in app_data:
+            app_data['icon'] = _find_resource(base_path, app_data['icon'])
+
     return app_data
 
 
-def load_rapp_specs_from_file(specification, rospack=rospkg.RosPack()):
+def load_rapp_specs_from_file(specification):
     '''
       Specification consists of resource which is file pointer. This function loads those files in memeory
 
       :param specification: Rapp Specification
       :type Specification: rocon_app_utilities.Rapp
-      :param rospack: utility cache to speed up ros resource searches
-      :type rospack: :py:class:`rospkg.RosPack`
 
       :returns Fully loaded rapp data dictionary
       :rtype: dict
     '''
     base_path = os.path.dirname(specification.filename)
     rapp_data = specification.raw_data
+
     data = {}
     data['name'] = specification.resource_name
     data['ancestor_name'] = specification.ancestor_name
     data['display_name']      = rapp_data.get('display', data['name'])
-
-    if 'description' in rapp_data:
-        data['description']       = rapp_data.get('description', '')
-
-    if 'compatibility' in rapp_data:
-        data['compatibility']     = rapp_data['compatibility']
-
-    if 'launch' in rapp_data:
-        data['launch']            = _find_resource(base_path, rapp_data['launch'], rospack)
-        data['launch_args']       = _get_standard_args(data['launch'])
-
-    data['public_interface']  = _load_public_interface(base_path, rapp_data.get('public_interface', None), rospack)
-    data['public_parameters'] = _load_public_parameters(base_path, rapp_data.get('public_parameters', None), rospack)
-
-    data['icon']              = _find_resource(base_path, rapp_data['icon'], rospack) if 'icon' in rapp_data else None
+    data['description']       = rapp_data.get('description', '')
+    data['compatibility']     = rapp_data['compatibility']
+    data['launch']            = rapp_data['launch']
+    data['launch_args']       = _get_standard_args(data['launch'])
+    data['public_interface']  = rapp_data.get('public_interface', _default_public_interface())
+    data['public_parameters'] = rapp_data.get('public_parameters', {})
+    data['icon']              = rapp_data.get('icon', None)
 
     if 'pairing_clients' in rapp_data:
         console.logwarn('Rapp Indexer : [%s] includes "pairing_clients". It is deprecated attribute. Please drop it'%specification.resource_name)
@@ -82,17 +83,15 @@ def load_rapp_specs_from_file(specification, rospack=rospkg.RosPack()):
     return data
 
 
-def _find_resource(base_path, resource, rospack):
+def _find_resource(base_path, resource):
     '''
       Find a rapp resource (.launch, .interface, icon) relative to the
       specified package path.
 
-      :param rapp_name: name of the rapp, only used for log messages.
-      :type rapp_name: str
+      :param base_path: absolute path to resource 
+      :type base_path: str
       :param resource: a typical resource identifier to look for
       :type resource: pkg_name/file pair in str format.
-      :param rospack: utility cache to speed up ros resource searches
-      :type rospack: :py:class:`rospkg.RosPack`
 
       :raises: :exc:`.exceptions.RappResourcenotExistException` if the resource is not found
     '''
@@ -103,14 +102,25 @@ def _find_resource(base_path, resource, rospack):
         raise RappResourceNotExistException("invalid rapp - %s does not exist" % (resource))
 
 
-def _load_public_interface(base_path, public_interface_resource, rospack):
+def _default_public_interface():
+    '''
+    returns dictionary of public_interface keys
+    '''
+    d = {}
+    keys = ['subscribers', 'publishers', 'services', 'action_clients', 'action_servers']
+
+    d = {k: [] for k in keys}
+    return d
+
+
+def _load_public_interface(base_path, public_interface_resource):
     '''
       loading public interfaces from file. If the given filepath
 
+      :param base_path: absolute path to resource 
+      :type base_path: str
       :params public_interface_resource: absolute path of public interface file
       :type: str
-      :param rospack: utility cache to speed up ros resource searches
-      :type rospack: :py:class:`rospkg.RosPack`
 
       :returns: dict of public interface
       :rtype: {keys : []}
@@ -125,7 +135,7 @@ def _load_public_interface(base_path, public_interface_resource, rospack):
         d = {k: [] for k in keys}
         return d
 
-    public_interface_file_path = _find_resource(base_path, public_interface_resource, rospack)
+    public_interface_file_path = _find_resource(base_path, public_interface_resource)
     with open(public_interface_file_path, 'r') as f:
         y = yaml.load(f.read())
         y = y or {}
@@ -145,12 +155,12 @@ def _load_public_interface(base_path, public_interface_resource, rospack):
     return d
 
 
-def _load_public_parameters(base_path, public_parameters_resource, rospack):
+def _load_public_parameters(base_path, public_parameters_resource):
     '''
+      :param base_path: absolute path to resource 
+      :type base_path: str
       :params public_parameters_resource: absolute path of public parameters file
       :type: str
-      :param rospack: utility cache to speed up ros resource searches
-      :type rospack: :py:class:`rospkg.RosPack`
 
       :returns: dict of public parameter
       :rtype: {keys : []}
@@ -160,7 +170,7 @@ def _load_public_parameters(base_path, public_parameters_resource, rospack):
     if not public_parameters_resource:
         return {}
 
-    public_parameters_file_path = _find_resource(base_path, public_parameters_resource, rospack)
+    public_parameters_file_path = _find_resource(base_path, public_parameters_resource)
     with open(public_parameters_file_path, 'r') as f:
         y = yaml.load(f.read())
         y = y or {}
