@@ -87,7 +87,7 @@ def _find_resource(base_path, resource):
       Find a rapp resource (.launch, .interface, icon) relative to the
       specified package path.
 
-      :param base_path: absolute path to resource 
+      :param base_path: relative path to resource 
       :type base_path: str
       :param resource: a typical resource identifier to look for
       :type resource: pkg_name/file pair in str format.
@@ -120,9 +120,9 @@ def _load_public_interface(base_path, public_interface_resource):
     '''
       loading public interfaces from file. If the given filepath
 
-      :param base_path: absolute path to resource 
+      :param base_path: relative path to resource 
       :type base_path: str
-      :params public_interface_resource: absolute path of public interface file
+      :params public_interface_resource: relative path of public interface file
       :type: str
 
       :returns: dict of public interface
@@ -160,9 +160,9 @@ def _load_public_interface(base_path, public_interface_resource):
 
 def _load_public_parameters(base_path, public_parameters_resource):
     '''
-      :param base_path: absolute path to resource 
+      :param base_path: relative path to resource 
       :type base_path: str
-      :params public_parameters_resource: absolute path of public parameters file
+      :params public_parameters_resource: relative path of public parameters file
       :type: str
 
       :returns: dict of public parameter
