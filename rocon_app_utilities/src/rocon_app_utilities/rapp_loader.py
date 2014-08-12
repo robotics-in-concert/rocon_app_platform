@@ -4,13 +4,12 @@
 #   https://raw.github.com/robotics-in-concert/rocon_app_platform/license/LICENSE
 #
 #################################################################################
-from .exceptions import InvalidRappException, RappResourceNotExistException, RappMalformedException
+from .exceptions import InvalidRappException, RappResourceNotExistException, RappMalformedException, XmlParseException
 import os
 import yaml
 import rospkg
-import roslaunch.xmlloader
-from roslaunch.config import load_config_default
-from roslaunch.core import RLException
+from xml.dom.minidom import parse
+from xml.dom import Node as DomNode
 import rocon_python_utils
 from rocon_console import console
 
@@ -198,12 +197,44 @@ def _get_standard_args(roslaunch_file):
     standard_args = ['gateway_name', 'application_namespace', 'rocon_uri', 'capability_server_nodelet_manager_name']
 
     try:
-        loader = roslaunch.xmlloader.XmlLoader(resolve_anon=False)
-        unused_config = load_config_default([roslaunch_file], None, loader=loader, verbose=False, assign_machines=False)
-        available_args = [str(x) for x in loader.root_context.resolve_dict['arg']]
+        available_args = _get_available_args(roslaunch_file)
         return [x for x in available_args if x in standard_args]
-    except (RLException, rospkg.common.ResourceNotFound) as e:
+    except (XmlParseException) as e:
         # The ResourceNotFound lets us catch errors when the launcher has invalid
         # references to resources
         reason = "failed to parse top-level args from rapp " + "launch file [" + str(e) + "]"
         raise RappMalformedException(str(reason))
+
+
+def _get_available_args(filename):
+    '''
+      Load XML from file to extract top-level args and returns available_args
+
+      :param filename: rapp launch file we are parsing for arguements
+      :type filename: str
+
+      :returns: list of available args 
+      :rtype: [str]
+    '''
+    xml = _parse_launch(filename)
+    available_args = [node.attributes['name'].value.strip() for node in xml.childNodes if node.nodeType == DomNode.ELEMENT_NODE and node.tagName == 'arg']
+    return available_args 
+
+def _parse_launch(filename):
+    '''
+      Parse launch from file
+
+      :param filename: rapp launch file we are parsing for arguements
+      :type filename: str
+      :returns: launch XML
+      :ortype: XML
+
+      :raises XmlParseException: if xml is invalid format
+    '''
+    try:
+        root = parse(filename).getElementsByTagName('launch')
+    except Exception as e:
+        raise XmlParseException('Invalid roslaunch XML syntax: %s'%e)
+    if len(root) != 1:
+        raise XmlParseException('Invalid roslaunch XML syntax: no root <launch> tag')
+    return root[0]
