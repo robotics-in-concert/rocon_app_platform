@@ -1,4 +1,4 @@
 display: Chirp
 description: Make an audible "chirp" sound.
-public_interface: rocon_apps/chirp.interface
-icon: rocon_bubble_icons/cow.png
+public_interface: chirp.interface
+icon: ../../icons/cow.png

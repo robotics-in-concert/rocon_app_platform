@@ -43,15 +43,15 @@ The following table describes the characteristics of each rapp types and require
   +-----------------------+-------------------------+-------------------------+-------------------------+-----------------------------------+
   | description           |     R                   | R                       | O :sup:`i`              |   str                             |
   +-----------------------+-------------------------+-------------------------+-------------------------+-----------------------------------+
-  | icon                  |     O                   | O                       | O :sup:`i`              | <package>/<png, jpg, jpeg>        |
+  | icon                  |     O                   | O                       | O :sup:`i`              | relative path to <png, jpg, jpeg> |
   +-----------------------+-------------------------+-------------------------+-------------------------+-----------------------------------+
-  | public_interface      |     O                   | O                       | N :sup:`i`              | <package>/<.interface>            |
+  | public_interface      |     O                   | O                       | N :sup:`i`              | relative path to <.interface>     |
   +-----------------------+-------------------------+-------------------------+-------------------------+-----------------------------------+
-  | public_parameters     |     O                   | O                       | N :sup:`i`              | <package>/<.parameters>           |
+  | public_parameters     |     O                   | O                       | N :sup:`i`              | relative path to <.parameters>    |
   +-----------------------+-------------------------+-------------------------+-------------------------+-----------------------------------+
   | compatibility         |     N                   | R                       | R                       | `Rocon URI`_                      |
   +-----------------------+-------------------------+-------------------------+-------------------------+-----------------------------------+
-  | launch                |     N                   | R                       | R                       | <package>/<.launch>               |
+  | launch                |     N                   | R                       | R                       | relative path to <.launch>        |
   +-----------------------+-------------------------+-------------------------+-------------------------+-----------------------------------+
   | parent_name           |     N                   | N                       | R                       | <package>/<rapp_name>             |
   +-----------------------+-------------------------+-------------------------+-------------------------+-----------------------------------+
@@ -146,9 +146,9 @@ Examples
     # rocon_apps/chirp
     display: Chirp
     description: Make an audible "chirp" sound.
-    icon: rocon_apps/chirp_bubble_icon.png
-    public_interface: rocon_apps/chirp.interface
-    public_parameters: rocon_apps/chirp.parameters
+    icon: chirp_bubble_icon.png
+    public_interface: chirp.interface
+    public_parameters: chirp.parameters
 
 **Chirp - Implementation Child Rapp**
 
@@ -156,7 +156,7 @@ Examples
 
     # turtlebot_apps/chirp
     description: Make a "moo" sound.
-    launch: turtlebot_apps/chirp.launch
+    launch: chirp.launch
     compatibility: rocon:/turtlebot
     parent_name: rocon_apps/chirp
 
@@ -168,9 +168,9 @@ Examples
     display:          Random Walker
     description:      Makes Kobuki wander off and explorer the world
     compatibility:    rocon:/kobuki|turtlebot2
-    launch:           kobuki_apps/random_walker.launch.xml
-    public_interface: kobuki_apps/random_walker.interface
-    icon:         kobuki_apps/random_walker.png
+    launch:           random_walker.launch.xml
+    public_interface: random_walker.interface
+    icon:             random_walker.png
     required_capabilities:
       - name: std_capabilities/DifferentialMobileBase
         interface:

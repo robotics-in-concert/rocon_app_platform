@@ -99,3 +99,9 @@ class NonInstallableRappException(Exception):
       If Rapp cannot be installed.
     '''
     pass
+
+class XmlParseException(Exception):
+    '''
+      Error with the XML syntax (e.g. invalid attribute/value combinations)
+    '''
+    pass

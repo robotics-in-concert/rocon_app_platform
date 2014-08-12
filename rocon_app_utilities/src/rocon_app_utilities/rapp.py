@@ -80,15 +80,19 @@ class Rapp(object):
           :param filename: absolute path to rapp definition
           :type filename: str
         '''
-        self.raw_data = load_rapp_yaml_from_file(filename)
-        self.filename = filename
-        self.classify()
+
+        try:
+            self.raw_data = load_rapp_yaml_from_file(filename)
+            self.filename = filename
+            self.classify()
+        except RappResourceNotExistException as e:
+            raise InvalidRappException(str(self.resource_name) + ' : ' + str(e))
 
     def load_rapp_specs_from_file(self):
         '''
            Specification consists of resource which is file pointer. This function loads those files in memeory
         '''
-        self.data = load_rapp_specs_from_file(self, self.rospack)
+        self.data = load_rapp_specs_from_file(self)
 
     def inherit(self, rapp):
         '''
