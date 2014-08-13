@@ -192,27 +192,29 @@ def apply_remapping_rules_from_start_app_request(launch_spec, data, remappings, 
     for connection_type in ['publishers', 'subscribers', 'services', 'action_clients', 'action_servers']:
         connections[connection_type] = []
         for t in data['public_interface'][connection_type]:
+            interface_name = t['name']
+            interface_type = t['type']
             remapped_name = None
             # Now we push the rapp launcher down into the prefixed
             # namespace, so just use it directly
-            indices = [i for i, x in enumerate(remap_from_list) if x == t]
+            indices = [i for i, x in enumerate(remap_from_list) if x == interface_name]
             if indices:
                 if roslib.names.is_global(remap_to_list[indices[0]]):
                     remapped_name = remap_to_list[indices[0]]
                 else:
                     remapped_name = '/' + application_namespace + "/" + remap_to_list[indices[0]]
                 for N in launch_spec.config.nodes:
-                    N.remap_args.append((t, remapped_name))
+                    N.remap_args.append((interface_name, remapped_name))
                 connections[connection_type].append(remapped_name)
             else:
                 # don't pass these in as remapping rules - they should map fine for the node as is
                 # just by getting pushed down the namespace.
                 #     https://github.com/robotics-in-concert/rocon_app_platform/issues/61
                 # we still need to pass them back to register for flipping though.
-                if roslib.names.is_global(t):
-                    flipped_name = t
+                if roslib.names.is_global(interface_name):
+                    flipped_name = interface_name
                 else:
-                    flipped_name = '/' + application_namespace + '/' + t
+                    flipped_name = '/' + application_namespace + '/' + interface_name
                 connections[connection_type].append(flipped_name)
     return connections
 

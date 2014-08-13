@@ -1,6 +1,7 @@
 publishers: []
 subscribers:
-  - /teleop/cmd_vel
+  - name: /teleop/cmd_vel
+    type: geometry_msgs/Twist  
 services: []
 action_clients: []
 action_servers: []

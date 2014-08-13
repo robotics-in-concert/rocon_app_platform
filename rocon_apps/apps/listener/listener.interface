@@ -1,4 +1,5 @@
 publishers: []
 subscribers:
-  - chatter
+  - name: chatter
+    type: std_msgs/String
 services: []
