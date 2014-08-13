@@ -192,6 +192,8 @@ def apply_remapping_rules_from_start_app_request(launch_spec, data, remappings, 
     for connection_type in ['publishers', 'subscribers', 'services', 'action_clients', 'action_servers']:
         connections[connection_type] = []
         for t in data['public_interface'][connection_type]:
+            if not type(t) is dict:
+                raise Exception("Public interface format is deprecated. Please update %s includes name and type"%t)
             interface_name = t['name']
             interface_type = t['type']
             remapped_name = None

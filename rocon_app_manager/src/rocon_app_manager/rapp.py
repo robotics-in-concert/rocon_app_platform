@@ -164,9 +164,8 @@ class Rapp(object):
             rospy.logerr("Rapp Manager : couldn't get capability remappings. Error: " + str(e))
             return False, "Error while launching " + data['name'], [], [], [], [], []
         except Exception as e:
-            print str(e)
             traceback.print_stack()
-            rospy.logerr("Rapp Manager : error while launching " + data['launch'])
+            rospy.logerr("Rapp Manager : error while launching " + data['launch'] + " : " + str(e))
             data['status'] = "Error while launching " + data['launch']
             return False, "Error while launching " + data['name'], [], [], [], [], []
         finally:
