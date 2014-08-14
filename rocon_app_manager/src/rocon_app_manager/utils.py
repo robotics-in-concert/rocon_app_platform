@@ -193,9 +193,11 @@ def apply_remapping_rules_from_start_app_request(launch_spec, data, remappings, 
         connections[connection_type] = []
         for t in data['public_interface'][connection_type]:
             if not type(t) is dict:
-                raise Exception("Public interface format is deprecated. Please update %s includes name and type"%t)
-            interface_name = t['name']
-            interface_type = t['type']
+                rospy.logwarn("Rapp Manager : Public interface has deprecated format. Please update %s includes name and type"%t)
+                interface_name = t
+            else:
+                interface_name = t['name']
+                interface_type = t['type']
             remapped_name = None
             # Now we push the rapp launcher down into the prefixed
             # namespace, so just use it directly
