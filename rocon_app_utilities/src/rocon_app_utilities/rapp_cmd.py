@@ -212,6 +212,7 @@ def _rapp_cmd_add_repository(argv):
         repository_url = os.path.abspath(repository_url)
     uris.append(repository_url)
     save_uris(uris)
+    update_indices()
 
 
 def _rapp_cmd_remove_repository(argv):
@@ -228,6 +229,7 @@ def _rapp_cmd_remove_repository(argv):
         raise RuntimeError("'%s' is not listed as a rapp repository" % repository_url)
     uris.remove(repository_url)
     save_uris(uris)
+    update_indices()
 
 
 def _rapp_cmd_list_repositories(argv):
