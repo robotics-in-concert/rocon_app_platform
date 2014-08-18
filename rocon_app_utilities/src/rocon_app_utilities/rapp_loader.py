@@ -5,6 +5,7 @@
 #
 #################################################################################
 from .exceptions import InvalidRappException, RappResourceNotExistException, RappMalformedException, XmlParseException
+import copy
 import os
 import yaml
 import rospkg
@@ -20,8 +21,8 @@ def load_rapp_yaml_from_file(filename):
       :param filename: absolute path to the rapp definition
       :type filename: str
 
-      :returns: dict of loaded rapp
-      :rtype: dict
+      :returns: raw yaml info, dict of loaded rapp
+      :rtype: dict, dict
 
       :raises: InvalidRappException: Rapp includes invalid filed
     '''
@@ -29,7 +30,8 @@ def load_rapp_yaml_from_file(filename):
     base_path = os.path.dirname(filename)
 
     with open(filename, 'r') as f:
-        app_data = yaml.load(f.read())
+        yaml_data = yaml.load(f.read())
+        app_data = copy.deepcopy(yaml_data)
 
         for d in app_data:
             if d not in RAPP_ATTRIBUTES:
@@ -37,13 +39,14 @@ def load_rapp_yaml_from_file(filename):
 
         if 'launch' in app_data:
             app_data['launch'] = _find_resource(base_path, app_data['launch'])
+            yaml_data['launch'] = app_data['launch']
         if 'public_interface' in app_data:
-            app_data['public_interface']  = _load_public_interface(base_path, app_data['public_interface'])
+            yaml_data['public_interface'], app_data['public_interface']  = _load_public_interface(base_path, app_data['public_interface'])
         if 'public_parameters' in app_data:
-            app_data['public_parameters']  = _load_public_parameters(base_path, app_data['public_parameters'])
+            yaml_data['public_parameters'], app_data['public_parameters']  = _load_public_parameters(base_path, app_data['public_parameters'])
         if 'icon' in app_data:
             app_data['icon'] = _find_resource(base_path, app_data['icon'])
-    return app_data
+    return yaml_data, app_data
 
 
 def load_rapp_specs_from_file(specification):
@@ -124,8 +127,8 @@ def _load_public_interface(base_path, public_interface_resource):
       :params public_interface_resource: relative path of public interface file
       :type: str
 
-      :returns: dict of public interface
-      :rtype: {keys : []}
+      :returns: resource path, dict of public interface
+      :rtype: os.path, {keys : []}
 
       :raises RappMalformedException: public interface contains mssing key
     '''
@@ -135,7 +138,7 @@ def _load_public_interface(base_path, public_interface_resource):
     # If public interface is not present. return empty list for each connection types
     if not public_interface_resource:
         d = {k: [] for k in keys}
-        return d
+        return None, d
 
     public_interface_file_path = _find_resource(base_path, public_interface_resource)
     with open(public_interface_file_path, 'r') as f:
@@ -154,7 +157,7 @@ def _load_public_interface(base_path, public_interface_resource):
 
         except KeyError:
             raise RappMalformedException("Invalid interface, missing keys")
-    return d
+    return public_interface_file_path, d
 
 
 def _load_public_parameters(base_path, public_parameters_resource):
@@ -164,20 +167,20 @@ def _load_public_parameters(base_path, public_parameters_resource):
       :params public_parameters_resource: relative path of public parameters file
       :type: str
 
-      :returns: dict of public parameter
-      :rtype: {keys : []}
+      :returns: resource path, dict of public parameter
+      :rtype: os.path, {keys : []}
     '''
 
     # If public interface is not present. return empty list for each connection types
     if not public_parameters_resource:
-        return {}
+        return None, {}
 
     public_parameters_file_path = _find_resource(base_path, public_parameters_resource)
     with open(public_parameters_file_path, 'r') as f:
         y = yaml.load(f.read())
         y = y or {}
         
-    return y
+    return public_parameters_file_path, y
 
 
 def _get_standard_args(roslaunch_file):

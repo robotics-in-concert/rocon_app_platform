@@ -25,7 +25,7 @@ import logging
 import sys
 logger = logging.getLogger('indexer')
 logger.addHandler(logging.StreamHandler(sys.stderr))
-logger.setLevel(logging.DEBUG)
+#logger.setLevel(logging.DEBUG)
 
 
 class RappIndexer(object):
@@ -277,6 +277,9 @@ class RappIndexer(object):
           :param filename_prefix: the pathname of the archive with out the suffix '.index.tar.gz'
           :type filename_prefix: str
         '''
+
+        RESOURCE_KEYS = ['icon', 'public_interface', 'public_parameters', 'launch']
+
         logger.debug("write_tarball() to '%s...'" % filename_prefix)
         added = set([])
         with tarfile.open('%s.index.tar.gz' % filename_prefix, 'w:gz') as tar:
@@ -294,20 +297,16 @@ class RappIndexer(object):
                     tar.add(rapp_filename)
                     added.add(rapp_filename)
 
-                    base_path = os.path.dirname(rapp_filename)
-                    for value in rapp.raw_data.values():
-                        try:
-                            path = os.path.join(base_path, value)
-                        except AttributeError as e:
-                            logger.debug("write_index() attribute error : %s"%str(e))
-                            continue
-                        if os.path.exists(path):
-                            normed_path = os.path.normpath(path)
-                            logger.debug("write_index() add resource '%s" % normed_path)
+                    for value in [v for k,v in rapp.yaml_data.items() if k in RESOURCE_KEYS]:
+                        logger.debug("write_index() value: %s"%str(value))
+
+                        if value and os.path.exists(value):
+                            normed_path = os.path.normpath(value)
+                            logger.debug("write_index() add resource '%s" % str(normed_path))
                             tar.add(normed_path)
                             added.add(normed_path)
                         else:
-                            logger.debug("write_index() path does not exist %s"%str(path))
+                            logger.debug("write_index() path does not exist %s"%str(value))
 
 
 def read_tarball(name=None, fileobj=None, package_whitelist=None, package_blacklist=[]):
