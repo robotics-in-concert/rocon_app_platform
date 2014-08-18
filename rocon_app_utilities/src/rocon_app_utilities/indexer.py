@@ -25,7 +25,7 @@ import logging
 import sys
 logger = logging.getLogger('indexer')
 logger.addHandler(logging.StreamHandler(sys.stderr))
-#logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.DEBUG)
 
 
 class RappIndexer(object):
@@ -47,6 +47,18 @@ class RappIndexer(object):
         else:
             self.update_index(package_whitelist, package_blacklist)
 
+    def __str__(self):
+
+        ret  = '-------------------------------\n'
+        for rapp_name, rapp in self.raw_data.items():
+            ret += str(rapp_name) + '\n'
+            for attr_name, attr_path in rapp.raw_data.items():
+                ret += '    ' + str(attr_name) + ' : ' + str(attr_path)  + '\n'
+
+        ret += '--------------------------------'
+        return ret
+
+
     def update_index(self, package_whitelist=None, package_blacklist=[]):
         '''
           Crawls rocon apps from ROS_PACKAGE_PATH and generates raw_data dictionary.
@@ -60,11 +72,11 @@ class RappIndexer(object):
         raw_data = {}
         invalid_data = {}
 
-        for resource_name, (path, unused_catkin_package) in self.raw_data_path.items():
+        for resource_name, (path, catkin_package) in self.raw_data_path.items():
             try:
                 r = Rapp(resource_name, self.rospack)
                 r.load_rapp_yaml_from_file(path)
-                r.package = unused_catkin_package
+                r.package = catkin_package
                 raw_data[resource_name] = r
             except InvalidRappFieldException as irfe:
                 invalid_data[resource_name] = str(irfe)
@@ -270,26 +282,32 @@ class RappIndexer(object):
         with tarfile.open('%s.index.tar.gz' % filename_prefix, 'w:gz') as tar:
             for rapp in self.raw_data.values():
                 # add package.xml file
-                if rapp.package.filename not in added:
-                    logger.debug("write_tarball() add package.xml '%s" % rapp.package.filename)
-                    tar.add(rapp.package.filename)
-                    added.add(rapp.package.filename)
+                rapp_package_filename = os.path.normpath(rapp.package.filename)
+                if rapp_package_filename not in added:
+                    logger.debug("write_tarball() add package.xml '%s" % rapp_package_filename)
+                    tar.add(rapp_package_filename)
+                    added.add(rapp_package_filename)
                 # add .rapp file
-                if rapp.filename not in added:
-                    logger.debug("write_tarball() add .rapp file '%s" % rapp.filename)
-                    tar.add(rapp.filename)
-                    added.add(rapp.filename)
+                rapp_filename = os.path.normpath(rapp.filename)
+                if rapp_filename not in added:
+                    logger.debug("write_tarball() add .rapp file '%s" % rapp_filename)
+                    tar.add(rapp_filename)
+                    added.add(rapp_filename)
 
-                    base_path = os.path.dirname(rapp.filename)
+                    base_path = os.path.dirname(rapp_filename)
                     for value in rapp.raw_data.values():
                         try:
                             path = os.path.join(base_path, value)
-                        except AttributeError:
+                        except AttributeError as e:
+                            logger.debug("write_index() attribute error : %s"%str(e))
                             continue
                         if os.path.exists(path):
-                            logger.debug("write_index() add resource '%s" % path)
-                            tar.add(path)
-                            added.add(path)
+                            normed_path = os.path.normpath(path)
+                            logger.debug("write_index() add resource '%s" % normed_path)
+                            tar.add(normed_path)
+                            added.add(normed_path)
+                        else:
+                            logger.debug("write_index() path does not exist %s"%str(path))
 
 
 def read_tarball(name=None, fileobj=None, package_whitelist=None, package_blacklist=[]):

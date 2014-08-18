@@ -38,7 +38,7 @@ class Rapp(object):
         if filename:
             self.load_rapp_yaml_from_file(filename)
 
-        self.package = None
+        #self.package = None
 
     def __str__(self):
         return str(self.resource_name + ' - ' + self.type)

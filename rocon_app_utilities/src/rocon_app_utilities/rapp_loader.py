@@ -95,7 +95,7 @@ def _find_resource(base_path, resource):
     '''
     path = os.path.join(base_path, resource)
     if os.path.exists(path):
-        return path
+        return os.path.normpath(path)
     else:
         try:
             found = rocon_python_utils.ros.find_resource_from_string(resource)

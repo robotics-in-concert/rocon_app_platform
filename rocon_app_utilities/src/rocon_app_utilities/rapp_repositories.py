@@ -132,6 +132,7 @@ def build_index(base_paths, package_whitelist=None, package_blacklist=[]):
         index = RappIndexer(packages_path=base_path, package_whitelist=package_whitelist, package_blacklist=package_blacklist)
         combined_index.merge(index)
     combined_index.source = ':'.join(base_paths)
+    print(str(combined_index))
     return combined_index
 
 
