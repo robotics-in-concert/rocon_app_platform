@@ -22,10 +22,11 @@ class Rapp(object):
     '''
         Rocon(or Robot) App definition.
     '''
-    __slots__ = ['resource_name', 'raw_data', 'data', 'type', 'is_implementation', 'is_ancestor', 'ancestor_name', 'parent_name', 'rospack', 'package', 'filename']
+    __slots__ = ['resource_name', 'yaml_data', 'raw_data', 'data', 'type', 'is_implementation', 'is_ancestor', 'ancestor_name', 'parent_name', 'rospack', 'package', 'filename']
 
     def __init__(self, name, rospack=rospkg.RosPack(), filename=None):
         self.resource_name = name
+        self.yaml_data = {}
         self.raw_data = {}
         self.data = {}
         self.type = None
@@ -38,7 +39,7 @@ class Rapp(object):
         if filename:
             self.load_rapp_yaml_from_file(filename)
 
-        self.package = None
+        #self.package = None
 
     def __str__(self):
         return str(self.resource_name + ' - ' + self.type)
@@ -82,7 +83,7 @@ class Rapp(object):
         '''
 
         try:
-            self.raw_data = load_rapp_yaml_from_file(filename)
+            self.yaml_data, self.raw_data = load_rapp_yaml_from_file(filename)
             self.filename = filename
             self.classify()
         except RappResourceNotExistException as e:
