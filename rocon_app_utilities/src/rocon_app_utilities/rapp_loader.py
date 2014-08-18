@@ -46,6 +46,7 @@ def load_rapp_yaml_from_file(filename):
             yaml_data['public_parameters'], app_data['public_parameters']  = _load_public_parameters(base_path, app_data['public_parameters'])
         if 'icon' in app_data:
             app_data['icon'] = _find_resource(base_path, app_data['icon'])
+            yaml_data['icon'] = app_data['icon']
     return yaml_data, app_data
 
 
