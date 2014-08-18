@@ -33,7 +33,8 @@ def _rapp_cmd_list(argv):
     #  Parse command arguments
     args = argv[2:]
     parser = argparse.ArgumentParser(description='Displays rapp information')
-    parser.add_argument('--uri', nargs='?', help='Optional narrow down list from specific Rapp repository')
+    parser.add_argument('-u', '--uri', nargs='?', help='Optional narrow down list from specific Rapp repository')
+    parser.add_argument('-c', '--compatibility', default='rocon://', help='Optional compatibility check')
 
     parsed_args = parser.parse_args(args)
 
@@ -43,7 +44,7 @@ def _rapp_cmd_list(argv):
         uri = sanitize_uri(parsed_args.uri)
         index = get_index(uri)
 
-    compatible_rapps, incompatible_rapps, invalid_rapps = index.get_compatible_rapps(ancestor_share_check=False)
+    compatible_rapps, incompatible_rapps, invalid_rapps = index.get_compatible_rapps(uri=parsed_args.compatibility, ancestor_share_check=False)
 
     print('== Available Rapp List == ')
     for n in compatible_rapps.values():
@@ -177,17 +178,19 @@ def _rapp_cmd_index(argv):
     args = argv[2:]
     parser = argparse.ArgumentParser(description='Generate an index for a Rapp tree')
     parser.add_argument('packages_path', type=str, help='Path to a Rapp tree')
+    parser.add_argument('-o', '--outfile', help='Output file name')
 
     parsed_args = parser.parse_args(args)
     packages_path = parsed_args.packages_path
+    outfile_name = parsed_args.outfile
 
-    index_path(packages_path)
+    index_path(packages_path, outfile_name)
 
 
-def index_path(packages_path):
+def index_path(packages_path, outfile_name):
     index = build_index([packages_path])
     base_path = os.path.dirname(packages_path)
-    filename_prefix = os.path.basename(packages_path)
+    filename_prefix = outfile_name if outfile_name else os.path.basename(packages_path)
     dest_prefix = os.path.join(base_path, filename_prefix)
     index.write_tarball(dest_prefix)
 
