@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Forthcoming
------------
+0.7.2 (2014-08-25)
+------------------
 * instead of exception. deprecated warning
 * add error message for having old style
 * type information added

@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Forthcoming
------------
+0.7.2 (2014-08-25)
+------------------
 * it updates its indices when it adds or removes repo
 * bugfix for `#260 <https://github.com/robotics-in-concert/rocon_app_platform/issues/260>`_ `#253 <https://github.com/robotics-in-concert/rocon_app_platform/issues/253>`_
 * now indexer works fine. rapp stores resources path in yaml_data

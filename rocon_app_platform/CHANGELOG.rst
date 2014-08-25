@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Forthcoming
------------
+0.7.2 (2014-08-25)
+------------------
 * 0.7.1
 * Contributors: Daniel Stonier
 

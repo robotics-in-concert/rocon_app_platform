@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Forthcoming
------------
+0.7.2 (2014-08-25)
+------------------
 * type information added
 * install chirp_apps, icons, and talker script
 * remove rocon_bubble_icons dependency
