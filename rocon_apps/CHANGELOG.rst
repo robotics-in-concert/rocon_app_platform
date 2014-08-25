@@ -1,6 +1,34 @@
 Changelog
 =========
 
+Forthcoming
+-----------
+* type information added
+* install chirp_apps, icons, and talker script
+* remove rocon_bubble_icons dependency
+* relative path rapps
+* cleanup teleop rapp and enable video_teleop virtual rapp
+* disable robot teleop and video teleop until resolving capabilitiy
+* update rapp description
+* merging changes
+* postfix for chirp apss
+* rename angry_cat to angry_cat_chirp
+* multiple chirp working
+* have robot_teleop and video teleop
+* Merge branch 'indigo' into teleop_rapp_anchestor
+* Explain defaults
+* Add defaults
+* Add rocon license
+* Remove Willow Garage license
+* parses parameters from file
+* launch args for public parameters
+* configurable talker
+* 0.7.1
+* configurable talker
+* rocon_apps: splits teleop rapp into virtual and implementation rapp
+* rocon_apps: implements teleop rapp anchestor
+* Contributors: Daniel Stonier, Jihoon Lee, Kent Sommer, Marcus Liebhardt
+
 0.7.0 (2014-05-06)
 ------------------
 * added local index generator.

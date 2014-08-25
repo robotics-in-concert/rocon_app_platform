@@ -1,6 +1,40 @@
 Changelog
 =========
 
+Forthcoming
+-----------
+* instead of exception. deprecated warning
+* add error message for having old style
+* type information added
+* re align the args
+* align the args
+* add the rosbridge setting for using rosbridge on pairing mode
+* remove legacy app store url.
+* Refined the comment for the preferred defaults
+  Also removed legacy app_store_url.
+* use preferred instead of selected and defaults
+* use yaml format for default app parsing
+* preferred or default rapp selection
+* rewrote get_available rapp logic
+* multiple chirp working
+* Fix import to include copy
+* Remove copy. Wrong branch :/
+* Fix import to include copy
+* merging work on public parameters for the rapps/rapp manager.
+* Move to use copy.deepcopy
+* Set rapp manager namespace handles to be private
+* Fix if else re-use
+* Correct testing defaults back to standard
+* public parameter works
+* parses parameters from file
+* 0.7.1
+* use proper lists for hubs/concerts now roslaunch can handle it.
+* fix defaults
+* Remove debug prints
+* Interactions for turtlebot on indigo update. Remove namespacing for standalone
+* rocon_app_manager: CMakeLists.txt(12): error: missing COMPONENTS keyword before 'roslint
+* Contributors: Daniel Stonier, DongWook Lee, Jihoon Lee, Kent Sommer, kentsommer
+
 0.7.1 (2014-05-26)
 ------------------
 * use lists instead of semi-colon separated strings for hub/concert whitelists/blacklists now roslaunch can handle it.
