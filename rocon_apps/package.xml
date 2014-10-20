@@ -31,6 +31,7 @@
     <rocon_app>apps/talker/talker.rapp</rocon_app>
     <rocon_app>apps/teleop/teleop.rapp</rocon_app>
     <rocon_app>apps/video_teleop/video_teleop.rapp</rocon_app> 
+    <rocon_app>apps/waypoint_navigation/waypoint_navigation.rapp</rocon_app>
 <!--    Hold until resolve turtlebot capabilities -->
 <!--    <rocon_app>apps/robot_teleop/robot_teleop.rapp</rocon_app>-->
 <!--    <rocon_app>apps/robot_video_teleop/robot_video_teleop.rapp</rocon_app>-->
