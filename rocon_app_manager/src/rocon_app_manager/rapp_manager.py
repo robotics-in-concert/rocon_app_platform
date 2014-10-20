@@ -150,7 +150,7 @@ class RappManager(object):
             self._publishers = {}
         self._service_names = {}
         self._publisher_names = {}
-        base_name = self._gateway_name if self._gateway_name else ""  # latter option is for standalone mode
+        base_name = self._gateway_name.lower().replace(' ', '_') if self._gateway_name else ""  # latter option is for standalone mode
         for name in self._default_service_names:
             if (base_name == ""):
                 self._service_names[name] = '~' + self._default_service_names[name]

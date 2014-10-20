@@ -28,7 +28,6 @@
     <param name="firewall" value="$(arg gateway_firewall)"/>
     <param name="name" value="$(arg gateway_name)"/> <!-- <rosparam param="name" subst_value="true">$(arg robot_name)</rosparam> -->
     <param name="watch_loop_period" value="$(arg gateway_watch_loop_period)"/>
-    <param name="hub_whitelist" value="$(arg hub_whitelist)"/>
     <param name="disable_uuids" value="$(arg disable_uuids)"/>
     <param name="network_interface" value="$(arg gateway_network_interface)"/>
   </node>

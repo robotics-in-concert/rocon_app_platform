@@ -151,7 +151,7 @@ class RappIndexer(object):
                     compatible_rapps[resource_name] = rapp
                 else:
                     incompatible_rapps[resource_name] = rapp
-            except Exception as e:
+            except rocon_uri.exceptions.RoconURIValueError as e:
                 invalid_rapps[resource_name] = str(e)
 
         resolved_compatible_rapps, invalid_compatible = self._resolve_rapplist(compatible_rapps, ancestor_share_check)
