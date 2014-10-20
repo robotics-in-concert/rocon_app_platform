@@ -1,0 +1,4 @@
+display: Waypoint Navigation
+description: Navigate a robot around a set of waypoints.
+public_interface: waypoint_navigation.interface
+icon: ../../icons/waypoint_navigation.png
