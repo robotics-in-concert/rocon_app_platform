@@ -413,9 +413,10 @@ class RappManager(object):
                 return rapp_manager_srvs.InviteResponse(False, rapp_manager_msgs.ErrorCodes.ALREADY_REMOTE_CONTROLLED, "already remote controlled from %s" % self._remote_name)
         # Variable setting
         if req.application_namespace == '':
-            self._application_namespace = self._gateway_name if self._gateway_name else self._param['robot_name']
+            self._application_namespace = self._gateway_name.lower().replace(' ', '_') if self._gateway_name else self._param['robot_name']
         else:
             self._application_namespace = req.application_namespace
+
         # Flips/Unflips
         try:
             self._flip_connections(req.remote_target_name,
