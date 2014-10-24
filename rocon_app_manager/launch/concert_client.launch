@@ -33,6 +33,9 @@
   <arg name="interactions"          default="false"/>
   <arg name="interactions_list"     default="[]"/>
 
+  <!-- *************************** Is simulataion ******************************* -->
+  <arg name="sim"                   default="false"/>
+
   <!-- ************************* Rarely Used Variables ************************** -->
   <arg name="firewall" default="false"/> <!-- typically false (don't let anything in), only for simulation clients -->
   
@@ -59,6 +62,7 @@
     <arg name="robot_icon"                     value="$(arg robot_icon)" />
     <arg name="robot_type"                     value="$(arg robot_type)" />
     <arg name="screen"                         value="$(arg screen)" />
+    <arg name="sim"                            value="$(arg sim)" />
   </include>
 
 </launch>

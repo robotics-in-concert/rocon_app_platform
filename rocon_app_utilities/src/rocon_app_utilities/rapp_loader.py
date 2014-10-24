@@ -198,7 +198,7 @@ def _get_standard_args(roslaunch_file):
 
       :raises RappMalformedException: if launch file format is invalid
     '''
-    standard_args = ['gateway_name', 'application_namespace', 'rocon_uri', 'capability_server_nodelet_manager_name']
+    standard_args = ['gateway_name', 'application_namespace', 'rocon_uri', 'capability_server_nodelet_manager_name', 'sim']
 
     try:
         available_args = _get_available_args(roslaunch_file)
