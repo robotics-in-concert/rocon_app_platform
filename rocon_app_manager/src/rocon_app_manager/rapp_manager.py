@@ -559,6 +559,7 @@ class RappManager(object):
                        req.remappings,
                        req.parameters,
                        self._param['app_output_to_screen'],
+                       self._param['sim'],
                        self.caps_list)
 
         rospy.loginfo("Rapp Manager : %s" % self._remote_name)
