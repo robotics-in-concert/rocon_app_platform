@@ -46,7 +46,7 @@
   <arg name="robot_type"                    default="pc"/>
   <arg name="robot_icon"                    default="rocon_icons/cybernetic_pirate.png"/> 
   <arg name="screen"                        default="false"/>             <!-- verbose output from running apps -->
-  <arg name="sim"                           default="false"/>
+  <arg name="sim"                           default="false"/>             <!-- simulated robot -->
 
   <include file="$(find rocon_app_manager)/launch/includes/_app_manager.xml">
     <arg name="robot_name" value="$(arg robot_name)" />

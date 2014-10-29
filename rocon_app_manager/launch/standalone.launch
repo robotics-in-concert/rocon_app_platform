@@ -30,7 +30,8 @@
   <arg name="robot_name"             default="Cybernetic Pirate"/>
   <arg name="robot_type"             default="pc"/>
   <arg name="robot_icon"             default="rocon_icons/cybernetic_pirate.png"/>
-  <arg name="screen" default="true"/>  <!-- verbose output from running apps -->
+  <arg name="screen"                 default="true"/>  <!-- verbose output from running apps -->
+  <arg name="sim"                    default="false"/> <!-- simulated robot -->
 
   <include file="$(find rocon_app_manager)/launch/includes/_app_manager.xml">
     <arg name="robot_name" value="$(arg robot_name)" />
@@ -40,6 +41,7 @@
     <arg name="rapp_package_blacklist" value="$(arg rapp_package_blacklist)" />
     <arg name="auto_start_rapp" value="$(arg auto_start_rapp)" />
     <arg name="screen" value="$(arg screen)" />
+    <arg name="sim" value="$(arg sim)"/>
     <arg name="auto_rapp_installation" value="$(arg auto_rapp_installation)" />
     <arg name="capability_server_name" default="$(arg capabilities_server_name)"/>
   </include>

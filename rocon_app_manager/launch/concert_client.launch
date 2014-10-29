@@ -34,7 +34,7 @@
   <arg name="interactions_list"     default="[]"/>
 
   <!-- *************************** Is simulataion ******************************* -->
-  <arg name="sim"                   default="false"/>
+  <arg name="sim"                   default="false"/> <!-- simulated robot -->
 
   <!-- ************************* Rarely Used Variables ************************** -->
   <arg name="firewall" default="false"/> <!-- typically false (don't let anything in), only for simulation clients -->
