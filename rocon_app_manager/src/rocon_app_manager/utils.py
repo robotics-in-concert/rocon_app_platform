@@ -33,7 +33,7 @@ def dict_to_KeyValue(d):
 
 
 def _prepare_launch_text(launch_file, launch_args, public_parameters, application_namespace,
-                         gateway_name, rocon_uri_string, sim, capability_server_nodelet_manager_name=None):
+                         gateway_name, rocon_uri_string, simulation, capability_server_nodelet_manager_name=None):
     '''
       Prepare the launch file text. This essentially wraps the rapp launcher
       with the following roslaunch elements:
@@ -60,8 +60,8 @@ def _prepare_launch_text(launch_file, launch_args, public_parameters, applicatio
       :type gateway_name: str
       :param rocon_uri_string: used to pass down information about the platform that is running this app to the app itself.
       :type rocon_uri_string: str - a rocon uri string
-      :param sim: true if rapp manager is for simulated robot
-      :type sim: boolen
+      :param simulation: true if rapp manager is for simulated robot
+      :type simulation: boolen
 
       The rocon_uri_string variable is a fixed identifier for this app manager's platform - i.e. no special
       characters or wildcards should be contained therein.
@@ -73,7 +73,7 @@ def _prepare_launch_text(launch_file, launch_args, public_parameters, applicatio
     launch_arg_mapping['gateway_name'] = gateway_name
     launch_arg_mapping['rocon_uri'] = rocon_uri_string
     launch_arg_mapping['capability_server_nodelet_manager_name'] = capability_server_nodelet_manager_name
-    launch_arg_mapping['sim'] = sim
+    launch_arg_mapping['simulation'] = simulation
 
     if(application_namespace == ""):
         launch_text = '<launch>\n  <include file="%s">\n' % (launch_file)
@@ -113,7 +113,7 @@ def resolve_chain_remappings(nodes):
         n.remap_args = new_remap_args_dict.items()
 
 
-def prepare_launcher(data, public_parameters, application_namespace, gateway_name, rocon_uri_string, capability_nodelet_manager_name, force_screen, sim, temp):
+def prepare_launcher(data, public_parameters, application_namespace, gateway_name, rocon_uri_string, capability_nodelet_manager_name, force_screen, simulation, temp):
     '''
       prepare roslaunch to start rapp.
     '''
@@ -125,7 +125,7 @@ def prepare_launcher(data, public_parameters, application_namespace, gateway_nam
                                        application_namespace,
                                        gateway_name,
                                        rocon_uri_string,
-                                       sim,
+                                       simulation,
                                        capability_nodelet_manager_name
                                        )
     temp.write(launch_text)

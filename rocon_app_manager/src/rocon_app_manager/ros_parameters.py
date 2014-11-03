@@ -42,6 +42,6 @@ def setup_ros_parameters():
     param['preferred'] = rospy.get_param('~preferred',[])
 
     # Simulation
-    param['sim'] = rospy.get_param('~sim', False)
+    param['simulation'] = rospy.get_param('~simulation', False)
 
     return param

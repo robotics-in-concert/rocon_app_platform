@@ -12,7 +12,7 @@
   <arg name="rapp_package_blacklist" default="[]"/>
   <arg name="auto_start_rapp" default=""/> <!-- autostart a rapp, e.g. rocon_apps/chirp -->
   <arg name="screen" default="false"/>  <!-- verbose output from running apps -->
-  <arg name="sim" default="false"/> <!-- is simulated robot in gazebo -->
+  <arg name="simulation" default="false"/> <!-- is simulated robot in gazebo -->
   <arg name="capability_server_name" default="capability_server"/>  <!-- name of the capability server -->
   <!-- See 'http://wiki.ros.org/rocon_app_manager/Tutorials/indigo/Automatic Rapp Installation'
        on how to enable automatic rapp installation -->
@@ -29,7 +29,7 @@
     <param name="auto_start_rapp" value="$(arg auto_start_rapp)"/>
     <param name="local_remote_controllers_only" value="$(arg local_remote_controllers_only)"/>
     <param name="screen" value="$(arg screen)"/>
-    <param name="sim" value="$(arg sim)"/>
+    <param name="simulation" value="$(arg simulation)"/>
     <param name="capability_server_name" value="$(arg capability_server_name)"/>
     <param name="auto_rapp_installation" value="$(arg auto_rapp_installation)" />
     <remap from="app_manager/gateway_info" to="gateway/gateway_info"/>

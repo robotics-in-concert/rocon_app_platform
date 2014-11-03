@@ -46,7 +46,7 @@
   <arg name="robot_type"                    default="pc"/>
   <arg name="robot_icon"                    default="rocon_icons/cybernetic_pirate.png"/> 
   <arg name="screen"                        default="false"/>             <!-- verbose output from running apps -->
-  <arg name="sim"                           default="false"/>             <!-- simulated robot -->
+  <arg name="simulation"                    default="false"/>             <!-- simulated robot -->
 
   <include file="$(find rocon_app_manager)/launch/includes/_app_manager.xml">
     <arg name="robot_name" value="$(arg robot_name)" />
@@ -57,7 +57,7 @@
     <arg name="auto_start_rapp" value="$(arg auto_start_rapp)" />
     <arg name="local_remote_controllers_only" value="$(arg local_remote_controllers_only)" />
     <arg name="screen" value="$(arg screen)" />
-    <arg name="sim" value="$(arg sim)"/>
+    <arg name="simulation" value="$(arg simulation)"/>
     <arg name="capability_server_name" value="$(arg capabilities_server_name)" if="$(arg capabilities)"/>
     <arg name="auto_rapp_installation" value="$(arg auto_rapp_installation)" />
   </include>

@@ -107,7 +107,7 @@ class Rapp(object):
 
         return success, str()
 
-    def start(self, application_namespace, gateway_name, rocon_uri_string, remappings=[], parameters=[], force_screen=False, sim=False,
+    def start(self, application_namespace, gateway_name, rocon_uri_string, remappings=[], parameters=[], force_screen=False, simulation=False,
               caps_list=None):
         '''
           Some important jobs here.
@@ -131,8 +131,8 @@ class Rapp(object):
           :type parameters: list of rocon_std_msgs.msg.KeyValue
           :param force_screen: whether to roslaunch the app with --screen or not
           :type force_screen: boolean
-          :param sim: whether the rapp manager is for simulated robot or not
-          :type sim: boolean
+          :param simulation: whether the rapp manager is for simulated robot or not
+          :type simulation: boolean
           :param caps_list: this holds the list of available capabilities, if app needs capabilities
           :type caps_list: CapsList
         '''
@@ -144,7 +144,7 @@ class Rapp(object):
             public_parameters = utils.apply_requested_public_parameters(data['public_parameters'], parameters)
 
             temp = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
-            self._launch = utils.prepare_launcher(data, public_parameters, application_namespace, gateway_name, rocon_uri_string, capability_nodelet_manager_name, force_screen, sim, temp)
+            self._launch = utils.prepare_launcher(data, public_parameters, application_namespace, gateway_name, rocon_uri_string, capability_nodelet_manager_name, force_screen, simulation, temp)
 
             # Better logic for the future, 1) get remap rules from capabilities. 2) get remap rules from requets. 3) apply them all. It would be clearer to understand the logic and easily upgradable
             if 'required_capabilities' in data:  # apply capability-specific remappings needed
