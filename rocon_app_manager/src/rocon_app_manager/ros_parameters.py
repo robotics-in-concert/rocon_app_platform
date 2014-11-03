@@ -41,4 +41,7 @@ def setup_ros_parameters():
     # Preferred rapp configuration
     param['preferred'] = rospy.get_param('~preferred',[])
 
+    # Simulation
+    param['simulation'] = rospy.get_param('~simulation', False)
+
     return param
