@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Forthcoming
------------
+0.7.3 (2014-11-21)
+------------------
 * Merge pull request `#263 <https://github.com/robotics-in-concert/rocon_app_platform/issues/263>`_ from robotics-in-concert/sim_param
   simulated robot support in app manager
 * rename sim to simulation

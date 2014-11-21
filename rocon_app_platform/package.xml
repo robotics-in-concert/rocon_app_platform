@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>rocon_app_platform</name>
-  <version>0.7.2</version>
+  <version>0.7.3</version>
   <description>
     Robot application platform for ros robots with a default implementation in python.
   </description>

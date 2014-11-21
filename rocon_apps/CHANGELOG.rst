@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Forthcoming
------------
+0.7.3 (2014-11-21)
+------------------
 * migrate teleop implementation rapps to yujin_ocs
 * add waypoint navigation app in package.xml
 * [rocon_apps] waypoint navigation meta-rapp.

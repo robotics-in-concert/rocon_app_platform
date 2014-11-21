@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Forthcoming
------------
+0.7.3 (2014-11-21)
+------------------
 * rename sim to simulation
 * sim parameter passing
 * [rocon_app_manager] bugfix stray hub whitelist param, lower casing base topic names, catching the right exception
