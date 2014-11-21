@@ -1,6 +1,20 @@
 Changelog
 =========
 
+Forthcoming
+-----------
+* Merge pull request `#263 <https://github.com/robotics-in-concert/rocon_app_platform/issues/263>`_ from robotics-in-concert/sim_param
+  simulated robot support in app manager
+* rename sim to simulation
+* add sim param in standalone launcher
+* sim parameter passing
+* process sim param
+* add sim param
+* [rocon_app_manager] permit esoteric names once more.
+* [rocon_app_manager] bugfix stray hub whitelist param, lower casing base topic names, catching the right exception
+* bugfix stopping of rapps after virtual implementation upgrade.
+* Contributors: Daniel Stonier, Jihoon Lee
+
 0.7.2 (2014-08-25)
 ------------------
 * instead of exception. deprecated warning

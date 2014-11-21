@@ -1,6 +1,13 @@
 Changelog
 =========
 
+Forthcoming
+-----------
+* rename sim to simulation
+* sim parameter passing
+* [rocon_app_manager] bugfix stray hub whitelist param, lower casing base topic names, catching the right exception
+* Contributors: Daniel Stonier, Jihoon Lee
+
 0.7.2 (2014-08-25)
 ------------------
 * it updates its indices when it adds or removes repo
