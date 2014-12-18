@@ -104,12 +104,14 @@ def resolve_chain_remappings(nodes):
             if str(fr) in new_remap_args_dict:
                 rospy.logwarn("Rapp Manager : Remapping rule for %s already exists. Ignoring remapping rule from %s to %s", str(fr), str(fr), str(to))
             else:
-                # if there is a value which matches with remap_from, the value should be replaced with the new remap_to
-                keys = [k for k, v in new_remap_args_dict.items() if v == str(fr)]
-                for k in keys:
-                    new_remap_args_dict[k] = str(to)
-
-                new_remap_args_dict[str(fr)] = str(to)
+                if fr == to:
+                    rospy.logwarn("Rapp Manager : ignoring uncessary remapping rule (%s, %s)"%(str(fr),str(to)))
+                else:
+                    # if there is a value which matches with remap_from, the value should be replaced with the new remap_to
+                    keys = [k for k, v in new_remap_args_dict.items() if v == str(fr)]
+                    for k in keys:
+                        new_remap_args_dict[k] = str(to)
+                    new_remap_args_dict[str(fr)] = str(to)
         n.remap_args = new_remap_args_dict.items()
 
 
