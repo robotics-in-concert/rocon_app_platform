@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Forthcoming
------------
+0.7.4 (2014-12-30)
+------------------
 * ignore unncessay remapping rule `#265 <https://github.com/robotics-in-concert/rocon_app_platform/issues/265>`_
 * Contributors: Jihoon Lee
 

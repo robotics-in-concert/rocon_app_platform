@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>rocon_app_utilities</name>
-  <version>0.7.3</version>
+  <version>0.7.4</version>
   <description>The rocon_app_utilities package</description>
 
   <maintainer email="jihoonlee.in@gmail.com">Jihoon Lee</maintainer>
