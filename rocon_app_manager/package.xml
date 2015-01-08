@@ -1,6 +1,6 @@
 <package>
   <name>rocon_app_manager</name>
-  <version>0.7.4</version>
+  <version>0.7.5</version>
   <description>
     The public interface and retaskable interface for a robot.
   </description>
@@ -28,6 +28,7 @@
   <run_depend>rocon_gateway_utils</run_depend>
   <run_depend>rocon_gateway</run_depend>
   <run_depend>rocon_hub</run_depend>
+  <run_depend>rocon_interactions</run_depend>
   <run_depend>rocon_master_info</run_depend>
   <run_depend>rocon_python_comms</run_depend>
   <run_depend>rocon_python_utils</run_depend>
