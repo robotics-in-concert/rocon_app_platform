@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Forthcoming
------------
+0.7.5 (2015-01-08)
+------------------
 * add rocon_interactions as run_depend closes `#268 <https://github.com/robotics-in-concert/rocon_app_platform/issues/268>`_
 * Contributors: Jihoon Lee
 
