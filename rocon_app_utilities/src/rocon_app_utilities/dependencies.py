@@ -8,6 +8,7 @@
 from collections import defaultdict
 import os
 import platform
+import rospkg.os_detect 
 
 from rosdep2 import RosdepLookup, create_default_installer_context, ResolutionError
 from rosdep2.installers import RosdepInstaller
@@ -42,22 +43,13 @@ class RappDependencies(object):
 
 class DependencyChecker(object):
 
-    def __init__(self, indexer, ros_distro=None, os_name=None, os_id=None):
+    def __init__(self, indexer, ros_distro=None, os_name=None, os_codename=None):
         self.indexer = indexer
 
-        import os
         if not os_name:
-            os_platform = platform.system().lower()
-            if os_platform == 'linux':
-                # Retrieve distribution name
-                os_name, os_version, os_id = platform.linux_distribution()
-                os_name = os_name.lower()
-            else:
-               # We only support Linux for now
-               raise UnsupportedPlatformException(os_platform)
-
-        self.os_name = os_name
-        self.os_id = os_id
+            os_detector = rospkg.os_detect.OsDetect()
+            self.os_name = os_detector.get_name()
+            self.os_codename = os_detector.get_codename()
 
         # FIXME: there should be a way to set this without using an environment variable
         if ros_distro:
@@ -96,8 +88,8 @@ class DependencyChecker(object):
                     try:
                         d = self.view.lookup(run_depend.name)
                         inst_key, rule = d.get_rule_for_platform(
-                            self.os_name, self.os_id, self.installer_keys, self.default_key
-                        )
+                            self.os_name, self.os_codename, self.installer_keys, self.default_key
+                        )  # os version used in rosdep is os_codename. refer to REP 111
                         deps[rapp_name].installable.extend(self.installer.resolve(rule))
                     except KeyError:
                         deps[rapp_name].noninstallable.append(run_depend.name)
