@@ -66,12 +66,12 @@ class RappManager(object):
         rospy.loginfo("Rapp Manager : indexing rapps...")
         self._indexer = rapp_repositories.get_combined_index(package_whitelist=self._param['rapp_package_whitelist'], package_blacklist=self._param['rapp_package_blacklist'])
 
-        try:
-            self._dependency_checker = rocon_app_utilities.DependencyChecker(self._indexer)
-            self._param['installer'] = True
-        except KeyError as e:
-            rospy.logwarn("Rapp Manager : fails to initialise rapp installer. Disabling installer..")
-            self._param['installer'] = False
+        if self._param['auto_rapp_installation']:
+            try:
+                self._dependency_checker = rocon_app_utilities.DependencyChecker(self._indexer)
+            except KeyError as e:
+                rospy.logwarn("Rapp Manager : fails to initialise auto rapp installer. Disabling auto_rapp_installation ..")
+                self._param['auto_rapp_installation'] = False
         self._runnable_apps, self._installable_apps, self._noninstallable_rapps, self._platform_filtered_apps, self._capabilities_filtered_apps, self._invalid_apps = self._determine_runnable_rapps()
 
         self._preferred = {}
@@ -206,7 +206,7 @@ class RappManager(object):
         compatible_rapps, platform_incompatible_rapps, invalid_rapps = self._indexer.get_compatible_rapps(uri=self._rocon_uri, ancestor_share_check=False)
         runnable_rapp_specs, capabilities_incompatible_rapps = self._filter_capability_unavailable_rapps(compatible_rapps)
 
-        if self._param['installer']:
+        if self._param['auto_rapp_installation']:
             runnable_rapp_specs, installable_rapp_specs, noninstallable_rapp_specs = self._determine_installed_rapps(runnable_rapp_specs)
             installable_rapps = convert_rapps_from_rapp_specs(installable_rapp_specs)
         else:
@@ -738,7 +738,7 @@ class RappManager(object):
         message = ""
         rapp = self._installable_apps[requested_rapp_name]
 
-        if self._param['auto_rapp_installation'] and self._param['installer']:
+        if self._param['auto_rapp_installation']:
             rospy.loginfo("Rapp Manager : Installing rapp '" + rapp.data['name'] + "'")
             success, reason = rapp.install(self._dependency_checker)
             if success:
