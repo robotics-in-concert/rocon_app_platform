@@ -69,6 +69,7 @@ class RappManager(object):
         if self._param['auto_rapp_installation']:
             try:
                 self._dependency_checker = rocon_app_utilities.DependencyChecker(self._indexer)
+                rospy.loginfo("Rapp Manager : auto rapp installation is enabled ..")
             except KeyError as e:
                 rospy.logwarn("Rapp Manager : fails to initialise auto rapp installer. Disabling auto_rapp_installation ..")
                 self._param['auto_rapp_installation'] = False
@@ -210,7 +211,7 @@ class RappManager(object):
             runnable_rapp_specs, installable_rapp_specs, noninstallable_rapp_specs = self._determine_installed_rapps(runnable_rapp_specs)
             installable_rapps = convert_rapps_from_rapp_specs(installable_rapp_specs)
         else:
-            installable_rapp = {}
+            installable_rapps = {}
             noninstallable_rapp_specs = {}
         runnable_rapps = convert_rapps_from_rapp_specs(runnable_rapp_specs)
 
