@@ -1,6 +1,13 @@
 Changelog
 =========
 
+Forthcoming
+-----------
+* add log and typo fix
+* use auto_rapp_installation param to enable disable installer
+* disabl installer logic
+* Contributors: Jihoon Lee
+
 0.7.5 (2015-01-08)
 ------------------
 * add rocon_interactions as run_depend closes `#268 <https://github.com/robotics-in-concert/rocon_app_platform/issues/268>`_
