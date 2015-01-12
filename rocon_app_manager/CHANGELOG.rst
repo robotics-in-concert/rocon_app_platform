@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Forthcoming
------------
+0.7.6 (2015-01-12)
+------------------
 * add log and typo fix
 * use auto_rapp_installation param to enable disable installer
 * disabl installer logic
