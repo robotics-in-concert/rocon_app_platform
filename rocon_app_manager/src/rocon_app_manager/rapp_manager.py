@@ -715,10 +715,16 @@ class RappManager(object):
         message = ""
         rapp = None
 
+        print(str(requested_rapp_name))
+
         if requested_rapp_name in self._virtual_apps.keys():  # Virtual rapp
             rapp = self._virtual_apps[requested_rapp_name]
             success = True
             message = ""
+
+            if rapp.data['name'] in self._installable_apps.keys():
+                success, message, rapp = self._install_rapp(rapp.data['name'])
+
         elif requested_rapp_name in self._runnable_apps.keys():  # Implementation Rapp
             rapp = self._runnable_apps[requested_rapp_name]
             success = True
@@ -728,7 +734,6 @@ class RappManager(object):
         else:
             success = False
             message = ("The requested app '%s' is not among the runnable, nor installable rapps." % requested_rapp_name)
-
         return success, message, rapp
 
     def _install_rapp(self, requested_rapp_name):
