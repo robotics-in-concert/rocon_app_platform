@@ -17,6 +17,7 @@
   <arg name="hub_uri" default=""/>                     <!-- Directly look for a hub on this ip/port, e.g. http://localhost:6380 -->
   <arg name="disable_uuids" default="false"/>          <!-- manage unique naming of multiple gateways yourself -->
   <arg name="gateway_network_interface" default="$(optenv GATEWAY_NETWORK_INTERFACE)"/>  <!-- If you have multiple network interfaces and want to lock it on one (e.g. 'eth0') -->
+  <arg name="disable_zeroconf" default="false"/>
 
   <node pkg="rocon_gateway" type="gateway.py" name="gateway">
     <rosparam command="load" file="$(find rocon_gateway)/param/default.yaml" />
@@ -30,5 +31,6 @@
     <param name="watch_loop_period" value="$(arg gateway_watch_loop_period)"/>
     <param name="disable_uuids" value="$(arg disable_uuids)"/>
     <param name="network_interface" value="$(arg gateway_network_interface)"/>
+    <param name="disable_zeroconf" value="$(arg disable_zeroconf)"/>
   </node>
 </launch>
