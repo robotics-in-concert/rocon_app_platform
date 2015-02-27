@@ -1,6 +1,15 @@
 Changelog
 =========
 
+Forthcoming
+-----------
+* disable_zeroconf option availalble
+* bug fix in rapp installation process
+* Contributors: Jihoon Lee
+
+* bug fix in rapp installation process
+* Contributors: Jihoon Lee
+
 0.7.6 (2015-01-12)
 ------------------
 * add log and typo fix
