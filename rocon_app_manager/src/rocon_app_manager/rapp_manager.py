@@ -260,11 +260,11 @@ class RappManager(object):
         for rapp_name, selected_rapp in virtual_apps.items():
             selected_rapp_name = selected_rapp.data['name']
             if not rapp_name in preferred:
-                rospy.logwarn("Rapp Manager : No preferred rapp for '" + rapp_name + "'.  '" + selected_rapp_name + "' has been selected.")
+                rospy.loginfo("Rapp Manager : No preferred rapp for '" + rapp_name + "'.  '" + selected_rapp_name + "' has been selected.")
                 continue
             preferred_rapp_name = preferred[rapp_name]
             if not preferred_rapp_name in full_apps:
-                rospy.logwarn("Rapp Manager : Given preferred rapp '" + preferred_rapp_name + "' for '" + rapp_name + "' does not exist. '" + selected_rapp_name + "' has been selected.")
+                rospy.loginfo("Rapp Manager : Given preferred rapp '" + preferred_rapp_name + "' for '" + rapp_name + "' does not exist. '" + selected_rapp_name + "' has been selected.")
                 continue
             rospy.loginfo("Rapp Manager: '%s' -> '%s'"%(rapp_name, preferred_rapp_name))
             virtual_apps[rapp_name] = full_apps[preferred_rapp_name]
