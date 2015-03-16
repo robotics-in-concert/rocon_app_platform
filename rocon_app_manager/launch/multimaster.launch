@@ -4,6 +4,9 @@
   for an example which tunes it for a particular usage.
  -->
 <launch>
+  <!-- ******************************* Common Args ***************************** -->
+  <arg name="robot_name"                    default="Cybernetic Pirate"/>
+
   <!-- ******************************** Gateway ******************************** -->
   <arg name="gateway_firewall"          default="true"/> <!-- default is not to let anything come into the robot -->
   <arg name="gateway_uuids"             default="true"/> <!-- all gateways represent their robots with unique uuid's postfixed to the name -->
@@ -46,7 +49,6 @@
   <arg name="local_remote_controllers_only" default="false"/>             <!-- allow remote control for local machine tests only -->
   <arg name="rapp_package_whitelist"        default="[rocon_apps]"/>      <!-- comma separated list of package names -->
   <arg name="rapp_package_blacklist"        default="[]"/>
-  <arg name="robot_name"                    default="Cybernetic Pirate"/>
   <arg name="robot_type"                    default="pc"/>
   <arg name="robot_icon"                    default="rocon_icons/cybernetic_pirate.png"/> 
   <arg name="screen"                        default="false"/>             <!-- verbose output from running apps -->
