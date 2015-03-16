@@ -21,6 +21,9 @@ local_remote_controllers_only: false
 
 # Uncomment and modify below to explicitly set the preferred
 # implementation for an ancestor rapp specification:
-#  - rocon_apps/chirp: 'rocon_apps/moo'
+preferred:
+  - rocon_apps/chirp: 'rocon_apps/moo_chirp'
+# implementation for an ancestor rapp specification:
+#  - rocon_apps/chirp: 'rocon_apps/meow_chirp'
 # and when an ancestor is an implementation...
 #  - rocon_apps/talker: 'rocon_apps/talker'
