@@ -242,7 +242,6 @@ class RappManager(object):
 
     def _configure_preferred_rapp_for_virtuals(self):
         virtual_apps = {}
-        #default_apps = setup_default_app_from_params()
         full_apps = {}
         full_apps.update(self._runnable_apps)
         full_apps.update(self._installable_apps)
@@ -250,25 +249,35 @@ class RappManager(object):
         for name, rapp in full_apps.items():
             ancestor_name = rapp.data['ancestor_name']
             if not ancestor_name in virtual_apps.keys():
-                virtual_apps[ancestor_name] = rapp
+                virtual_apps[ancestor_name] = []
+                virtual_apps[ancestor_name].append(rapp)
+            else:
+                virtual_apps[ancestor_name].append(rapp)
 
         # Get preferred rapp configurations from parameter server and use
         preferred = {}
+        v_rapps = {}
         for pair in self._param['preferred']:
             preferred.update(pair)
 
-        for rapp_name, selected_rapp in virtual_apps.items():
-            selected_rapp_name = selected_rapp.data['name']
+        for rapp_name, available_rapps in virtual_apps.items():
             if not rapp_name in preferred:
-                rospy.loginfo("Rapp Manager : No preferred rapp for '" + rapp_name + "'.  '" + selected_rapp_name + "' has been selected.")
+                if len(available_rapps) > 1:
+                    v_rapps[rapp_name] = available_rapps[0]
+                    rospy.logwarn("Rapp Manager : '" + rapp_name + "' is not unique and has no preferred rapp. " + available_rapps[0].data['name'] + "' has been selected.")
+                else:
+                    v_rapps[rapp_name] = available_rapps[0]
                 continue
-            preferred_rapp_name = preferred[rapp_name]
-            if not preferred_rapp_name in full_apps:
-                rospy.loginfo("Rapp Manager : Given preferred rapp '" + preferred_rapp_name + "' for '" + rapp_name + "' does not exist. '" + selected_rapp_name + "' has been selected.")
-                continue
-            rospy.loginfo("Rapp Manager: '%s' -> '%s'"%(rapp_name, preferred_rapp_name))
-            virtual_apps[rapp_name] = full_apps[preferred_rapp_name]
-        self._virtual_apps = virtual_apps
+            else:
+                preferred_rapp_name = preferred[rapp_name]
+
+                if not preferred_rapp_name in full_apps:
+                    rospy.logwarn("Rapp Manager : Given preferred rapp '" + preferred_rapp_name + "' for '" + rapp_name + "' does not exist. '" + available_rapps[0].data['name'] + "' has been selected.")
+                    v_rapps[rapp_name] = available_rapps[0]
+                else:
+                    rospy.loginfo("Rapp Manager: '%s' -> '%s'"%(rapp_name, preferred_rapp_name))
+                    v_rapps[rapp_name] = full_apps[preferred_rapp_name]
+        self._virtual_apps = v_rapps
         self._preferred = preferred
 
     def _filter_capability_unavailable_rapps(self, compatible_rapps):
