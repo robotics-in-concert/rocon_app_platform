@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Forthcoming
------------
+0.7.8 (2015-03-23)
+------------------
 * better warning for preferred rapp selection closes `#274 <https://github.com/robotics-in-concert/rocon_app_platform/issues/274>`_
 * clean up launchers `#279 <https://github.com/robotics-in-concert/rocon_app_platform/issues/279>`_
 * bugfix robot_naem arg location, fixes `#276 <https://github.com/robotics-in-concert/rocon_app_platform/issues/276>`_.
