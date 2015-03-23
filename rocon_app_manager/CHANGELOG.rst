@@ -1,6 +1,15 @@
 Changelog
 =========
 
+Forthcoming
+-----------
+* better warning for preferred rapp selection closes `#274 <https://github.com/robotics-in-concert/rocon_app_platform/issues/274>`_
+* clean up launchers `#279 <https://github.com/robotics-in-concert/rocon_app_platform/issues/279>`_
+* bugfix robot_naem arg location, fixes `#276 <https://github.com/robotics-in-concert/rocon_app_platform/issues/276>`_.
+* set moo as default preferred chirp closes `#275 <https://github.com/robotics-in-concert/rocon_app_platform/issues/275>`_
+* change warn to info closes `#274 <https://github.com/robotics-in-concert/rocon_app_platform/issues/274>`_
+* Contributors: Daniel Stonier, Jihoon Lee
+
 0.7.7 (2015-02-27)
 ------------------
 * disable_zeroconf option availalble
