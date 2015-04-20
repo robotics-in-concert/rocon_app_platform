@@ -1,7 +1,0 @@
-publishers:
-  - name: nav_ctrl_status
-    type: yocs_msgs/NavigationControlStatus
-subscribers:
-  - name: nav_ctrl
-    type: yocs_msgs/NavigationControl
-services: []

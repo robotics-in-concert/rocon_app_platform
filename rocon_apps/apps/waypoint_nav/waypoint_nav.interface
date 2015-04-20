@@ -1,0 +1,17 @@
+publishers:
+  - name: robot_pose
+    type: geometry_msgs/PoseStamped
+subscribers: 
+  - name: initialpose
+    type: geometry_msgs/PoseWithCovarianceStamped
+  - name: map
+    type: nav_msgs/OccupancyGrid
+  - name: map_metadata
+    type: nav_msgs/MapMetaData
+  - name: waypoints
+    type: yocs_msgs/WayPointList
+services: []
+action_clients: []
+action_servers:
+  - name: navigator
+    type: yocs_msgs/NavigateTo
