@@ -18,6 +18,7 @@
   <buildtool_depend>catkin</buildtool_depend>
   <run_depend>rocon_app_manager</run_depend>
   <run_depend>rocon_apps</run_depend>
+  <run_depend>rocon_app_utilities</run_depend>
   
   <export>
     <metapackage/>
