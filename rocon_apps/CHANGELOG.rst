@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Forthcoming
+-----------
+* update waypoint_nav rapp
+* Contributors: Jihoon Lee
+
 0.7.8 (2015-03-23)
 ------------------
 

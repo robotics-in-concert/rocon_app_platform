@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Forthcoming
+-----------
+* add rocon_app_utilities in meta pkg closes `#284 <https://github.com/robotics-in-concert/rocon_app_platform/issues/284>`_
+* Contributors: Jihoon Lee
+
 0.7.8 (2015-03-23)
 ------------------
 
