@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Forthcoming
+-----------
+* [rocon_app_manager] remove install rule.
+* Contributors: Daniel Stonier
+
 0.7.9 (2015-04-28)
 ------------------
 * remove legacy paird.concert closes `#282 <https://github.com/robotics-in-concert/rocon_app_platform/issues/282>`_

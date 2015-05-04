@@ -1,6 +1,9 @@
 Changelog
 =========
 
+Forthcoming
+-----------
+
 0.7.9 (2015-04-28)
 ------------------
 * add rocon_app_utilities in meta pkg closes `#284 <https://github.com/robotics-in-concert/rocon_app_platform/issues/284>`_
