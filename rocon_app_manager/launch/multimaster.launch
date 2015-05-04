@@ -91,6 +91,8 @@
 
   <!-- ******************************* Zeroconf ******************************** -->
   <!-- We might like to advertise our ros master sometimes here, like for standalone -->
-  <node ns="zeroconf" pkg="zeroconf_avahi" type="zeroconf" name="zeroconf"/>
+  <group unless="$(arg disable_zeroconf)">
+    <node ns="zeroconf" pkg="zeroconf_avahi" type="zeroconf" name="zeroconf"/>
+  </group>
 
 </launch>
