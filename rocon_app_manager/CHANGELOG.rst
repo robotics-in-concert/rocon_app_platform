@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Forthcoming
------------
+0.7.10 (2015-05-04)
+-------------------
 * [rocon_app_manager] remove install rule.
 * Contributors: Daniel Stonier
 
