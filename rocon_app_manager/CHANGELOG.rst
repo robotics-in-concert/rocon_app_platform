@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Forthcoming
------------
+0.7.11 (2015-05-06)
+-------------------
 * add webserver_address arg closes `#285 <https://github.com/robotics-in-concert/rocon_app_platform/issues/285>`_
 * disable_zeroconf does not start zeroconf node `#273 <https://github.com/robotics-in-concert/rocon_app_platform/issues/273>`_
 * Contributors: Jihoon Lee
