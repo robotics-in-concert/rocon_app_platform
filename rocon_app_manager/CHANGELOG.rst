@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Forthcoming
+-----------
+* add webserver_address arg closes `#285 <https://github.com/robotics-in-concert/rocon_app_platform/issues/285>`_
+* disable_zeroconf does not start zeroconf node `#273 <https://github.com/robotics-in-concert/rocon_app_platform/issues/273>`_
+* Contributors: Jihoon Lee
+
 0.7.10 (2015-05-04)
 -------------------
 * [rocon_app_manager] remove install rule.
