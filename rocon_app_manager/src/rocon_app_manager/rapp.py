@@ -44,6 +44,8 @@ class Rapp(object):
         self._raw_data = rapp_specification
         self.data = rapp_specification.data
         self.data['status'] = 'Ready'
+        self.data['published_interfaces'] = []
+        self.data['published_parameters'] = {}
         self.data['implementations'] = []
 
     def __repr__(self):
@@ -107,6 +109,18 @@ class Rapp(object):
 
         return success, str()
 
+    def published_interfaces_to_msg_list(self):
+        '''
+        Convert the published interfaces as a rocon_app_manager_msgs.PublishedInterface list.
+        '''
+        return self.data['published_interfaces']
+
+    def published_parameters_to_msg_list(self):
+        '''
+        Convert the published parameters as a rocon_std_msgs.KeyValue list.
+        '''
+        return utils.dict_to_KeyValue(self.data['published_parameters'])
+
     def start(self, application_namespace, gateway_name, rocon_uri_string, remappings=[], parameters=[], force_screen=False, simulation=False,
               caps_list=None):
         '''
@@ -141,21 +155,23 @@ class Rapp(object):
         try:
             capability_nodelet_manager_name = caps_list.nodelet_manager_name if caps_list else None
 
-            public_parameters = utils.apply_requested_public_parameters(data['public_parameters'], parameters)
+            published_parameters = utils.apply_requested_public_parameters(data['public_parameters'], parameters)
 
             temp = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
-            self._launch = utils.prepare_launcher(data, public_parameters, application_namespace, gateway_name, rocon_uri_string, capability_nodelet_manager_name, force_screen, simulation, temp)
+            self._launch = utils.prepare_launcher(data, published_parameters, application_namespace, gateway_name, rocon_uri_string, capability_nodelet_manager_name, force_screen, simulation, temp)
 
             # Better logic for the future, 1) get remap rules from capabilities. 2) get remap rules from requets. 3) apply them all. It would be clearer to understand the logic and easily upgradable
             if 'required_capabilities' in data:  # apply capability-specific remappings needed
                 utils.apply_remapping_rules_from_capabilities(self._launch, data, caps_list)
 
-            self._connections = utils.apply_remapping_rules_from_start_app_request(self._launch, data, remappings, application_namespace)
+            self._connections, published_interfaces = utils.apply_remapping_rules_from_start_app_request(self._launch, data, remappings, application_namespace)
 
             utils.resolve_chain_remappings(self._launch.config.nodes)
             self._launch.start()
 
             data['status'] = 'Running'
+            data['published_parameters'] = published_parameters
+            data['published_interfaces'] = published_interfaces
             return True, "Success", self._connections['subscribers'], self._connections['publishers'], \
                 self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
 
@@ -183,6 +199,8 @@ class Rapp(object):
                 finally:
                     self._launch = None
                     data['status'] = 'Ready'
+                    data['published_parameters'] = {}
+                    data['published_interfaces'] = []
                 rospy.loginfo("Rapp Manager : stopped rapp [%s]" % data['name'] + "'.")
         except Exception as e:
             print str(e)

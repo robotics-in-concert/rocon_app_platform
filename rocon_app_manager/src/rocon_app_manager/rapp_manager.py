@@ -509,9 +509,13 @@ class RappManager(object):
         if self._current_rapp:
             rapp = self._current_rapp.to_msg()
             rapp_status = rapp_manager_msgs.Status.RAPP_RUNNING
+            published_interfaces = self._current_rapp.published_interfaces_to_msg_list()
+            published_parameters = self._current_rapp.published_parameters_to_msg_list()
         else:
             rapp = rapp_manager_msgs.Rapp()
             rapp_status = rapp_manager_msgs.Status.RAPP_STOPPED
+            published_interfaces = []
+            published_parameters = []
         if self._remote_name:
             remote_controller = self._remote_name
         else:
@@ -519,7 +523,9 @@ class RappManager(object):
         msg = rapp_manager_msgs.Status(application_namespace=self._application_namespace,
                                        remote_controller=remote_controller,
                                        rapp_status=rapp_status,
-                                       rapp=rapp
+                                       rapp=rapp,
+                                       published_interfaces=published_interfaces,
+                                       published_parameters=published_parameters
                                        )
         try:
             self._publishers['status'].publish(msg)

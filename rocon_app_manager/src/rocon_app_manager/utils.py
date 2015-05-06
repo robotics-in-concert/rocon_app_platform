@@ -8,8 +8,22 @@ import rospy
 import roslaunch.parent
 import roslib.names
 import rocon_std_msgs.msg as rocon_std_msgs
+import rocon_app_manager_msgs.msg as rapp_manager_msgs
+import rocon_python_comms
 import copy
 from .exceptions import MissingCapabilitiesException
+
+
+##############################################################################
+# Constants
+##############################################################################
+
+plurality_converter = {}
+plurality_converter["subscribers"] = rocon_python_comms.SUBSCRIBER
+plurality_converter["publishers"] = rocon_python_comms.PUBLISHER
+plurality_converter["services"] = rocon_python_comms.SERVICE
+plurality_converter["action_client"] = rocon_python_comms.ACTION_CLIENT
+plurality_converter["action_server"] = rocon_python_comms.ACTION_SERVER
 
 ##############################################################################
 # Utilities
@@ -191,6 +205,7 @@ def apply_remapping_rules_from_start_app_request(launch_spec, data, remappings, 
       :rtype: { connection_type: Remapping topic list}
     '''
     connections = {}
+    published_interfaces = []
 
     # Prefix with robot name by default (later pass in remap argument)
     remap_from_list = [remapping.remap_from for remapping in remappings]
@@ -200,11 +215,16 @@ def apply_remapping_rules_from_start_app_request(launch_spec, data, remappings, 
         connections[connection_type] = []
         for t in data['public_interface'][connection_type]:
             if not type(t) is dict:
-                rospy.logwarn("Rapp Manager : Public interface has deprecated format. Please update %s includes name and type"%t)
+                rospy.logwarn("Rapp Manager : Public interface has deprecated format. Please update %s includes name and type" % t)
                 interface_name = t
             else:
                 interface_name = t['name']
-                interface_type = t['type']
+                unused_interface_type = t['type']
+            # this is ugly
+            published_interface = rapp_manager_msgs.PublishedInterface(
+                    interface=rapp_manager_msgs.PublicInterface(plurality_converter[connection_type], t['type'], t['name']),
+                    name=''
+            )
             remapped_name = None
             # Now we push the rapp launcher down into the prefixed
             # namespace, so just use it directly
@@ -213,10 +233,12 @@ def apply_remapping_rules_from_start_app_request(launch_spec, data, remappings, 
                 if roslib.names.is_global(remap_to_list[indices[0]]):
                     remapped_name = remap_to_list[indices[0]]
                 else:
-                    remapped_name = '/' + application_namespace + "/" + remap_to_list[indices[0]]
+                    remapped_name = '/' + application_namespace.strip("/") + "/" + remap_to_list[indices[0]]
+                remapped_name = "/" + remapped_name.lstrip("/")  # ensure only one leading slash
                 for N in launch_spec.config.nodes:
                     N.remap_args.append((interface_name, remapped_name))
                 connections[connection_type].append(remapped_name)
+                published_interface.name = remapped_name
             else:
                 # don't pass these in as remapping rules - they should map fine for the node as is
                 # just by getting pushed down the namespace.
@@ -225,9 +247,12 @@ def apply_remapping_rules_from_start_app_request(launch_spec, data, remappings, 
                 if roslib.names.is_global(interface_name):
                     flipped_name = interface_name
                 else:
-                    flipped_name = '/' + application_namespace + '/' + interface_name
+                    flipped_name = application_namespace + '/' + interface_name
+                flipped_name = "/" + flipped_name.lstrip("/")  # ensure only one leading slash
                 connections[connection_type].append(flipped_name)
-    return connections
+                published_interface.name = flipped_name
+            published_interfaces.append(published_interface)
+    return connections, published_interfaces
 
 
 def apply_requested_public_parameters(default_parameters, requested_parameters):
@@ -238,7 +263,7 @@ def apply_requested_public_parameters(default_parameters, requested_parameters):
     :type default_parameters: dict
     :param requested_parameters: given from start_rapp request
     :type requested_parameters: [rocon_std_msgs.KeyValue]
-    
+
     :returns: A resolved public_parameters
     :rtype: {name: value}
     '''
@@ -246,11 +271,11 @@ def apply_requested_public_parameters(default_parameters, requested_parameters):
     public_parameters = copy.deepcopy(default_parameters)
 
     # validate whether requested parameters are in public parameter list
-    valid_params = {param.key:param.value for param in requested_parameters if param.key in default_parameters}
+    valid_params = {param.key: param.value for param in requested_parameters if param.key in default_parameters}
     invalid_params = [param for param in requested_parameters if not param.key in default_parameters]
 
     if invalid_params:
-        rospy.logwarn('Rapp Manager : Skipping invalid public parameters[%s]'%str(invalid_params))
+        rospy.logwarn('Rapp Manager : Skipping invalid public parameters[%s]' % str(invalid_params))
 
     for key, val in valid_params.items():
         public_parameters[key] = val
