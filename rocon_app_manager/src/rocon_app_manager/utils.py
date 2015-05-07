@@ -22,8 +22,8 @@ plurality_converter = {}
 plurality_converter["subscribers"] = rocon_python_comms.SUBSCRIBER
 plurality_converter["publishers"] = rocon_python_comms.PUBLISHER
 plurality_converter["services"] = rocon_python_comms.SERVICE
-plurality_converter["action_client"] = rocon_python_comms.ACTION_CLIENT
-plurality_converter["action_server"] = rocon_python_comms.ACTION_SERVER
+plurality_converter["action_clients"] = rocon_python_comms.ACTION_CLIENT
+plurality_converter["action_servers"] = rocon_python_comms.ACTION_SERVER
 
 ##############################################################################
 # Utilities
