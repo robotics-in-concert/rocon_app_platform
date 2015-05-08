@@ -80,7 +80,9 @@ class RappManager(object):
 
         self._init_default_service_names()
         self._init_gateway_services()
-        self._init_services()
+        #if we dont depend on gateway we can init services right now
+        if not self._param['use_gateway_uuids']:
+            self._init_services()
 
         if self._param['auto_start_rapp']:  # None and '' are both false here
             request = rapp_manager_srvs.StartRappRequest(self._param['auto_start_rapp'], [])
@@ -148,6 +150,7 @@ class RappManager(object):
             # and in the spin(), then we just use a flag to protect.
             return False
         self._initialising_services = True
+        #TOCHECK : Maybe we want to completely skip this code(keep services/topics what they are), instead of forcibly reinitializing?
         if self._services:
             for service in self._services.values():
                 service.shutdown()
@@ -156,8 +159,9 @@ class RappManager(object):
             self._services = {}
             self._publishers = {}
         self._service_names = {}
-        self._publisher_names = {}
-        base_name = self._gateway_name.lower().replace(' ', '_') if self._gateway_name else ""  # latter option is for standalone mode
+        self._publisher_names = {}        # Variable setting
+        #Standalone basename need to also be usable by concert ( until we get relays/aliases )
+        base_name = self._gateway_name.lower().replace(' ', '_') if self._gateway_name else self._param['robot_name']  # latter option is for standalone mode
         for name in self._default_service_names:
             if (base_name == ""):
                 self._service_names[name] = '~' + self._default_service_names[name]
@@ -482,7 +486,7 @@ class RappManager(object):
         for name, rapp in avail.items():
             if name in self._preferred:
                 rapp.preferred = self._preferred[name]
-            
+
         for name, rapp in self._runnable_apps.items():
             ancestor_name = rapp.data['ancestor_name']
             avail[ancestor_name].implementations.append(name)
@@ -783,13 +787,16 @@ class RappManager(object):
         return success, message, rapp
 
     def spin(self):
+        rate = rospy.Rate(10) # 10hz
         while not rospy.is_shutdown():
             gateway_info = self._gateway_services['gateway_info'](timeout=rospy.Duration(0.3))
             if gateway_info:
                 if gateway_info.connected:
                     self._gateway_name = gateway_info.name
                     self._gateway_ip = gateway_info.ip
-                    if self._init_services():
-                        break
-            # don't need a sleep since our timeout on the service call acts like this.
+                    #if we depend on gateway we can init services now (only one time)
+                    if 0 == len(self._services) and 0 == len(self._publishers) and self._param['use_gateway_uuids']:
+                        if self._init_services():
+                            break
+            rate.sleep()
         rospy.spin()

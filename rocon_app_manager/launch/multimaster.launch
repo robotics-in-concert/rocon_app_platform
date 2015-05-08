@@ -30,7 +30,7 @@
   <arg name="capabilities_parameters"            default="$(find rocon_app_manager)/param/capabilities.yaml" doc="detailed parameter configuration for the providers" />
   <arg name="capabilities_blacklist"             default="[]" doc="blacklist specific capabilities" />
   <arg name="capabilities_nodelet_manager_name"  default="capability_server_nodelet_manager" />
-  <arg name="capabilities_package_whitelist"     default="[std_capabilities]" doc="get capabilities from these packages only" /> 
+  <arg name="capabilities_package_whitelist"     default="[std_capabilities]" doc="get capabilities from these packages only" />
   <arg name="capabilities_server_name"           default="capability_server"/>
 
   <group if="$(arg capabilities)">
@@ -47,11 +47,11 @@
   <arg name="auto_rapp_installation"        default="false" doc="http://wiki.ros.org/rocon_app_manager/Tutorials/indigo/Automatic Rapp Installation" />
   <arg name="auto_start_rapp"               default="" doc="autostart a rapp, e.g. rocon_apps/chirp" />
   <arg name="local_remote_controllers_only" default="false" doc="allow remote control for local machine tests only" />
-  <arg name="rapp_package_whitelist"        default="[rocon_apps]" doc="comma separated list of package names" /> 
+  <arg name="rapp_package_whitelist"        default="[rocon_apps]" doc="comma separated list of package names" />
   <arg name="rapp_package_blacklist"        default="[]"/>
   <arg name="rapp_preferred_configuration_file" default="$(find rocon_app_manager)/param/preferred_default.yaml"/>
   <arg name="robot_type"                    default="pc"/>
-  <arg name="robot_icon"                    default="rocon_icons/cybernetic_pirate.png"/> 
+  <arg name="robot_icon"                    default="rocon_icons/cybernetic_pirate.png"/>
   <arg name="screen"                        default="false" doc="verbose output from running apps" />
   <arg name="simulation"                    default="false" doc="if simulated robot" />
 
@@ -59,6 +59,7 @@
     <arg name="robot_name" value="$(arg robot_name)" />
     <arg name="robot_type" value="$(arg robot_type)" />
     <arg name="robot_icon" value="$(arg robot_icon)" />
+    <arg name="use_gateway_uuids" value="$(arg gateway_uuids)" />
     <arg name="rapp_package_whitelist" value="$(arg rapp_package_whitelist)" />
     <arg name="rapp_package_blacklist" value="$(arg rapp_package_blacklist)" />
     <arg name="rapp_preferred_configuration_file" value="$(arg rapp_preferred_configuration_file)" />
