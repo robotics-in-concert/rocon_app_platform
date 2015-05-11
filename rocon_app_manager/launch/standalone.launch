@@ -38,6 +38,7 @@
     <arg name="robot_name" value="$(arg robot_name)" />
     <arg name="robot_type" value="$(arg robot_type)" />
     <arg name="robot_icon" value="$(arg robot_icon)" />
+    <arg name="use_gateway_uuids" value="false" />
     <arg name="rapp_package_whitelist" value="$(arg rapp_package_whitelist)" />
     <arg name="rapp_package_blacklist" value="$(arg rapp_package_blacklist)" />
     <arg name="rapp_preferred_configuration_file" value="$(arg rapp_preferred_configuration_file)" />

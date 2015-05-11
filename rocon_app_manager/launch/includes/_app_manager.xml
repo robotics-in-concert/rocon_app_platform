@@ -1,12 +1,13 @@
 <!--
-  Default launch configuration for the app manager in paired or concert mode. 
+  Default launch configuration for the app manager in paired or concert mode.
  -->
 <launch>
   <!-- ************************* Public Arguments ****************************** -->
   <!-- These go into the advertised platform_info -->
-  <arg name="robot_name" default="Cybernetic Pirate"/> 
-  <arg name="robot_type" default="turtlebot"/> 
+  <arg name="robot_name" default="Cybernetic Pirate"/>
+  <arg name="robot_type" default="turtlebot"/>
   <arg name="robot_icon" default="$(find rocon_app_manager)/icons/turtlebot.png"/>
+  <arg name="use_gateway_uuids" default="true" doc="wait for gateway before setting up services under namespace with uuid" />
   <arg name="local_remote_controllers_only" default="false" doc="allow remote control for local machine tests only"/>
   <arg name="rapp_package_whitelist" default="[]" doc="comma separated list of package names"/>
   <arg name="rapp_package_blacklist" default="[]"/>
@@ -27,6 +28,7 @@
     <param name="robot_name" value="$(arg robot_name)"/>
     <param name="robot_type" value="$(arg robot_type)"/>
     <param name="robot_icon" value="$(arg robot_icon)"/>
+    <param name="use_gateway_uuids" value="$(arg use_gateway_uuids)"/>
     <param name="auto_start_rapp" value="$(arg auto_start_rapp)"/>
     <param name="local_remote_controllers_only" value="$(arg local_remote_controllers_only)"/>
     <param name="screen" value="$(arg screen)"/>

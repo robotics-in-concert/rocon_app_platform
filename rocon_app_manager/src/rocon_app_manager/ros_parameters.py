@@ -38,6 +38,9 @@ def setup_ros_parameters():
     param['app_output_to_screen'] = rocon_screen or app_manager_screen
     param['auto_rapp_installation'] = rospy.get_param('~auto_rapp_installation', False)
 
+    # to delay services creation until gateway appears (services/topics names should not change after being published)
+    param['use_gateway_uuids'] = rospy.get_param('~use_gateway_uuids',True)
+
     # Preferred rapp configuration
     param['preferred'] = rospy.get_param('~preferred',[])
 
