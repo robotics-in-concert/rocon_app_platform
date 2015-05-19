@@ -29,6 +29,7 @@ class Rapp(object):
         Got many inspiration and imported from willow_app_manager implementation
     '''
     # I should add a __slots__ definition here to make it easy to read
+    # Dont think so : slots prevent using dict and other high level python stuff. (AlexV)
 
     # standard args that can be put inside a rapp launcher, the rapp manager
     # will fill these args in when starting the rapp
