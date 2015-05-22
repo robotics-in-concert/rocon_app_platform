@@ -538,15 +538,11 @@ class RappManager(object):
 
     def _publish_rapp_list(self):
         '''
-          Publishes an updated list of available and running apps (in that order).
+          Publishes an updated list of available apps (in that order).
         '''
         rapp_list = rapp_manager_msgs.RappList()
         try:
             rapp_list.available_rapps = self._get_available_rapp_list()
-            if self._current_rapp:
-                rapp_list.running_rapps = [self._current_rapp.to_msg()]
-            else:
-                rapp_list.running_rapps = []
             self._publishers['rapp_list'].publish(rapp_list)
         except rospy.exceptions.ROSException:  # publishing to a closed topic.
             pass
