@@ -1,6 +1,15 @@
 Changelog
 =========
 
+Forthcoming
+-----------
+* adding parameter to delay service creation (now only once) if gateway uuid is needed.
+  changed standalone namespace to be robot_name (parameter) to match namespace with concert but without uuid
+  added delay in spin
+* fix typo regarding constant definition in utils
+* [rocon_app_manager] status now publishes the runtime interfaces and parameters.
+* Contributors: AlexV, Daniel Stonier, dwlee
+
 0.7.11 (2015-05-06)
 -------------------
 * add webserver_address arg closes `#285 <https://github.com/robotics-in-concert/rocon_app_platform/issues/285>`_

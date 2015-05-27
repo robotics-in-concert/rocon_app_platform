@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Forthcoming
+-----------
+* add make a map rapp closes `#290 <https://github.com/robotics-in-concert/rocon_app_platform/issues/290>`_
+* add goal and path
+* Contributors: Jihoon Lee
+
 0.7.11 (2015-05-06)
 -------------------
 
