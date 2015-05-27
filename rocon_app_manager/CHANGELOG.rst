@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Forthcoming
------------
+0.7.12 (2015-05-27)
+-------------------
 * adding parameter to delay service creation (now only once) if gateway uuid is needed.
   changed standalone namespace to be robot_name (parameter) to match namespace with concert but without uuid
   added delay in spin
