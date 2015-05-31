@@ -11,6 +11,7 @@ import sys
 import os
 import traceback
 import argparse
+import rocon_console.console as console
 
 from .dependencies import DependencyChecker
 from .rapp_repositories import build_index, get_combined_index, get_index, get_index_dest_prefix_for_base_paths, is_index, load_uris, sanitize_uri, save_uris, uri2url
@@ -44,14 +45,13 @@ def _rapp_cmd_list(argv):
         uri = sanitize_uri(parsed_args.uri)
         index = get_index(uri)
 
-    compatible_rapps, incompatible_rapps, invalid_rapps = index.get_compatible_rapps(uri=parsed_args.compatibility, ancestor_share_check=False)
+    compatible_rapps, unused_incompatible_rapps, invalid_rapps = index.get_compatible_rapps(uri=parsed_args.compatibility, ancestor_share_check=False)
 
     print('== Available Rapp List == ')
     for n in compatible_rapps.values():
-        print('  Resource: %s'%(str(n.resource_name)))
-        print('     - Compatibility : %s '%str(n.data['compatibility']))
-        print('     - Ancestor      : %s '%str(n.ancestor_name))
-
+        print('  Resource: %s' % (str(n.resource_name)))
+        print('     - Compatibility : %s ' % str(n.data['compatibility']))
+        print('     - Ancestor      : %s ' % str(n.ancestor_name))
 
     if len(invalid_rapps) > 0:
         print('== Invalid Rapp List == ')
@@ -73,9 +73,10 @@ def _rapp_cmd_raw_info(argv):
 
     rapp = index.get_raw_rapp(resource_name)
 
-    print('== %s =='%str(rapp))
+    print('== %s ==' % str(rapp))
     for k, v in rapp.raw_data.items():
-        print('  %s : %s'%(str(k),str(v)))
+        print('  %s : %s' % (str(k),str(v)))
+
 
 def _rapp_cmd_info(argv):
     print("Displays rapp resolved information")
@@ -90,13 +91,13 @@ def _rapp_cmd_info(argv):
     index = get_combined_index()
     try:
         rapp = index.get_rapp(resource_name)
-        print('== %s =='%str(rapp))
+        print('== %s ==' % str(rapp))
         for k, v in rapp.raw_data.items():
-            print('  %s : %s'%(str(k),str(v)))
+            print('  %s : %s' % (str(k), str(v)))
     except Exception as e:
-        print('%s : Error - %s'%(resource_name,str(e)))
+        print('%s : Error - %s' % (resource_name, str(e)))
 
-        
+
 #def _rapp_cmd_depends(argv):
 #    print("Dependecies")
 #    pass
@@ -126,15 +127,15 @@ def _rapp_cmd_compat(argv):
 
     print('== Available Rapp List for [%s] == ' % compatibility)
     for r in compatible_rapps.values():
-        print('  Resource: %s'%(str(r.resource_name)))
-        print('     - Ancestor : %s '%str(r.ancestor_name))
+        print('  Resource: %s' % (str(r.resource_name)))
+        print('     - Ancestor : %s ' % str(r.ancestor_name))
 
     print('== Incompatible Rapp List for [%s] == ' % compatibility)
-    for k, v in incompatible_rapps.items(): 
+    for k, v in incompatible_rapps.items():
         print('  ' + k + ' : ' + str(v.raw_data['compatibility']))
 
     print('== Invalid Rapp List for [%s] == ' % compatibility)
-    for k, v in invalid_rapps.items(): 
+    for k, v in invalid_rapps.items():
         print('  ' + k + ' : ' + str(v))
 
 
@@ -155,7 +156,7 @@ def _rapp_cmd_install(argv):
     dependencies = dependencyChecker.check_rapp_dependencies(rapp_names)
 
     missing_dependencies = []
-    for rapp_name, deps in dependencies.items():
+    for unused_rapp_name, deps in dependencies.items():
         missing_dependencies.extend(deps.noninstallable)
     missing_dependencies = set(missing_dependencies)
 
@@ -287,7 +288,7 @@ Type rocon_app <command> -h for more detailed usage, e.g. 'rocon_app info -h'
     sys.exit(getattr(os, 'EX_USAGE', 1))
 
 
-# Future TODO    
+# Future TODO
 #\trocon_app depends\tdisplay a rapp dependency list
 #\trocon_app depends-on\tdisplay a list of rapps that depend on the given rapp
 #\trocon_app profile\tupdate cache
