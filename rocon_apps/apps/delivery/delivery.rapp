@@ -1,0 +1,5 @@
+display: Delivery
+description: Gophering goods from here to there and back again.
+icon: ../../icons/delivery.png
+public_interface: delivery.interface
+public_parameters: delivery.parameters
