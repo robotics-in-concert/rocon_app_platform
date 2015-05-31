@@ -162,7 +162,6 @@ class RappManager(object):
         self._publisher_names = {}        # Variable setting
         #Standalone basename need to also be usable by concert ( until we get relays/aliases )
         base_name = self._gateway_name.lower().replace(' ', '_') if self._gateway_name else self._param['robot_name'].lower().replace(' ', '_')  # latter option is for standalone mode
-        print("Base Name: %s" % base_name)
         for name in self._default_service_names:
             if (base_name == ""):
                 self._service_names[name] = '~' + self._default_service_names[name]
