@@ -70,7 +70,7 @@ class RappManager(object):
             try:
                 self._dependency_checker = rocon_app_utilities.DependencyChecker(self._indexer)
                 rospy.loginfo("Rapp Manager : auto rapp installation is enabled ..")
-            except KeyError as e:
+            except KeyError as unused_e:
                 rospy.logwarn("Rapp Manager : fails to initialise auto rapp installer. Disabling auto_rapp_installation ..")
                 self._param['auto_rapp_installation'] = False
         self._runnable_apps, self._installable_apps, self._noninstallable_rapps, self._platform_filtered_apps, self._capabilities_filtered_apps, self._invalid_apps = self._determine_runnable_rapps()
@@ -161,7 +161,8 @@ class RappManager(object):
         self._service_names = {}
         self._publisher_names = {}        # Variable setting
         #Standalone basename need to also be usable by concert ( until we get relays/aliases )
-        base_name = self._gateway_name.lower().replace(' ', '_') if self._gateway_name else self._param['robot_name']  # latter option is for standalone mode
+        base_name = self._gateway_name.lower().replace(' ', '_') if self._gateway_name else self._param['robot_name'].lower().replace(' ', '_')  # latter option is for standalone mode
+        print("Base Name: %s" % base_name)
         for name in self._default_service_names:
             if (base_name == ""):
                 self._service_names[name] = '~' + self._default_service_names[name]
