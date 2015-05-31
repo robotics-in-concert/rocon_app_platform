@@ -7,10 +7,7 @@
 
 from __future__ import division, print_function
 import copy
-import errno
-import json
 import os
-import urllib2
 import tarfile
 import tempfile
 
@@ -49,15 +46,14 @@ class RappIndexer(object):
 
     def __str__(self):
 
-        ret  = '-------------------------------\n'
+        ret = '-------------------------------\n'
         for rapp_name, rapp in self.raw_data.items():
             ret += str(rapp_name) + '\n'
             for attr_name, attr_path in rapp.raw_data.items():
-                ret += '    ' + str(attr_name) + ' : ' + str(attr_path)  + '\n'
+                ret += '    ' + str(attr_name) + ' : ' + str(attr_path) + '\n'
 
         ret += '--------------------------------'
         return ret
-
 
     def update_index(self, package_whitelist=None, package_blacklist=[]):
         '''
@@ -189,7 +185,7 @@ class RappIndexer(object):
         resolved = {}
         used_ancestors = {}
         invalid = {}
-        for resource_name, rapp in rapps.items():
+        for resource_name, unused_rapp in rapps.items():
             try:
                 resolved_rapp = self._resolve(resource_name)
                 ancestor_name = resolved_rapp.ancestor_name
@@ -253,7 +249,7 @@ class RappIndexer(object):
             returns the dot graph format. Not Implemented Yet.
         '''
         raise NotImplementedError()
-          # TODO
+        # TODO
         pass
 
     def merge(self, other_indexer):
@@ -267,7 +263,7 @@ class RappIndexer(object):
         self.raw_data_path.update(other_indexer.raw_data_path)
 
         # Cleanup 'invalid' invalid data before merge
-        self.invalid_data = {k : v for k,v in self.invalid_data.items() if k not in self.raw_data}
+        self.invalid_data = {k: v for k, v in self.invalid_data.items() if k not in self.raw_data}
         self.invalid_data.update(other_indexer.invalid_data)
 
     def write_tarball(self, filename_prefix):
@@ -297,8 +293,8 @@ class RappIndexer(object):
                     tar.add(rapp_filename)
                     added.add(rapp_filename)
 
-                    for value in [v for k,v in rapp.yaml_data.items() if k in RESOURCE_KEYS]:
-                        logger.debug("write_index() value: %s"%str(value))
+                    for value in [v for k, v in rapp.yaml_data.items() if k in RESOURCE_KEYS]:
+                        logger.debug("write_index() value: %s" % str(value))
 
                         if value and os.path.exists(value):
                             normed_path = os.path.normpath(value)
@@ -306,7 +302,7 @@ class RappIndexer(object):
                             tar.add(normed_path)
                             added.add(normed_path)
                         else:
-                            logger.debug("write_index() path does not exist %s"%str(value))
+                            logger.debug("write_index() path does not exist %s" % str(value))
 
 
 def read_tarball(name=None, fileobj=None, package_whitelist=None, package_blacklist=[]):
