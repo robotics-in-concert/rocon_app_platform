@@ -27,6 +27,14 @@ NAME = 'rocon_app'
 #################################################################################
 
 
+def _print_banner(banner_message):
+    message_half_length = int(len(banner_message) / 2)
+    space_buffer = " " * (40 - message_half_length)
+    print(console.bold + "##############################################################################" + console.reset)
+    print(console.bold + space_buffer + banner_message + console.reset)
+    print(console.bold + "##############################################################################" + console.reset)
+
+
 def _rapp_cmd_list(argv):
     """
       Command-line parsing for 'rapp list' command.
@@ -47,20 +55,21 @@ def _rapp_cmd_list(argv):
 
     compatible_rapps, unused_incompatible_rapps, invalid_rapps = index.get_compatible_rapps(uri=parsed_args.compatibility, ancestor_share_check=False)
 
-    print('== Available Rapp List == ')
+    _print_banner("Available Rapp List")
     for n in compatible_rapps.values():
-        print('  Resource: %s' % (str(n.resource_name)))
-        print('     - Compatibility : %s ' % str(n.data['compatibility']))
-        print('     - Ancestor      : %s ' % str(n.ancestor_name))
+        print(console.green + str(n.resource_name) + console.reset)
+        if (n.ancestor_name != n.resource_name):
+            print(console.cyan + "  ancestor     : " + console.yellow + str(n.ancestor_name) + console.reset)
+        print(console.cyan + "  compatibility: " + console.yellow + str(n.data['compatibility']) + console.reset)
 
     if len(invalid_rapps) > 0:
-        print('== Invalid Rapp List == ')
+        _print_banner("Invalid Rapp List")
+        # is in form key: resource name, value: error message
         for k, v in invalid_rapps.items():
-            print('  ' + k + ' : ' + str(v))
+            print(console.green + k + console.white + ' : ' + console.red + str(v) + console.reset)
 
 
 def _rapp_cmd_raw_info(argv):
-    print("Displays rapp raw information")
     #  Parse command arguments
     args = argv[2:]
     parser = argparse.ArgumentParser(description='Displays rapp information')
@@ -73,13 +82,13 @@ def _rapp_cmd_raw_info(argv):
 
     rapp = index.get_raw_rapp(resource_name)
 
-    print('== %s ==' % str(rapp))
+    _print_banner("Raw Information")
+    print(console.green + resource_name + console.reset)
     for k, v in rapp.raw_data.items():
-        print('  %s : %s' % (str(k),str(v)))
+        print(console.cyan + '  %s : ' % str(k) + console.yellow + '%s' % str(v) + console.reset)
 
 
 def _rapp_cmd_info(argv):
-    print("Displays rapp resolved information")
     #  Parse command arguments
     args = argv[2:]
     parser = argparse.ArgumentParser(description='Displays rapp information')
@@ -91,11 +100,22 @@ def _rapp_cmd_info(argv):
     index = get_combined_index()
     try:
         rapp = index.get_rapp(resource_name)
-        print('== %s ==' % str(rapp))
-        for k, v in rapp.raw_data.items():
-            print('  %s : %s' % (str(k), str(v)))
+        _print_banner("Resolved Information")
+        print(console.green + resource_name + console.reset)
+        if rapp.ancestor_name is not None:
+            print(console.cyan + "  ancestor          : " + console.yellow + rapp.ancestor_name + console.reset)
+        #for k, v in rapp.raw_data.items():
+        #    print(console.cyan + '  %s : ' % str(k) + console.yellow + '%s' % str(v) + console.reset)
+        # instead, pretty printing the dictionary (could be smarter about this).
+        print(console.cyan + "  icon              : " + console.yellow + rapp.raw_data['icon'] + console.reset)
+        print(console.cyan + "  display           : " + console.yellow + rapp.raw_data['display'] + console.reset)
+        print(console.cyan + "  description       : " + console.yellow + rapp.raw_data['description'] + console.reset)
+        print(console.cyan + "  compatibility     : " + console.yellow + rapp.raw_data['compatibility'] + console.reset)
+        print(console.cyan + "  launch            : " + console.yellow + rapp.raw_data['launch'] + console.reset)
+        print(console.cyan + "  public_parameters : " + console.yellow + str(rapp.raw_data['public_parameters']) + console.reset)
+        print(console.cyan + "  public_interface  : " + console.yellow + str(rapp.raw_data['public_interface']) + console.reset)
     except Exception as e:
-        print('%s : Error - %s' % (resource_name, str(e)))
+        print(console.red + '%s : Error - %s' % (resource_name, str(e)) + console.reset)
 
 
 #def _rapp_cmd_depends(argv):
@@ -125,18 +145,19 @@ def _rapp_cmd_compat(argv):
     index = get_combined_index()
     compatible_rapps, incompatible_rapps, invalid_rapps = index.get_compatible_rapps(compatibility)
 
-    print('== Available Rapp List for [%s] == ' % compatibility)
+    _print_banner("Available Rapp List for '%s'" % compatibility)
     for r in compatible_rapps.values():
-        print('  Resource: %s' % (str(r.resource_name)))
-        print('     - Ancestor : %s ' % str(r.ancestor_name))
+        print(console.green + r.resource_name + console.reset)
+        if r.ancestor_name is not None:
+            print(console.cyan + '  ancestor : ' + console.yellow + r.ancestor_name + console.reset)
 
-    print('== Incompatible Rapp List for [%s] == ' % compatibility)
+    _print_banner("Incompatible Rapp List for '%s'" % compatibility)
     for k, v in incompatible_rapps.items():
-        print('  ' + k + ' : ' + str(v.raw_data['compatibility']))
+        print(console.cyan + '  ' + k + ' : ' + console.yellow + str(v.raw_data['compatibility']) + console.reset)
 
-    print('== Invalid Rapp List for [%s] == ' % compatibility)
+    _print_banner("Invalid Rapp List for '%s'" % compatibility)
     for k, v in invalid_rapps.items():
-        print('  ' + k + ' : ' + str(v))
+        print(console.cyan + '  ' + k + ' : ' + console.yellow + str(v) + console.reset)
 
 
 def _rapp_cmd_install(argv):
