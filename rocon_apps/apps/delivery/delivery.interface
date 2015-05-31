@@ -1,5 +1,16 @@
+
+# publisher `robot_status` should eventually be moved out and published by something generic (e.g.
+# robot app manager) rather than this rapp itself. 
+
 publishers: 
-  - name: chatter
+  - name: homebase
     type: std_msgs/String
+  - name: pose
+    type: geometry_msgs/PoseStamped
+  - name: robot_status
+    type: gopher_std_msgs/Status
 subscribers: []
 services: []
+action_servers:
+  - name: delivery
+    type: gopher_std_msgs/DeliveryTask
