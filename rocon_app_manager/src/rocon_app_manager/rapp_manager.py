@@ -510,22 +510,20 @@ class RappManager(object):
          Publish status updates whenever something significant changes, e.g.
          remote controller changed, or rapp started/stopped.
         """
+        published_interfaces = []
+        published_parameters = []
+        rapp = rapp_manager_msgs.Rapp()
+        rapp_status = rapp_manager_msgs.Status.RAPP_STOPPED
         if self._current_rapp:
-            rapp = self._current_rapp.to_msg()
-            rapp_status = rapp_manager_msgs.Status.RAPP_RUNNING
             try:
-                if self._current_rapp is not None:
-                    published_interfaces = self._current_rapp.published_interfaces_to_msg_list()
-                    published_parameters = self._current_rapp.published_parameters_to_msg_list()
-            except AttributeError:
-                # catch when self._current_rapp is None anyway since there is a miniscule chance
+                published_interfaces = self._current_rapp.published_interfaces_to_msg_list()
+                published_parameters = self._current_rapp.published_parameters_to_msg_list()
+                rapp = self._current_rapp.to_msg()
+                rapp_status = rapp_manager_msgs.Status.RAPP_RUNNING
+            except AttributeError:  # i.e. current_rapp is None
+                # catch when self._current_rapp is NoneType since there is a miniscule chance
                 # it might have changed inbetween the if check and the method calls
-                pass
-        else:
-            rapp = rapp_manager_msgs.Rapp()
-            rapp_status = rapp_manager_msgs.Status.RAPP_STOPPED
-            published_interfaces = []
-            published_parameters = []
+                pass  # nothing to do here as we predefine everything for this case.
         if self._remote_name:
             remote_controller = self._remote_name
         else:
