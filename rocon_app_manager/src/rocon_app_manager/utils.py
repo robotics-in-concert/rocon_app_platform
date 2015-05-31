@@ -217,12 +217,13 @@ def apply_remapping_rules_from_start_app_request(launch_spec, data, remappings, 
             if not type(t) is dict:
                 rospy.logwarn("Rapp Manager : Public interface has deprecated format. Please update %s includes name and type" % t)
                 interface_name = t
+                interface_type = 'unknown'
             else:
                 interface_name = t['name']
-                unused_interface_type = t['type']
+                interface_type = t['type']
             # this is ugly
             published_interface = rapp_manager_msgs.PublishedInterface(
-                    interface=rapp_manager_msgs.PublicInterface(plurality_converter[connection_type], t['type'], t['name']),
+                    interface=rapp_manager_msgs.PublicInterface(plurality_converter[connection_type], interface_type, interface_name),
                     name=''
             )
             remapped_name = None
