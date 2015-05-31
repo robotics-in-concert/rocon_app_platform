@@ -513,8 +513,14 @@ class RappManager(object):
         if self._current_rapp:
             rapp = self._current_rapp.to_msg()
             rapp_status = rapp_manager_msgs.Status.RAPP_RUNNING
-            published_interfaces = self._current_rapp.published_interfaces_to_msg_list()
-            published_parameters = self._current_rapp.published_parameters_to_msg_list()
+            try:
+                if self._current_rapp is not None:
+                    published_interfaces = self._current_rapp.published_interfaces_to_msg_list()
+                    published_parameters = self._current_rapp.published_parameters_to_msg_list()
+            except AttributeError:
+                # catch when self._current_rapp is None anyway since there is a miniscule chance
+                # it might have changed inbetween the if check and the method calls
+                pass
         else:
             rapp = rapp_manager_msgs.Rapp()
             rapp_status = rapp_manager_msgs.Status.RAPP_STOPPED
