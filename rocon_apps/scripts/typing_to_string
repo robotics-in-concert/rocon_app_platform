@@ -3,13 +3,13 @@
 # License: BSD
 #   https://raw.github.com/robotics-in-concert/rocon_app_platform/license/LICENSE
 
-## Simply publishes given string message
+## Simply publishes typed input as string
 
 import rospy
 from std_msgs.msg import String
 
 def commander():
-    pub = rospy.Publisher('command', String, queue_size=10)
+    pub = rospy.Publisher('string', String, queue_size=10)
             
     while not rospy.is_shutdown():
         response = str(raw_input("> Command : "))
@@ -20,6 +20,6 @@ def commander():
 
 if __name__ == '__main__':
     try:
-        rospy.init_node('commander')
+        rospy.init_node('typing_to_string')
         commander()
     except rospy.ROSInterruptException: pass
