@@ -1,0 +1,4 @@
+<launch>
+  <node pkg="rocon_apps" name="type_to_string" type="typing_to_string" output="screen">
+  </node>
+</launch>
