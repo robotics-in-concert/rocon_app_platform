@@ -30,8 +30,12 @@ install(DIRECTORY sounds
 install(DIRECTORY icons
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
+install(DIRECTORY launch
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+
 install(PROGRAMS
     scripts/chirp.bash
     scripts/talker
+    scripts/typing_to_string
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
