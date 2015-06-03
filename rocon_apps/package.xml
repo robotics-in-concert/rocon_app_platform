@@ -25,7 +25,6 @@
 
   <export>
     <rosdoc config="rosdoc.yaml"/>
-    <rocon_app>apps/delivery/delivery.rapp</rocon_app>
     <rocon_app>apps/chirp/chirp.rapp</rocon_app>
     <rocon_app>apps/listener/listener.rapp</rocon_app>
     <rocon_app>apps/talker/talker.rapp</rocon_app>
