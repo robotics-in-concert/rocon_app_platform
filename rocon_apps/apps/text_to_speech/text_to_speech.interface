@@ -1,0 +1,5 @@
+subscribers: 
+  - name: /text_to_speech/text
+    type: std_msgs/String
+publishers: []
+services: []

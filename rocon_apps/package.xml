@@ -29,6 +29,7 @@
     <rocon_app>apps/listener/listener.rapp</rocon_app>
     <rocon_app>apps/talker/talker.rapp</rocon_app>
     <rocon_app>apps/teleop/teleop.rapp</rocon_app>
+    <rocon_app>apps/text_to_speech/text_to_speech.rapp</rocon_app>
     <rocon_app>apps/video_teleop/video_teleop.rapp</rocon_app>
     <rocon_app>apps/make_a_map/make_a_map.rapp</rocon_app>
     <rocon_app>apps/waypoint_nav/waypoint_nav.rapp</rocon_app>
