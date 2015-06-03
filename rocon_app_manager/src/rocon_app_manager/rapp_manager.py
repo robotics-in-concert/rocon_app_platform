@@ -70,7 +70,7 @@ class RappManager(object):
             try:
                 self._dependency_checker = rocon_app_utilities.DependencyChecker(self._indexer)
                 rospy.loginfo("Rapp Manager : auto rapp installation is enabled ..")
-            except KeyError as e:
+            except KeyError as unused_e:
                 rospy.logwarn("Rapp Manager : fails to initialise auto rapp installer. Disabling auto_rapp_installation ..")
                 self._param['auto_rapp_installation'] = False
         self._runnable_apps, self._installable_apps, self._noninstallable_rapps, self._platform_filtered_apps, self._capabilities_filtered_apps, self._invalid_apps = self._determine_runnable_rapps()
@@ -161,7 +161,7 @@ class RappManager(object):
         self._service_names = {}
         self._publisher_names = {}        # Variable setting
         #Standalone basename need to also be usable by concert ( until we get relays/aliases )
-        base_name = self._gateway_name.lower().replace(' ', '_') if self._gateway_name else self._param['robot_name']  # latter option is for standalone mode
+        base_name = self._gateway_name.lower().replace(' ', '_') if self._gateway_name else self._param['robot_name'].lower().replace(' ', '_')  # latter option is for standalone mode
         for name in self._default_service_names:
             if (base_name == ""):
                 self._service_names[name] = '~' + self._default_service_names[name]
@@ -510,16 +510,20 @@ class RappManager(object):
          Publish status updates whenever something significant changes, e.g.
          remote controller changed, or rapp started/stopped.
         """
+        published_interfaces = []
+        published_parameters = []
+        rapp = rapp_manager_msgs.Rapp()
+        rapp_status = rapp_manager_msgs.Status.RAPP_STOPPED
         if self._current_rapp:
-            rapp = self._current_rapp.to_msg()
-            rapp_status = rapp_manager_msgs.Status.RAPP_RUNNING
-            published_interfaces = self._current_rapp.published_interfaces_to_msg_list()
-            published_parameters = self._current_rapp.published_parameters_to_msg_list()
-        else:
-            rapp = rapp_manager_msgs.Rapp()
-            rapp_status = rapp_manager_msgs.Status.RAPP_STOPPED
-            published_interfaces = []
-            published_parameters = []
+            try:
+                published_interfaces = self._current_rapp.published_interfaces_to_msg_list()
+                published_parameters = self._current_rapp.published_parameters_to_msg_list()
+                rapp = self._current_rapp.to_msg()
+                rapp_status = rapp_manager_msgs.Status.RAPP_RUNNING
+            except AttributeError:  # i.e. current_rapp is None
+                # catch when self._current_rapp is NoneType since there is a miniscule chance
+                # it might have changed inbetween the if check and the method calls
+                pass  # nothing to do here as we predefine everything for this case.
         if self._remote_name:
             remote_controller = self._remote_name
         else:
@@ -538,15 +542,11 @@ class RappManager(object):
 
     def _publish_rapp_list(self):
         '''
-          Publishes an updated list of available and running apps (in that order).
+          Publishes an updated list of available apps (in that order).
         '''
         rapp_list = rapp_manager_msgs.RappList()
         try:
             rapp_list.available_rapps = self._get_available_rapp_list()
-            if self._current_rapp:
-                rapp_list.running_rapps = [self._current_rapp.to_msg()]
-            else:
-                rapp_list.running_rapps = []
             self._publishers['rapp_list'].publish(rapp_list)
         except rospy.exceptions.ROSException:  # publishing to a closed topic.
             pass
