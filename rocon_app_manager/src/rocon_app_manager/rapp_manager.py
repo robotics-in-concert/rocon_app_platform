@@ -734,8 +734,6 @@ class RappManager(object):
         message = ""
         rapp = None
 
-        print(str(requested_rapp_name))
-
         if requested_rapp_name in self._virtual_apps.keys():  # Virtual rapp
             rapp = self._virtual_apps[requested_rapp_name]
             success = True
