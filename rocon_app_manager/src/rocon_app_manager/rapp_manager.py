@@ -445,9 +445,9 @@ class RappManager(object):
 
         # Flips/Unflips
         try:
-            self._flip_connections(req.remote_target_name,
-                                   [self._service_names['start_rapp'], self._service_names['stop_rapp']],
-                                   gateway_msgs.ConnectionType.SERVICE,
+            connections = {'services':[self._service_names['start_rapp'], self._service_names['stop_rapp']]}
+            self._flip_all_connections(req.remote_target_name,
+                                   connections,
                                    req.cancel
                                    )
         except Exception as unused_e:
@@ -698,6 +698,8 @@ class RappManager(object):
           :param cancel_flag: whether or not we are flipping (false) or unflipping (true)
           :type cancel_flag: bool
         '''
+        result = False
+
         req = gateway_srvs.RemoteRequest()
         req.cancel = cancel_flag
         req.remotes = []
@@ -725,7 +727,7 @@ class RappManager(object):
                 # so just suppress this warning if it's a request to cancel
                 rospy.logwarn("Rapp Manager : failed to cancel flips (probably remote hub intentionally went down as well) [%s, %s]" % (resp.result, resp.error_message))
             else:
-                rospy.logerr("Rapp Manager : failed to flip [%s][%s, %s]" % (resp.result, resp.error_message))
+                rospy.logerr("Rapp Manager : failed to flip [%s][%s, %s]" % (str(connections),resp.result, resp.error_message))
             return False
 
     def _check_runnable(self, requested_rapp_name):
