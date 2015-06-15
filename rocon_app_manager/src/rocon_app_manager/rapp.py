@@ -6,6 +6,7 @@
 # Imports
 ##############################################################################
 
+import copy
 import os
 import subprocess
 import tempfile
@@ -38,7 +39,7 @@ class Rapp(object):
            :param package_relative_rapp_filename: string specified by the package export
            :type package_relative_rapp_filename: os.path
         '''
-        self._connections = _init_connections()
+        self._connections = _create_empty_connection_type_dictionary()
         self._raw_data = rapp_specification
         self.data = rapp_specification.data
         self.data['status'] = 'Ready'
@@ -170,25 +171,29 @@ class Rapp(object):
             data['status'] = 'Running'
             data['published_parameters'] = published_parameters
             data['published_interfaces'] = published_interfaces
-            return True, "Success", self._connections['subscribers'], self._connections['publishers'], \
-                self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
+
+            connections = copy.deepcopy(self._connections)
+            return True, "Success", connections
+            #return True, "Success", self._connections['subscribers'], self._connections['publishers'], \
+            #    self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
 
         except rospy.ServiceException as e:
             rospy.logerr("App Manager : Couldn't get cap remappings. Error: " + str(e))
-            return False, "Error while launching " + data['name'], [], [], [], [], []
+            return False, "Error while launching " + data['name'], _create_empty_connection_type_dictionary()
         except MissingCapabilitiesException as e:
             rospy.logerr("Rapp Manager : couldn't get capability remappings. Error: " + str(e))
-            return False, "Error while launching " + data['name'], [], [], [], [], []
+            return False, "Error while launching " + data['name'], _create_empty_connection_type_dictionary()
         except Exception as e:
             traceback.print_stack()
             rospy.logerr("Rapp Manager : error while launching " + data['launch'] + " : " + str(e))
             data['status'] = "Error while launching " + data['launch']
-            return False, "Error while launching " + data['name'], [], [], [], [], []
+            return False, "Error while launching " + data['name'], _create_empty_connection_type_dictionary()
         finally:
             os.unlink(temp.name)
 
     def stop(self):
         data = self.data
+        connections = copy.deepcopy(self._connections)
 
         try:
             if self._launch:
@@ -205,11 +210,9 @@ class Rapp(object):
             error_msg = "Error while stopping rapp '" + data['name'] + "'."
             rospy.loginfo(error_msg)
             data['status'] = 'Error'
-            return False, error_msg, self._connections['subscribers'], self._connections['publishers'], \
-                self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
+            return False, error_msg, connections
 
-        return True, "Success", self._connections['subscribers'], self._connections['publishers'], \
-            self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
+        return True, "Success", connections
 
     def is_running(self):
         '''
@@ -255,7 +258,7 @@ def convert_rapps_from_rapp_specs(rapp_specs):
 
     return runnable_rapps
 
-def _init_connections():
+def _create_empty_connection_type_dictionary():
     '''
       Initialise connections which use as public interface
 
