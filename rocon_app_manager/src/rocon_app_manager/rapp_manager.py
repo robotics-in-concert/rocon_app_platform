@@ -607,7 +607,7 @@ class RappManager(object):
             thread.start_new_thread(self._monitor_rapp, ())
 
             if self._remote_name:
-                success, message = self._flip_all_connections(self._remote_name, connections, True)
+                success, message = self._flip_all_connections(self._remote_name, connections, False)
                 if not success:
                     self._process_stop_app()
                     resp.started = success
