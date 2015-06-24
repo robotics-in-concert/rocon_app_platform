@@ -84,7 +84,7 @@ def _prepare_launch_text(launch_file, launch_args, public_parameters, applicatio
     # Prepare argument mapping
     launch_arg_mapping = {}
     launch_arg_mapping['application_namespace'] = application_namespace
-    launch_arg_mapping['gateway_name'] = gateway_name.lower().replace(' ', '_')
+    launch_arg_mapping['gateway_name'] = gateway_name.lower().replace(' ', '_') if gateway_name else None
     launch_arg_mapping['rocon_uri'] = rocon_uri_string
     launch_arg_mapping['capability_server_nodelet_manager_name'] = capability_server_nodelet_manager_name
     launch_arg_mapping['simulation'] = simulation
