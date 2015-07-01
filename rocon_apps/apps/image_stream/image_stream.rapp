@@ -1,0 +1,3 @@
+display:          Image Stream
+description:      streaming image... 
+public_interface: image_stream.interface
