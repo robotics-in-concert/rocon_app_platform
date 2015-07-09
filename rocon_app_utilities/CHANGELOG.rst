@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Forthcoming
------------
+0.7.13 (2015-07-09)
+-------------------
 * Merge pull request `#292 <https://github.com/robotics-in-concert/rocon_app_platform/issues/292>`_ from robotics-in-concert/gopher
   Delivery ancestor rapp and some bugfixes
 * [rocon_app_manager] trivial

@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Forthcoming
------------
+0.7.13 (2015-07-09)
+-------------------
 * the cancel_flag should be False in start_app
 * attempts to flip public interface a couple of times. Then stopps rapp if it fails after all attempts. closes `#297 <https://github.com/robotics-in-concert/rocon_app_platform/issues/297>`_
 * fix start_rapp stop rapp flipping `#299 <https://github.com/robotics-in-concert/rocon_app_platform/issues/299>`_

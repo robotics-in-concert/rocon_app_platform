@@ -1,8 +1,8 @@
 Changelog
 =========
 
-Forthcoming
------------
+0.7.13 (2015-07-09)
+-------------------
 * add image stream app
 * add text to speech app closes `#293 <https://github.com/robotics-in-concert/rocon_app_platform/issues/293>`_
 * add install rule for typing to string script closes `#294 <https://github.com/robotics-in-concert/rocon_app_platform/issues/294>`_
