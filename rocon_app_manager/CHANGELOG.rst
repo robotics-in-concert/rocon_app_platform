@@ -1,6 +1,31 @@
 Changelog
 =========
 
+Forthcoming
+-----------
+* the cancel_flag should be False in start_app
+* attempts to flip public interface a couple of times. Then stopps rapp if it fails after all attempts. closes `#297 <https://github.com/robotics-in-concert/rocon_app_platform/issues/297>`_
+* fix start_rapp stop rapp flipping `#299 <https://github.com/robotics-in-concert/rocon_app_platform/issues/299>`_
+* cleans up flip connection logic in start/stop rapp closes `#299 <https://github.com/robotics-in-concert/rocon_app_platform/issues/299>`_
+* print should not be here closes `#298 <https://github.com/robotics-in-concert/rocon_app_platform/issues/298>`_
+* add gatewayname as launch arg only if it exists closes `#295 <https://github.com/robotics-in-concert/rocon_app_platform/issues/295>`_
+* [rocon_app_manager] trivial
+* [rocon_app_manager] pass a ros compatible name to the rapp.
+* [rocon_app_manager] remove unnecessary, and old, comment.
+* [rocon_app_manager] bugfix the bugfix for status publishing
+  Didn't look around properly - this corrects the last bugfix to make sure
+  all variables are properly defined before publishing the status.
+* [rocon_app_manager] remove debug print.
+* [rocon_app_manager] base name handling should be same for uuids or not.
+  Wasn't applying the correct conversion rules (lower, space->'_') for
+  standalone mode so that the namespaced topics/services conform to ros
+  conventions.
+* [rocon_app_manager] bugfix handling of nonexistant current rapp.
+  Was mistakenly assuming that this is always available. This handles the
+  case when it is None.
+* removing running rapps from listrapps
+* Contributors: AlexV, Daniel Stonier, Jihoon Lee
+
 0.7.12 (2015-05-27)
 -------------------
 * adding parameter to delay service creation (now only once) if gateway uuid is needed.
