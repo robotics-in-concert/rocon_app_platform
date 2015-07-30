@@ -14,6 +14,7 @@
   <arg name="hub_whitelist"             default="[]" doc="list of hub names/regex patterns" />
   <arg name="hub_uri"                   default=""/>
   <arg name="disable_zeroconf"          default="false"/>
+  <arg name="gateway_custom_configuration" default="" doc="name of a user custom parameterisation (yaml)."/>
 
   <include file="$(find rocon_app_manager)/launch/includes/_gateway.xml">
     <arg name="gateway_name" value="$(arg robot_name)" />
@@ -23,6 +24,7 @@
     <arg name="hub_whitelist" value="$(arg hub_whitelist)" />
     <arg name="hub_uri" value="$(arg hub_uri)"/>
     <arg name="disable_zeroconf"  value="$(arg disable_zeroconf)"/>
+    <arg name="gateway_custom_configuration" value="$(arg gateway_custom_configuration)"/>
   </include>
 
   <!-- ****************************** Capabilities ****************************** -->
