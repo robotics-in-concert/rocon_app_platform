@@ -1,0 +1,25 @@
+#!/usr/bin/env python
+
+# License: BSD
+#   https://raw.github.com/robotics-in-concert/rocon_app_platform/license/LICENSE
+
+## Simply publishes typed input as string
+
+import rospy
+from std_msgs.msg import String
+
+def commander():
+    pub = rospy.Publisher('string', String, queue_size=10)
+            
+    while not rospy.is_shutdown():
+        response = str(raw_input("> Command : "))
+        print("--- Typed : %s"%str(response))
+        pub.publish(str(response))
+
+    print("Bye Bye")
+
+if __name__ == '__main__':
+    try:
+        rospy.init_node('typing_to_string')
+        commander()
+    except rospy.ROSInterruptException: pass

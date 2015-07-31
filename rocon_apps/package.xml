@@ -1,6 +1,6 @@
 <package>
   <name>rocon_apps</name>
-  <version>0.7.11</version>
+  <version>0.7.13</version>
   <description>
     Core rocon apps for use with the appmanager and rocon concert.
   </description>
@@ -29,8 +29,11 @@
     <rocon_app>apps/listener/listener.rapp</rocon_app>
     <rocon_app>apps/talker/talker.rapp</rocon_app>
     <rocon_app>apps/teleop/teleop.rapp</rocon_app>
-    <rocon_app>apps/video_teleop/video_teleop.rapp</rocon_app> 
+    <rocon_app>apps/text_to_speech/text_to_speech.rapp</rocon_app>
+    <rocon_app>apps/video_teleop/video_teleop.rapp</rocon_app>
+    <rocon_app>apps/make_a_map/make_a_map.rapp</rocon_app>
     <rocon_app>apps/waypoint_nav/waypoint_nav.rapp</rocon_app>
+    <rocon_app>apps/image_stream/image_stream.rapp</rocon_app>
     <rocon_app>chirp_apps/lion/lion_chirp.rapp</rocon_app>
     <rocon_app>chirp_apps/angry_cat/angry_cat_chirp.rapp</rocon_app>
     <rocon_app>chirp_apps/meow/meow_chirp.rapp</rocon_app>

@@ -1,6 +1,21 @@
 Changelog
 =========
 
+0.7.13 (2015-07-09)
+-------------------
+* Merge pull request `#292 <https://github.com/robotics-in-concert/rocon_app_platform/issues/292>`_ from robotics-in-concert/gopher
+  Delivery ancestor rapp and some bugfixes
+* [rocon_app_manager] trivial
+* [rocon_app_utilities] syntax highlighting for rocon_app cmd output.
+* [rocon_app_utilites] pep8 for rapp_cmd.py
+* [rocon_app_utilities] bugfix undefined variable call to ancestor_name.
+  Must be in scope before the exception branching is executed.
+* [rocon_app_utilities] pep8 fixes.
+* Contributors: Daniel Stonier, Jihoon Lee
+
+0.7.12 (2015-05-27)
+-------------------
+
 0.7.11 (2015-05-06)
 -------------------
 

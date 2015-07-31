@@ -34,6 +34,7 @@ import rocon_app_utilities.rapp_repositories as rapp_repositories
 from . import exceptions
 from ros_parameters import setup_ros_parameters
 from .rapp import convert_rapps_from_rapp_specs
+from .utils import plurality_converter
 
 ##############################################################################
 # Rapp Manager
@@ -444,9 +445,9 @@ class RappManager(object):
 
         # Flips/Unflips
         try:
-            self._flip_connections(req.remote_target_name,
-                                   [self._service_names['start_rapp'], self._service_names['stop_rapp']],
-                                   gateway_msgs.ConnectionType.SERVICE,
+            connections = {'services':[self._service_names['start_rapp'], self._service_names['stop_rapp']]}
+            self._flip_all_connections(req.remote_target_name,
+                                   connections,
                                    req.cancel
                                    )
         except Exception as unused_e:
@@ -584,31 +585,33 @@ class RappManager(object):
                 return resp
 
         rospy.loginfo("Rapp Manager : starting app '" + req.name + "' underneath " + self._application_namespace)
-        resp.started, resp.message, subscribers, publishers, services, action_clients, action_servers = \
-            rapp.start(self._application_namespace,
-                       self._gateway_name,
-                       self._rocon_uri,
-                       req.remappings,
-                       req.parameters,
-                       self._param['app_output_to_screen'],
-                       self._param['simulation'],
-                       self.caps_list)
+        resp.started, resp.message, connections = rapp.start(self._application_namespace,
+                                                           self._gateway_name,
+                                                           self._rocon_uri,
+                                                           req.remappings,
+                                                           req.parameters,
+                                                           self._param['app_output_to_screen'],
+                                                           self._param['simulation'],
+                                                           self.caps_list)
 
-        rospy.loginfo("Rapp Manager : %s" % self._remote_name)
+        rospy.loginfo("Rapp Manager : Remote Name [%s]" % self._remote_name)
+
         # small pause (convenience only) to let connections to come up
         # gateway watcher usually rolls over slowly. so this makes sure the flips get enacted on promptly
         rospy.rostime.wallsleep(0.5)
-        if self._remote_name:
-            self._flip_connections(self._remote_name, subscribers, gateway_msgs.ConnectionType.SUBSCRIBER)
-            self._flip_connections(self._remote_name, publishers, gateway_msgs.ConnectionType.PUBLISHER)
-            self._flip_connections(self._remote_name, services, gateway_msgs.ConnectionType.SERVICE)
-            self._flip_connections(self._remote_name, action_clients, gateway_msgs.ConnectionType.ACTION_CLIENT)
-            self._flip_connections(self._remote_name, action_servers, gateway_msgs.ConnectionType.ACTION_SERVER)
+
         if resp.started:
             self._current_rapp = rapp
             self._publish_rapp_list()
             self._publish_status()
             thread.start_new_thread(self._monitor_rapp, ())
+
+            if self._remote_name:
+                success, message = self._flip_all_connections(self._remote_name, connections, False)
+                if not success:
+                    self._process_stop_app()
+                    resp.started = success
+                    resp.message = message
         return resp
 
     def _process_stop_app(self, req=None):
@@ -640,14 +643,10 @@ class RappManager(object):
             rospy.logwarn("Rapp Manager : %s" % resp.message)
             return resp
 
-        resp.stopped, resp.message, subscribers, publishers, services, action_clients, action_servers = rapp.stop()
+        resp.stopped, resp.message, connections = rapp.stop()
 
         if self._remote_name:
-            self._flip_connections(self._remote_name, subscribers, gateway_msgs.ConnectionType.SUBSCRIBER, cancel_flag=True)
-            self._flip_connections(self._remote_name, publishers, gateway_msgs.ConnectionType.PUBLISHER, cancel_flag=True)
-            self._flip_connections(self._remote_name, services, gateway_msgs.ConnectionType.SERVICE, cancel_flag=True)
-            self._flip_connections(self._remote_name, action_clients, gateway_msgs.ConnectionType.ACTION_CLIENT, cancel_flag=True)
-            self._flip_connections(self._remote_name, action_servers, gateway_msgs.ConnectionType.ACTION_SERVER, cancel_flag=True)
+            success = self._flip_all_connections(self._remote_name, connections, cancel_flag=True)
 
         if resp.stopped:
             if 'required_capabilities' in rapp.data:
@@ -694,47 +693,67 @@ class RappManager(object):
                 req.rules.append(create_gateway_rule(service_name, gateway_msgs.ConnectionType.SERVICE))
             unused_resp = self._gateway_services['advertise'](req)
 
-    def _flip_connections(self, remote_name, connection_names, connection_type, cancel_flag=False):
+    def _flip_all_connections(self, remote_name, connections, cancel_flag=False):
         '''
-          (Un)Flip a service to a remote gateway.
+          (Un)Flip connections to a remote gateway.
 
           :param remote_name: the name of the remote gateway to flip to.
           :type remote_name: str
-          :param connection_names: the topic/service/action_xxx names
-          :type connetion_names: list of str
-          :param connection_type: publisher, subscriber, service, action_client or action_server
-          :type connection_type: gateway_msgs.ConnectionType
+          :param connections: the dict of connection types(topic/service/action_xxx) names
+          :type connetions: dict
           :param cancel_flag: whether or not we are flipping (false) or unflipping (true)
           :type cancel_flag: bool
+
+          :returns: success or not, message 
+          :rtype: bool, str
         '''
-        if len(connection_names) == 0:
-            return
+        success = False
+        message = ""
+
         req = gateway_srvs.RemoteRequest()
         req.cancel = cancel_flag
         req.remotes = []
-        for connection_name in connection_names:
-            req.remotes.append(create_gateway_remote_rule(remote_name, create_gateway_rule(connection_name, connection_type)))
-        try:
-            resp = self._gateway_services['flip'](req)
-        except rospy.service.ServiceException:
-            # often disappears when the gateway shuts down just before the app manager, ignore silently.
-            return
-        if resp.result == 0:
-            rospy.loginfo("Rapp Manager : successfully flipped %s" % str([os.path.basename(name) for name in connection_names]))
-        else:
-            if resp.result == gateway_msgs.ErrorCodes.NO_HUB_CONNECTION and cancel_flag:
-                # can often happen if a concert goes down and brings the hub down as as well
-                # so just suppress this warning if it's a request to cancel
-                rospy.logwarn("Rapp Manager : failed to cancel flips (probably remote hub intentionally went down as well) [%s, %s]" % (resp.result, resp.error_message))
+
+        # Create request
+        for conn_type, conns in connections.items():
+            gateway_type = plurality_converter[conn_type]
+            for conn_name in conns:
+                remote_rule = create_gateway_remote_rule(remote_name, create_gateway_rule(conn_name, gateway_type))
+                req.remotes.append(remote_rule)
+
+        # Send request
+        attempts = 0
+        MAX_ATTEMPTS = 4
+        while not success and attempts < MAX_ATTEMPTS and not rospy.is_shutdown():
+            try:
+                resp = self._gateway_services['flip'](req)
+            except rospy.service.ServiceException:
+                # often disappears when the gateway shuts down just before the app manager, ignore silently.
+                success = False
+                message = "Flip service has disappeared"
+                attempts = attempts + 1
+                continue
+
+            if resp.result == gateway_msgs.ErrorCodes.SUCCESS:
+                rospy.loginfo("Rapp Manager : successfully flipped %s" % str([(names) for names in connections.values()]))
+                success = True
             else:
-                rospy.logerr("Rapp Manager : failed to flip [%s, %s]" % (resp.result, resp.error_message))
+                if resp.result == gateway_msgs.ErrorCodes.NO_HUB_CONNECTION and cancel_flag:
+                    # can often happen if a concert goes down and brings the hub down as as well
+                    # so just suppress this warning if it's a request to cancel
+                    rospy.logwarn("Rapp Manager : failed to cancel flips (probably remote hub intentionally went down as well) [%s, %s]" % (resp.result, resp.error_message))
+                else:
+                    message = "failed to flip [%s][%s, %s]" % (str(connections),resp.result, resp.error_message)
+                    rospy.logerr("Rapp Manager : %s"%message)
+                success = False
+                attempts = attempts + 1
+                rospy.sleep(1.0)
+        return success, message
 
     def _check_runnable(self, requested_rapp_name):
         success = False
         message = ""
         rapp = None
-
-        print(str(requested_rapp_name))
 
         if requested_rapp_name in self._virtual_apps.keys():  # Virtual rapp
             rapp = self._virtual_apps[requested_rapp_name]

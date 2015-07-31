@@ -1,6 +1,25 @@
 Changelog
 =========
 
+0.7.13 (2015-07-09)
+-------------------
+* add image stream app
+* add text to speech app closes `#293 <https://github.com/robotics-in-concert/rocon_app_platform/issues/293>`_
+* add install rule for typing to string script closes `#294 <https://github.com/robotics-in-concert/rocon_app_platform/issues/294>`_
+* [rocon_apps] delivery rapp moved out.
+* add typing to string launch file
+* renaming the script
+* add commander
+* [rocon_apps] next iteration of the delivery rapp interface.
+* [rocon_apps] first iteration of the delivery ancestor rapp.
+* Contributors: Daniel Stonier, Jihoon Lee
+
+0.7.12 (2015-05-27)
+-------------------
+* add make a map rapp closes `#290 <https://github.com/robotics-in-concert/rocon_app_platform/issues/290>`_
+* add goal and path
+* Contributors: Jihoon Lee
+
 0.7.11 (2015-05-06)
 -------------------
 
