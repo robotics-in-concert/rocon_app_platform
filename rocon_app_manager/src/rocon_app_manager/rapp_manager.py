@@ -85,10 +85,6 @@ class RappManager(object):
         if not self._param['use_gateway_uuids']:
             self._init_services()
 
-        if self._param['auto_start_rapp']:  # None and '' are both false here
-            request = rapp_manager_srvs.StartRappRequest(self._param['auto_start_rapp'], [])
-            unused_response = self._process_start_app(request)
-
         self._debug_ignores = {}  # a remote_controller_name : timestamp of the last time we logged an ignore response
 
         rospy.loginfo("Rapp Manager : initialised.")
@@ -189,6 +185,13 @@ class RappManager(object):
             self._publishers['incompatible_rapp_list'] = rospy.Publisher(self._publisher_names['incompatible_rapp_list'], rapp_manager_msgs.IncompatibleRappList, latch=True, queue_size=1)
             # Force an update on the gateway
             self._gateway_publishers['force_update'].publish(std_msgs.Empty())
+
+            # if we need to auto start something we can do it now.
+            if self._param['auto_start_rapp']:  # None and '' are both false here
+                request = rapp_manager_srvs.StartRappRequest()
+                request.name = self._param['auto_start_rapp']
+                unused_response = self._process_start_app(request)
+
         except Exception as unused_e:
             traceback.print_exc(file=sys.stdout)
             self._initialising_services = False
@@ -445,7 +448,7 @@ class RappManager(object):
 
         # Flips/Unflips
         try:
-            connections = {'services':[self._service_names['start_rapp'], self._service_names['stop_rapp']]}
+            connections = {'services': [self._service_names['start_rapp'], self._service_names['stop_rapp']]}
             self._flip_all_connections(req.remote_target_name,
                                    connections,
                                    req.cancel
@@ -584,7 +587,10 @@ class RappManager(object):
                 resp.message = message
                 return resp
 
-        rospy.loginfo("Rapp Manager : starting app '" + req.name + "' underneath " + self._application_namespace)
+        rospy.loginfo(
+            "Rapp Manager : starting app '" + req.name +
+            (("' underneath '" + self._application_namespace + "'") if self._application_namespace else "'")
+        )
         resp.started, resp.message, connections = rapp.start(self._application_namespace,
                                                            self._gateway_name,
                                                            self._rocon_uri,
@@ -743,7 +749,7 @@ class RappManager(object):
                     # so just suppress this warning if it's a request to cancel
                     rospy.logwarn("Rapp Manager : failed to cancel flips (probably remote hub intentionally went down as well) [%s, %s]" % (resp.result, resp.error_message))
                 else:
-                    message = "failed to flip [%s][%s, %s]" % (str(connections),resp.result, resp.error_message)
+                    message = "failed to flip [%s][%s, %s]" % (str(connections), resp.result, resp.error_message)
                     rospy.logerr("Rapp Manager : %s"%message)
                 success = False
                 attempts = attempts + 1
@@ -806,16 +812,15 @@ class RappManager(object):
         return success, message, rapp
 
     def spin(self):
-        rate = rospy.Rate(10) # 10hz
+        rate = rospy.Rate(10)  # 10hz
         while not rospy.is_shutdown():
             gateway_info = self._gateway_services['gateway_info'](timeout=rospy.Duration(0.3))
             if gateway_info:
-                if gateway_info.connected:
-                    self._gateway_name = gateway_info.name
-                    self._gateway_ip = gateway_info.ip
-                    #if we depend on gateway we can init services now (only one time)
-                    if 0 == len(self._services) and 0 == len(self._publishers) and self._param['use_gateway_uuids']:
-                        if self._init_services():
-                            break
+                self._gateway_name = gateway_info.name
+                self._gateway_ip = gateway_info.ip
+                #if we depend on gateway we can init services now (only one time)
+                if 0 == len(self._services) and 0 == len(self._publishers) and self._param['use_gateway_uuids']:
+                    if self._init_services():
+                        break
             rate.sleep()
         rospy.spin()

@@ -83,23 +83,28 @@ def _prepare_launch_text(launch_file, launch_args, public_parameters, applicatio
     # Prepare argument mapping
     launch_arg_mapping = {}
     launch_arg_mapping['application_namespace'] = application_namespace
-    if gateway_name:
+    if gateway_name is not None:
         launch_arg_mapping['gateway_name'] = gateway_name.lower().replace(' ', '_')
     launch_arg_mapping['rocon_uri'] = rocon_uri_string
     launch_arg_mapping['capability_server_nodelet_manager_name'] = capability_server_nodelet_manager_name
     launch_arg_mapping['simulation'] = simulation
 
-    if(application_namespace == ""):
-        launch_text = '<launch>\n  <include file="%s">\n' % (launch_file)
+    if(application_namespace is None or application_namespace == ""):
+        launch_text = '<launch>\n  <include file="%s">' % (launch_file)
     else:
-        launch_text = '<launch>\n  <include ns="%s" file="%s">\n' % (application_namespace, launch_file)
+        launch_text = '<launch>\n  <include ns="%s" file="%s">' % (application_namespace, launch_file)
 
     for arg in launch_args:
-        launch_text += '    <arg name="%s" value="%s"/>' % (arg, launch_arg_mapping[arg])
+        try:
+            launch_text += '\n    <arg name="%s" value="%s"/>' % (arg, launch_arg_mapping[arg])
+        except KeyError, e:
+            rospy.logwarn("Expected argument {arg} not found in launcher arg_mapping list. using empty string instead.".format(arg=arg))
+            launch_text += '\n    <arg name="%s" value="%s"/>' % (arg, "")
     for name, value in public_parameters.items():
-        launch_text += '    <arg name="%s" value="%s"/>' % (name, value)
+        launch_text += '\n    <arg name="%s" value="%s"/>' % (name, value)
 
-    launch_text += '  </include>\n</launch>\n'
+    launch_text += '\n  </include>\n</launch>\n'
+
     return launch_text
 
 
@@ -206,6 +211,9 @@ def apply_remapping_rules_from_start_app_request(launch_spec, data, remappings, 
     '''
     connections = {}
     published_interfaces = []
+
+    if application_namespace is None:
+        application_namespace = ""
 
     # Prefix with robot name by default (later pass in remap argument)
     remap_from_list = [remapping.remap_from for remapping in remappings]
