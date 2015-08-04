@@ -18,14 +18,13 @@
   <arg name="disable_uuids" default="false"/>          <!-- manage unique naming of multiple gateways yourself -->
   <arg name="gateway_network_interface" default="$(optenv GATEWAY_NETWORK_INTERFACE)"/>  <!-- If you have multiple network interfaces and want to lock it on one (e.g. 'eth0') -->
   <arg name="disable_zeroconf" default="false"/>
-  <arg name="gateway_custom_configuration" default="" doc="name of a user custom parameterisation (yaml)."/>
+  <arg name="gateway_custom_rules_file" default="" doc="name of a user custom parameterisation (yaml)."/>
 
   <node pkg="rocon_gateway" type="gateway.py" name="gateway">
     <rosparam command="load" file="$(find rocon_gateway)/param/default.yaml" />
     <rosparam command="load" file="$(find rocon_gateway)/param/default_blacklist.yaml" />
     <rosparam command="load" file="$(find rocon_app_manager)/param/app_manager_advertisements.yaml" />
     <rosparam command="load" file="$(find rocon_app_manager)/param/app_manager_flips.yaml" />
-    <rosparam command="load" file="$(arg gateway_custom_configuration)"/>
     <rosparam param="hub_whitelist" subst_value="True">$(arg hub_whitelist)</rosparam>
     <param name="hub_uri" value="$(arg hub_uri)"/>
     <param name="firewall" value="$(arg gateway_firewall)"/>
@@ -34,5 +33,6 @@
     <param name="disable_uuids" value="$(arg disable_uuids)"/>
     <param name="network_interface" value="$(arg gateway_network_interface)"/>
     <param name="disable_zeroconf" value="$(arg disable_zeroconf)"/>
+    <param name="custom_rules_file" value="$(arg gateway_custom_rules_file)"/>
   </node>
 </launch>
