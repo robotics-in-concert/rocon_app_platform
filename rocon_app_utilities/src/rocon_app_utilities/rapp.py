@@ -87,7 +87,7 @@ class Rapp(object):
             self.filename = filename
             self.classify()
         except RappResourceNotExistException as e:
-            raise InvalidRappException(str(self.resource_name) + ' : ' + str(e))
+            raise InvalidRappException(str(e))
 
     def load_rapp_specs_from_file(self):
         '''

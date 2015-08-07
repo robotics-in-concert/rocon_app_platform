@@ -22,7 +22,6 @@ import logging
 import sys
 logger = logging.getLogger('indexer')
 logger.addHandler(logging.StreamHandler(sys.stderr))
-#logger.setLevel(logging.DEBUG)
 
 
 class RappIndexer(object):
@@ -190,12 +189,12 @@ class RappIndexer(object):
                 resolved_rapp = self._resolve(resource_name)
                 ancestor_name = resolved_rapp.ancestor_name
                 if ancestor_share_check and ancestor_name in used_ancestors:
-                    invalid[resource_name] = "Ancestor has already been taken by other rapp"
+                    invalid[resource_name] = "ancestor has already been taken by other rapp"
                 else:
                     resolved[resource_name] = resolved_rapp
                 used_ancestors[ancestor_name] = resource_name
             except ParentRappNotFoundException as e:
-                invalid[resource_name] = str('Invalid parent_name [%s] in resource [%s]' % (str(e.parent_name), str(e.resource_name)))
+                invalid[resource_name] = str('parent rapp not found (is it in your rapp_package_whitelist?) [%s]' % str(e.parent_name))
             except RappInvalidChainException as e:
                 invalid[resource_name] = str(e)
         return resolved, invalid

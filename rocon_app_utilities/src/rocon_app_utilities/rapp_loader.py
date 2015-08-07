@@ -14,6 +14,7 @@ from xml.dom import Node as DomNode
 import rocon_python_utils
 from rocon_console import console
 
+
 def load_rapp_yaml_from_file(filename):
     '''
       Load rapp specs yaml from the given file
@@ -104,7 +105,9 @@ def _find_resource(base_path, resource):
         try:
             found = rocon_python_utils.ros.find_resource_from_string(resource)
         except rospkg.ResourceNotFound:
-            raise RappResourceNotExistException("invalid rapp - %s does not exist" % (resource))
+            raise RappResourceNotExistException("does not exist [%s]" % (resource))
+        except ValueError:  # thrown when path not found above, but it is not a resource name (e.g. ../../icons/gopher.png will generate ValueError here)
+            raise RappResourceNotExistException("neither found, nor a valid resource [%s]" % (resource))
         raise RappResourceNotExistException("invalid rapp - %s is 'tuple based rapp resource'. It is deprecated attribute. Please fix it as relative path to .rapp file" % (resource))
 
 
