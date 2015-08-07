@@ -32,7 +32,7 @@
   <arg name="robot_type"             default="pc"/>
   <arg name="robot_icon"             default="rocon_icons/cybernetic_pirate.png"/>
   <arg name="screen"                 default="true" doc="verbose output from running apps" />
-  <arg name="simulation"             default="false" doc="if simulated robot" />
+  <arg name="simulation"             default="false" doc="passed down to rapps to let them know if it is a simulation or otherwise" />
 
   <include file="$(find rocon_app_manager)/launch/includes/_app_manager.xml">
     <arg name="robot_name" value="$(arg robot_name)" />
@@ -75,11 +75,11 @@
   </group>
 
   <!-- ******************************** Zeroconf ******************************** -->
-  <arg name="zeroconf"      default="false"/>
-  <arg name="zeroconf_name" default="$(arg robot_name)"/>
-  <arg name="zeroconf_port" default="11311"/>
+  <arg name="disable_zeroconf" default="false"/>
+  <arg name="zeroconf_name"    default="$(arg robot_name)"/>
+  <arg name="zeroconf_port"    default="11311"/>
 
-  <group if="$(arg zeroconf)">
+  <group unless="$(arg disable_zeroconf)">
     <include file="$(find rocon_app_manager)/launch/includes/_zeroconf.xml">
       <arg name="name" value="$(arg zeroconf_name)"/>
       <arg name="port" value="$(arg zeroconf_port)"/>

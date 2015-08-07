@@ -37,7 +37,7 @@
   <arg name="interactions_list"     default="[]"/>
 
   <!-- *************************** Is simulataion ******************************* -->
-  <arg name="simulation"                   default="false" doc="if simulated robot" />
+  <arg name="simulation"                   default="false" doc="passed down to rapps to let them know if it is a simulation or otherwise" />
 
   <!-- ************************* Rarely Used Variables ************************** -->
   <arg name="firewall" default="false" doc="typically false (don't let anything in), only for simulation clients"/>

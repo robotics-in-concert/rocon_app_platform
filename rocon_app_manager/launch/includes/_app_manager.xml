@@ -14,7 +14,7 @@
   <arg name="rapp_preferred_configuration_file" default="$(find rocon_app_manager)/param/preferred_default.yaml"/>
   <arg name="auto_start_rapp" default="" doc="autostart a rapp, e.g. rocon_apps/chirp"/>
   <arg name="screen" default="false" doc="verbose output from running apps"/>
-  <arg name="simulation" default="false" doc="is simulated robot in gazebo"/>
+  <arg name="simulation" default="false" doc="passed down to rapps to let them know if it is a simulation or otherwise"/>
   <arg name="capability_server_name" default="capability_server" doc="name of the capability server"/>
   <!-- See 'http://wiki.ros.org/rocon_app_manager/Tutorials/indigo/Automatic Rapp Installation'
        on how to enable automatic rapp installation -->
