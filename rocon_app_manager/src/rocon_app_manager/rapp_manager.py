@@ -103,12 +103,12 @@ class RappManager(object):
         try:
             filename = rocon_python_utils.ros.find_resource_from_string(self._param['robot_icon'])
             icon = rocon_python_utils.ros.icon_to_msg(filename)
-        except exceptions.NotFoundException:
-            rospy.logwarn("Rapp Manager : icon resource not found [%s]" % self._param['robot_icon'])
-            icon = rocon_std_msgs.Icon()
-        except ValueError:
-            rospy.logwarn("Rapp Manager : invalid resource name [%s]" % self._param['robot_icon'])
-            icon = rocon_std_msgs.Icon()
+        except rospkg.ResourceNotFound as e:
+            rospy.logwarn("Rapp Manager : no icon found, using a default [%s][%s]" % (self._param['robot_icon'], e))
+            icon = rocon_python_utils.ros.icon_resource_to_msg("rocon_bubble_icons/rocon_logo.png")
+        except ValueError as e:
+            rospy.logwarn("Rapp Manager : invalid resource name, using a default icon instead [%s][%s]" % (self._param['robot_icon'], e))
+            icon = rocon_python_utils.ros.icon_resource_to_msg("rocon_bubble_icons/rocon_logo.png")
         return (rocon_uri, icon)
 
     def _init_default_service_names(self):
@@ -279,11 +279,11 @@ class RappManager(object):
             else:
                 preferred_rapp_name = preferred[rapp_name]
 
-                if not preferred_rapp_name in full_apps:
+                if preferred_rapp_name not in full_apps:
                     rospy.logwarn("Rapp Manager : Given preferred rapp '" + preferred_rapp_name + "' for '" + rapp_name + "' does not exist. '" + available_rapps[0].data['name'] + "' has been selected.")
                     v_rapps[rapp_name] = available_rapps[0]
                 else:
-                    rospy.loginfo("Rapp Manager: '%s' -> '%s'"%(rapp_name, preferred_rapp_name))
+                    rospy.loginfo("Rapp Manager: '%s' -> '%s'" % (rapp_name, preferred_rapp_name))
                     v_rapps[rapp_name] = full_apps[preferred_rapp_name]
         self._virtual_apps = v_rapps
         self._preferred = preferred
@@ -822,5 +822,8 @@ class RappManager(object):
                 if 0 == len(self._services) and 0 == len(self._publishers) and self._param['use_gateway_uuids']:
                     if self._init_services():
                         break
-            rate.sleep()
+            try:
+                rate.sleep()
+            except rospy.exceptions.ROSInterruptException:
+                rospy.loginfo("Rapp Manager : breaking out of spin loop [most likley just ros shutting down]")
         rospy.spin()
