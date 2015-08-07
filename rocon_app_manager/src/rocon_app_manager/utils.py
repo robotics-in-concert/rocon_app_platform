@@ -89,10 +89,9 @@ def _prepare_launch_text(launch_file, launch_args, public_parameters, applicatio
     launch_arg_mapping['capability_server_nodelet_manager_name'] = capability_server_nodelet_manager_name
     launch_arg_mapping['simulation'] = simulation
 
-    if(application_namespace is None or application_namespace == ""):
-        launch_text = '<launch>\n  <include file="%s">' % (launch_file)
-    else:
-        launch_text = '<launch>\n  <include ns="%s" file="%s">' % (application_namespace, launch_file)
+    # we used to push the include here into its own namespace (i.e. <include ns="%s" file="%s">) but it's better to let the rapp
+    # designer choose via the 'application_namespace' lauch_arg_mapping provided
+    launch_text = '<launch>\n  <include file="%s">' % (launch_file)
 
     for arg in launch_args:
         try:
