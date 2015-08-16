@@ -1,6 +1,6 @@
 #
 # License: BSD
-#   https://raw.github.com/robotics-in-concert/rocon_app_platform/license/LICENSE
+#   https://raw.github.com/robotics-in-concertified/rocon_app_platform/license/LICENSE
 #
 ##############################################################################
 
@@ -47,7 +47,7 @@ def dict_to_KeyValue(d):
 
 
 def _prepare_launch_text(launch_file, launch_args, public_parameters, application_namespace,
-                         gateway_name, rocon_uri_string, simulation, capability_server_nodelet_manager_name=None):
+                         rocon_uri_string, simulation, capability_server_nodelet_manager_name=None):
     '''
       Prepare the launch file text. This essentially wraps the rapp launcher
       with the following roslaunch elements:
@@ -59,7 +59,7 @@ def _prepare_launch_text(launch_file, launch_args, public_parameters, applicatio
       automatically generated roslaunch args (e.g. namespace, name,
       rocon_uri properties) should get passed to the rapp. Note that we
       don't pass the whole set, because roslaunch args will throw an error
-      if the rapp itself isn't expecting them. The logoc for determing this is
+      if the rapp itself isn't expecting them. The logic for determining this is
       in get_standard_args.
 
       :param launch_file: fully resolved launch file path
@@ -67,11 +67,8 @@ def _prepare_launch_text(launch_file, launch_args, public_parameters, applicatio
       :param launch_args: strings identifying the keys of the standard roslaunch args
              to send (not the args themselves)
       :type launch_args: [str]
-      :param application_namespace: unique name granted indirectly via the
-             gateways, we namespace everything under this
+      :param application_namespace: we launch the rapp in this namespace
       :type application_namespace: str
-      :param gateway_name: unique name granted to the gateway
-      :type gateway_name: str
       :param rocon_uri_string: used to pass down information about the platform that is running this app to the app itself.
       :type rocon_uri_string: str - a rocon uri string
       :param simulation: true if rapp manager is for simulated robot
@@ -83,8 +80,6 @@ def _prepare_launch_text(launch_file, launch_args, public_parameters, applicatio
     # Prepare argument mapping
     launch_arg_mapping = {}
     launch_arg_mapping['application_namespace'] = application_namespace
-    if gateway_name is not None:
-        launch_arg_mapping['gateway_name'] = gateway_name.lower().replace(' ', '_')
     launch_arg_mapping['rocon_uri'] = rocon_uri_string
     launch_arg_mapping['capability_server_nodelet_manager_name'] = capability_server_nodelet_manager_name
     launch_arg_mapping['simulation'] = simulation
@@ -123,7 +118,7 @@ def resolve_chain_remappings(nodes):
                 rospy.logwarn("Rapp Manager : Remapping rule for %s already exists. Ignoring remapping rule from %s to %s", str(fr), str(fr), str(to))
             else:
                 if fr == to:
-                    rospy.logwarn("Rapp Manager : ignoring uncessary remapping rule (%s, %s)"%(str(fr),str(to)))
+                    rospy.logwarn("Rapp Manager : ignoring uncessary remapping rule (%s, %s)" % (str(fr), str(to)))
                 else:
                     # if there is a value which matches with remap_from, the value should be replaced with the new remap_to
                     keys = [k for k, v in new_remap_args_dict.items() if v == str(fr)]
@@ -133,7 +128,7 @@ def resolve_chain_remappings(nodes):
         n.remap_args = new_remap_args_dict.items()
 
 
-def prepare_launcher(data, public_parameters, application_namespace, gateway_name, rocon_uri_string, capability_nodelet_manager_name, force_screen, simulation, temp):
+def prepare_launcher(data, public_parameters, application_namespace, rocon_uri_string, capability_nodelet_manager_name, force_screen, simulation, temp):
     '''
       prepare roslaunch to start rapp.
     '''
@@ -143,7 +138,6 @@ def prepare_launcher(data, public_parameters, application_namespace, gateway_nam
                                        data['launch_args'],
                                        public_parameters,
                                        application_namespace,
-                                       gateway_name,
                                        rocon_uri_string,
                                        simulation,
                                        capability_nodelet_manager_name
@@ -250,7 +244,7 @@ def apply_remapping_rules_from_start_app_request(launch_spec, data, remappings, 
             else:
                 # don't pass these in as remapping rules - they should map fine for the node as is
                 # just by getting pushed down the namespace.
-                #     https://github.com/robotics-in-concert/rocon_app_platform/issues/61
+                #     https://github.com/robotics-in-concertified/rocon_app_platform/issues/61
                 # we still need to pass them back to register for flipping though.
                 if roslib.names.is_global(interface_name):
                     flipped_name = interface_name

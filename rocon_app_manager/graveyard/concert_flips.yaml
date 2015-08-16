@@ -1,0 +1,11 @@
+##############################################################################
+# Default flips from a rocon app manager working with a concert
+##############################################################################
+
+default_flips: 
+    - gateway: Public Gateway.*
+      rule:  
+        name: /concert
+        node: None
+        type: publisher
+

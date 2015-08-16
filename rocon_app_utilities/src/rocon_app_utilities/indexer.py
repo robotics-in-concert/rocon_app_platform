@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # License: BSD
-#   https://raw.github.com/robotics-in-concert/rocon_app_platform/license/LICENSE
+#   https://raw.github.com/robotics-in-concertified/rocon_app_platform/license/LICENSE
 #
 #################################################################################
 
@@ -99,7 +99,7 @@ class RappIndexer(object):
 
           :raises: RappNotExistException: the given rapp name does not exist
         '''
-        if not rapp_name in self.raw_data:
+        if rapp_name not in self.raw_data:
             raise RappNotExistException(str(rapp_name) + ' does not exist')
 
         return self.raw_data[rapp_name]
@@ -116,7 +116,7 @@ class RappIndexer(object):
 
           :raises: RappNotExistException: the given rapp name does not exist
         '''
-        if not rapp_name in self.raw_data:
+        if rapp_name not in self.raw_data:
             raise RappNotExistException(str(rapp_name) + ' does not exist')
 
         rapp = self._resolve(rapp_name)

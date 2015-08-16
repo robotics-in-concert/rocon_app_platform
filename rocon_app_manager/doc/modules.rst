@@ -10,9 +10,6 @@ rocon_app_manager
 .. automodule:: rocon_app_manager
    :synopsis: application management inside the robot
 
-Rapp Managers
-=============
-
 rocon_app_manager.standalone
 ----------------------------
 
@@ -20,10 +17,12 @@ rocon_app_manager.standalone
     :members:
     :show-inheritance:
 
-#    :special-members:
+rocon_app_manager.concertified
+------------------------------
 
-Rapps
-=====
+.. automodule:: rocon_app_manager.concertified
+    :members:
+    :show-inheritance:
 
 rocon_app_manager.rapp
 ----------------------
@@ -31,9 +30,6 @@ rocon_app_manager.rapp
 .. automodule:: rocon_app_manager.rapp
     :members:
     :show-inheritance:
-
-Other
-=====
 
 rocon_app_manager.caps_list
 ---------------------------

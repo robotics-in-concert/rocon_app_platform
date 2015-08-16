@@ -1,7 +1,17 @@
-### Unit tests
+##############################################################################
+# Unit Tests
 #
-#   Only configured when CATKIN_ENABLE_TESTING is true.
+#   Only run when CATKIN_ENABLE_TESTING is true.
+##############################################################################
 
-# Unit tests using nose, but needing a running ROS core.
-find_package(catkin REQUIRED COMPONENTS rostest)
-#TODO add_rostest(rocon_app_manager.test)
+##############################################################################
+# Nose Tests
+##############################################################################
+
+catkin_add_nosetests(nosetests)
+
+##############################################################################
+# Ros Tests
+##############################################################################
+
+add_subdirectory(rostests)
