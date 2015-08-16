@@ -39,6 +39,7 @@ import std_msgs.msg as std_msgs
 
 # local imports
 from . import exceptions
+from . import utils
 from ros_parameters import StandaloneParameters
 from .rapp import convert_rapps_from_rapp_specs
 
@@ -433,12 +434,18 @@ class Standalone(object):
             "Rapp Manager : starting app '" + req.name +
             (("' underneath '" + self.parameters.application_namespace + "'") if self.parameters.application_namespace else "'")
         )
-        resp.started, resp.message, unused_connections = rapp.start(self.parameters.application_namespace,
-                                                                    self.rocon_uri,
+
+        launch_arg_mappings = utils.LaunchArgMappings()
+        launch_arg_mappings.application_namespace = self.parameters.application_namespace
+        launch_arg_mappings.robot_name = self.parameters.robot_name
+        launch_arg_mappings.rocon_uri = self.rocon_uri
+        launch_arg_mappings.simulation = self.parameters.simulation
+        launch_arg_mappings.capability_nodelet_manager_name = caps_list.nodelet_manager_name if self.caps_list else None
+
+        resp.started, resp.message, unused_connections = rapp.start(launch_arg_mappings,
                                                                     req.remappings,
                                                                     req.parameters,
                                                                     self.parameters.screen,
-                                                                    self.parameters.simulation,
                                                                     self.caps_list
                                                                     )
         if resp.started:

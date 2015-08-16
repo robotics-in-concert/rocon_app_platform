@@ -1,3 +1,7 @@
+##############################################################################
+# Imports
+##############################################################################
+
 from __future__ import absolute_import
 
 import sys
@@ -7,13 +11,31 @@ from nose.tools import assert_raises
 from rocon_app_manager import utils
 import rocon_console.console as console
 
+##############################################################################
+# Support Methods
+##############################################################################
+
+def default_launch_arg_mappings():
+    launch_arg_mappings = utils.LaunchArgMappings()
+    launch_arg_mappings.application_namespace = "/applications"
+    launch_arg_mappings.robot_name = "dude"
+    launch_arg_mappings.rocon_uri = "rocon:/"
+    launch_arg_mappings.simulation = False
+    launch_arg_mappings.capability_nodelet_manager_name = None
+    return launch_arg_mappings
+
+##############################################################################
+# Tests
+##############################################################################
+
+
 def test_prepare_launch_text_launchfile():
     print("")
     print(console.bold + "\n****************************************************************************************" + console.reset)
     print(console.bold + "* No Bells and Whistles" + console.reset)
     print(console.bold + "****************************************************************************************" + console.reset)
     print("")
-    launchtext = utils._prepare_launch_text("path_to_launcher", [], {}, "", "rocon:/", False)
+    launchtext = utils._prepare_launch_text("path_to_launcher", [], {}, default_launch_arg_mappings())
     print launchtext
     assert launchtext.strip() == """
 <launch>
@@ -28,12 +50,12 @@ def test_prepare_launch_text_launchfile_appnamespace():
     print(console.bold + "* Application Namespace" + console.reset)
     print(console.bold + "****************************************************************************************" + console.reset)
     print("")
-    launchtext = utils._prepare_launch_text("path_to_launcher", ['application_namespace'], {}, "applications", "rocon:/", False)
+    launchtext = utils._prepare_launch_text("path_to_launcher", ['application_namespace'], {}, default_launch_arg_mappings())
     print "'" + launchtext + "'"
     assert launchtext.strip() == """
 <launch>
   <include file="path_to_launcher">
-    <arg name="application_namespace" value="applications"/>
+    <arg name="application_namespace" value="/applications"/>
   </include>
 </launch>
 """.strip()
@@ -44,7 +66,7 @@ def test_prepare_launch_text_launchfile_public_parameters():
     print(console.bold + "* Public Parameters" + console.reset)
     print(console.bold + "****************************************************************************************" + console.reset)
     print("")
-    launchtext = utils._prepare_launch_text("path_to_launcher", [], {"public_param": "pubparam_value"}, "", "rocon:/", False)
+    launchtext = utils._prepare_launch_text("path_to_launcher", [], {"public_param": "pubparam_value"}, default_launch_arg_mappings())
     print "'" + launchtext + "'"
     assert launchtext.strip() == """
 <launch>
@@ -60,7 +82,7 @@ def test_prepare_launch_text_launchfile_rocon_uri():
     print(console.bold + "* Rocon Uri" + console.reset)
     print(console.bold + "****************************************************************************************" + console.reset)
     print("")
-    launchtext = utils._prepare_launch_text("path_to_launcher", ['rocon_uri'], {}, "", "rocon:/", False)
+    launchtext = utils._prepare_launch_text("path_to_launcher", ['rocon_uri'], {}, default_launch_arg_mappings())
     print "'" + launchtext + "'"
     assert launchtext.strip() == """
 <launch>
@@ -76,7 +98,7 @@ def test_prepare_launch_text_launchfile_simulation():
     print(console.bold + "* Simulation" + console.reset)
     print(console.bold + "****************************************************************************************" + console.reset)
     print("")
-    launchtext = utils._prepare_launch_text("path_to_launcher", ['simulation'], {}, "", "rocon:/", False)
+    launchtext = utils._prepare_launch_text("path_to_launcher", ['simulation'], {}, default_launch_arg_mappings())
     print "'" + launchtext + "'"
     assert launchtext.strip() == """
 <launch>
