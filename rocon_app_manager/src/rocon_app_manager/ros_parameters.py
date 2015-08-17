@@ -1,6 +1,6 @@
 #
 # License: BSD
-#   https://raw.github.com/robotics-in-concertified/rocon_app_platform/license/LICENSE
+#   https://raw.github.com/robotics-in-py/rocon_app_platform/license/LICENSE
 #
 ##############################################################################
 # Imports
@@ -67,7 +67,7 @@ class StandaloneParameters:
         self.screen = rocon_screen or rapp_manager_screen
         self.auto_rapp_installation = rospy.get_param('~auto_rapp_installation', False)
         preferred = rospy.get_param('~preferred', [])
-        self.application_namespace = rospy.get_param('~application_namespace', "applications")
+        self.application_namespace = rospy.get_param('~application_namespace', "/applications")
         self.simulation = rospy.get_param('~simulation', False)
         # processing
         self.auto_start_rapp = self.auto_start_rapp if self.auto_start_rapp else None  # empty string -> None
@@ -98,9 +98,9 @@ class ConcertParameters:
     :vartype robot_type: str
     """
     def __init__(self):
-        self.local_concerts_only = rospy.get_param('~local_concerts_only', False)
         self.concert_whitelist = rospy.get_param('~concert_whitelist', [])
-        self.concert_blacklist = rospy.get_param('~concert_blacklist', [])
+        # not yet implemented
+        # self.local_concerts_only = rospy.get_param('~local_concerts_only', False)
 
     def __str__(self):
         s = console.bold + "\nRapp Manager Concert Parameters:\n" + console.reset

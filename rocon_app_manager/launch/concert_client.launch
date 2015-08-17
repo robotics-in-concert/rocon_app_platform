@@ -31,7 +31,7 @@
   <arg name="simulation" default="false" doc="passed down to rapps to let them know if it is a simulation or otherwise"/>
 
   <group ns="rocon">
-    <node pkg="rocon_app_manager" type="concertified.py" name="app_manager">
+    <node pkg="rocon_app_manager" type="concert_client.py" name="app_manager">
       <rosparam command="load" file="$(arg rapp_preferred_configuration_file)" />
       <rosparam param="rapp_package_whitelist" subst_value="True">$(arg rapp_package_whitelist)</rosparam>
       <rosparam param="rapp_package_blacklist" subst_value="True">$(arg rapp_package_blacklist)</rosparam>
@@ -42,6 +42,7 @@
       <param name="simulation" value="$(arg simulation)"/>
       <param name="auto_rapp_installation" value="$(arg auto_rapp_installation)"/>
       <remap from="app_manager/gateway_info" to="gateway/gateway_info"/>
+      <remap from="app_manager/flip" to="gateway/flip"/>
     </node>
   </group>
 

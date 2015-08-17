@@ -1,6 +1,6 @@
 #
 # License: BSD
-#   https://raw.github.com/robotics-in-concertified/rocon_app_platform/license/LICENSE
+#   https://raw.github.com/robotics-in-py/rocon_app_platform/license/LICENSE
 #
 ##############################################################################
 
@@ -223,7 +223,7 @@ def apply_remapping_rules_from_start_app_request(launch_spec, data, remappings, 
             else:
                 # don't pass these in as remapping rules - they should map fine for the node as is
                 # just by getting pushed down the namespace.
-                #     https://github.com/robotics-in-concertified/rocon_app_platform/issues/61
+                #     https://github.com/robotics-in-py/rocon_app_platform/issues/61
                 # we still need to pass them back to register for flipping though.
                 if roslib.names.is_global(interface_name):
                     flipped_name = interface_name

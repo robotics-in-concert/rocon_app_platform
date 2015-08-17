@@ -1,6 +1,6 @@
 #
 # License: BSD
-#   https://raw.github.com/robotics-in-concertified/rocon_app_platform/license/LICENSE
+#   https://raw.github.com/robotics-in-py/rocon_app_platform/license/LICENSE
 #
 ##############################################################################
 # Imports
@@ -121,7 +121,7 @@ class Rapp(object):
           1) run the rapp launcher under the unique robot name namespace
 
           This guarantees that flipped entities generate unique node id's that won't collide when communicating
-          with each other (refer to https://github.com/robotics-in-concertified/rocon_multimaster/issues/136).
+          with each other (refer to https://github.com/robotics-in-py/rocon_multimaster/issues/136).
 
           2) Apply remapping rules while ignoring the namespace underneath.
 
@@ -130,8 +130,7 @@ class Rapp(object):
           :type remapping: list of rocon_std_msgs.msg.Remapping values.
           :param parameters: requested public_parameters
           :type parameters: list of rocon_std_msgs.msg.KeyValue
-          :param force_screen: whether to roslaunch the app with --screen or not
-          :type force_screen: boolean
+          :param bool force_screen: whether to roslaunch the app with --screen or not
           :param caps_list: this holds the list of available capabilities, if app needs capabilities
           :type caps_list: CapsList
         '''
@@ -159,7 +158,7 @@ class Rapp(object):
 
             connections = copy.deepcopy(self._connections)
             return True, "Success", connections
-            #return True, "Success", self._connections['subscribers'], self._connections['publishers'], \
+            # return True, "Success", self._connections['subscribers'], self._connections['publishers'], \
             #    self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
 
         except rospy.ServiceException as e:
@@ -220,10 +219,11 @@ class Rapp(object):
             return False
         return True
 
-
 ##############################################################################
 # Utilities
 ##############################################################################
+
+
 def convert_rapps_from_rapp_specs(rapp_specs):
     '''
       Converts rocon_app_utilities.Rapp into rocon_app_manager.Rapp
@@ -242,6 +242,7 @@ def convert_rapps_from_rapp_specs(rapp_specs):
         runnable_rapps[name] = r
 
     return runnable_rapps
+
 
 def _create_empty_connection_type_dictionary():
     '''

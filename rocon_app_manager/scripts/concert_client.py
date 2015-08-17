@@ -16,5 +16,5 @@ import rocon_app_manager
 
 if __name__ == '__main__':
     rospy.init_node('rapp_manager')
-    standalone_rapp_manager = rocon_app_manager.Concertified()
+    standalone_rapp_manager = rocon_app_manager.ConcertClient()
     standalone_rapp_manager.spin()
