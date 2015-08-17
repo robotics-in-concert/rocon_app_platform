@@ -20,7 +20,7 @@
   <node pkg="rocon_gateway" type="gateway.py" name="gateway">
     <rosparam command="load" file="$(find rocon_gateway)/param/default.yaml" />
     <rosparam command="load" file="$(find rocon_gateway)/param/default_blacklist.yaml" />
-    <rosparam command="load" file="$(find rocon_app_manager)/param/concertified_flips.yaml" />
+    <rosparam command="load" file="$(find rocon_app_manager)/param/advertisements.yaml" />
     <rosparam param="hub_whitelist" subst_value="True">$(arg hub_whitelist)</rosparam>
     <param name="hub_uri" value="$(arg hub_uri)"/>
     <param name="firewall" value="true"/>  <!-- nothing allowed in! -->
