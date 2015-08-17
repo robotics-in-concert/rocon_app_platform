@@ -31,10 +31,9 @@ from .caps_list import CapsList, start_capabilities_from_caps_list, stop_capabil
 import rocon_python_comms
 import rocon_app_manager_msgs.msg as rapp_manager_msgs
 import rocon_app_manager_msgs.srv as rapp_manager_srvs
-import rocon_python_utils
 import rocon_app_utilities
 import rocon_app_utilities.rapp_repositories as rapp_repositories
-import rospkg.os_detect
+import rocon_uri
 import std_msgs.msg as std_msgs
 
 # local imports
@@ -104,7 +103,7 @@ class Standalone(object):
         self.current_rapp = None
         roslaunch.pmon._init_signal_handlers()
         self.parameters = StandaloneParameters()
-        self.rocon_uri = self._init_rocon_uri()
+        self.rocon_uri = rocon_uri.generate_platform_rocon_uri(self.parameters.robot_type, self.parameters.robot_name)
         rospy.loginfo("Rapp Manager : rocon_uri: %s" % self.rocon_uri)
         self.caps_list = {}
 
@@ -161,19 +160,6 @@ class Standalone(object):
                 rospy.logwarn("Rapp Manager : disabling rapps requiring capabilities [%s]" % str(e))
             return False
         return True
-
-    def _init_rocon_uri(self):
-        '''
-          Initialises the rapp manager with the appropriate platform information
-          represented as a rocon_uri.
-        '''
-        # This might be naive and only work well on ubuntu...
-        os_codename = rospkg.os_detect.OsDetect().get_codename()
-        rocon_uri = "rocon:/" + self.parameters.robot_type.lower().replace(' ', '_') + \
-                    "/" + self.parameters.robot_name.lower().replace(' ', '_') + \
-                    "/" + rocon_python_utils.ros.get_rosdistro() + \
-                    "/" + os_codename
-        return rocon_uri
 
     ##########################################################################
     # Ros Callbacks

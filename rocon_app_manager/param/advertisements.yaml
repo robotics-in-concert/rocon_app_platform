@@ -3,6 +3,6 @@
 ##############################################################################
 
 default_advertisements: 
-    - name: .*rocon_uri
+    - name: .*platform_info
       node: .*app_manager
       type: publisher

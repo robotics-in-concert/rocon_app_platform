@@ -43,6 +43,7 @@
       <param name="auto_rapp_installation" value="$(arg auto_rapp_installation)"/>
       <remap from="app_manager/gateway_info" to="gateway/gateway_info"/>
       <remap from="app_manager/flip" to="gateway/flip"/>
+      <remap from="app_manager/master_info" to="master/info"/>
     </node>
   </group>
 

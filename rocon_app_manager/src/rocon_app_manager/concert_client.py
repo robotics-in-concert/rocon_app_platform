@@ -27,6 +27,7 @@ import gateway_msgs.msg as gateway_msgs
 import gateway_msgs.srv as gateway_srvs
 import rocon_gateway_utils
 import rocon_python_comms
+import rocon_std_msgs.msg as rocon_std_msgs
 import rospy
 import std_msgs.msg as std_msgs
 
@@ -46,12 +47,12 @@ class ConcertClient(Standalone):
 
     **Features**
 
-    * **application namespace** - communicates with a gateway to set a unique application namespace in /py/clients/_name_
-    * **firing the gateway** - pings the gateway whenever a rapp is started to create low latency flips
+    * **application namespace** - communicates with a gateway to set a unique landing space for topics in /concert/clients/_name_
 
     **Publishers**
 
-    * **~force_update** (*rapp_manager_msgs.IncompatibleRappList*) - rapps filtered from the startup list for various reasons [latched]
+    * **~concert_parameters** (*std_msgs.String*) - displays the parameters used for this instantiation [latched]
+    * **/concert/clients/_name_/platform_info** (*rocon_std_msgs.MasterInfo*) - a master info relay to the concert
 
     .. todo:: if we want low latency flipping, call the gateway watcher set period service with low period after starting a rapp
     '''
@@ -73,20 +74,27 @@ class ConcertClient(Standalone):
         except GatewayNotFoundException:
             return  # error messages already in the underlying functions
 
+        # ros api
         latched = True
         queue_size_five = 5
         self.concert_publishers = rocon_python_comms.utils.Publishers(
             [
                 ('~concert_parameters', std_msgs.String, latched, queue_size_five),
-                ('/concert/clients/' + self.parameters.robot_name + '/rocon_uri', std_msgs.String, latched, queue_size_five),
+                ('/concert/clients/' + self.parameters.robot_name + '/platform_info', rocon_std_msgs.MasterInfo, latched, queue_size_five),
             ]
         )
-        rospy.rostime.wallsleep(0.5)  # let the publisher come up
-        self.concert_publishers.concert_parameters.publish(std_msgs.String("%s" % self.concert_parameters))
-        self.concert_publishers.rocon_uri.publish(std_msgs.String(self.rocon_uri))
+        self.concert_subscribers = rocon_python_comms.utils.Subscribers(
+            [
+                ('~master_info', rocon_std_msgs.MasterInfo, self._relay_master_info)
+            ]
+        )
 
-        # done
-        rospy.loginfo("Rapp Manager : initialised and ready for concert interactions")
+        # let the publishers come up
+        rospy.rostime.wallsleep(0.5)
+        self.concert_publishers.concert_parameters.publish(std_msgs.String("%s" % self.concert_parameters))
+
+    def _relay_master_info(self, msg):
+        self.concert_publishers.platform_info.publish(msg)
 
     def _match_robot_name_to_gateway_name(self):
         gateway_info_service = rocon_python_comms.SubscriberProxy('~gateway_info', gateway_msgs.GatewayInfo)
@@ -109,10 +117,13 @@ class ConcertClient(Standalone):
                 raise GatewayNotFoundException()
 
     def _set_gateway_flip_rules(self, cancel_flag=False):
+        """
+        Converts the concert whitelist into a set of remote gateway flip rules for the namespaces in which
+        the rapp manager will drop 'to be shared' communications.
+        """
         req = gateway_srvs.RemoteRequest()
         req.cancel = cancel_flag
         flip_request_service = rospy.ServiceProxy('~flip', gateway_srvs.Remote)
-        print("Resolved : %s" % flip_request_service.resolved_name)
 
         concert_namespace_rule = rocon_gateway_utils.create_gateway_rule(name="/concert/.*", connection_type=gateway_msgs.ConnectionType.PUBLISHER)
         applications_namespace_rule = rocon_gateway_utils.create_gateway_rule(name=self.parameters.application_namespace + "/.*", connection_type=gateway_msgs.ConnectionType.PUBLISHER)

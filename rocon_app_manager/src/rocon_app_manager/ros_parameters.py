@@ -21,7 +21,7 @@ class StandaloneParameters:
     ros parameter server. Each parameter is nested in the private namespace of
     the node which instantiates this class.
 
-    :ivar robot_type: used for `rocon_uri`_ rapp compatibility checks *['rapp_manager_script']*
+    :ivar robot_type: used for `rocon_uri`_ rapp compatibility checks *['robot']*
     :vartype robot_type: str
     :ivar robot_name: also used for `rocon_uri`_ rapp compatibility checks *['robot']*
     :vartype robot_name: str
@@ -58,7 +58,7 @@ class StandaloneParameters:
     def __init__(self):
         # see sphinx docs above for more detailed explanations of each parameter
         self.robot_type = rospy.get_param('~robot_type', 'robot')
-        self.robot_name = rospy.get_param('~robot_name', 'rapp_manager_script')
+        self.robot_name = rospy.get_param('~robot_name', 'cybernetic_pirate')
         self.auto_start_rapp = rospy.get_param('~auto_start_rapp', None)
         self.rapp_package_whitelist = rospy.get_param('~rapp_package_whitelist', [])
         self.rapp_package_blacklist = rospy.get_param('~rapp_package_blacklist', [])
@@ -94,7 +94,7 @@ class ConcertParameters:
     ros parameter server. Each parameter is nested in the private namespace of
     the node which instantiates this class.
 
-    :ivar robot_type: used for `rocon_uri`_ rapp compatibility checks *['rapp_manager_script']*
+    :ivar concert_whitelist: used for `rocon_uri`_ rapp compatibility checks *['rapp_manager_script']*
     :vartype robot_type: str
     """
     def __init__(self):

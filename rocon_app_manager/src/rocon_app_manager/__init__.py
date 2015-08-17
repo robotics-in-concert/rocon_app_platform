@@ -7,5 +7,5 @@
 # Imports
 ##############################################################################
 
-from .concertified import ConcertClient
+from rocon_app_manager.concert_client import ConcertClient
 from .standalone import Standalone
