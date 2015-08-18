@@ -32,3 +32,12 @@ install(DIRECTORY param
 
 install(DIRECTORY icons
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+
+  
+##############################################################################
+# Unit Tests
+##############################################################################
+
+if (CATKIN_ENABLE_TESTING)
+  add_subdirectory(tests)
+endif()

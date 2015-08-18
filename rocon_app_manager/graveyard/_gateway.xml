@@ -10,27 +10,25 @@
  -->
 <launch>
   <arg name="gateway_name" default="gateway"/>
-  <!-- Polling period for multimaster advertising/flipping -->
   <arg name="gateway_watch_loop_period" default="5"/>
-  <arg name="gateway_firewall" default="true"/>        <!-- Typically nothing comes in! -->
   <arg name="hub_whitelist" default="[]"/>             <!-- list of hub names/regex patterns -->
-  <arg name="hub_uri" default=""/>                     <!-- Directly look for a hub on this ip/port, e.g. http://localhost:6380 -->
+  <arg name="hub_uri" default=""/>                     <!-- directly look for a hub on this ip/port, e.g. http://localhost:6380 -->
   <arg name="disable_uuids" default="false"/>          <!-- manage unique naming of multiple gateways yourself -->
-  <arg name="disable_zeroconf" default="false"/>
+  <arg name="zeroconf" default="true"/>
   <arg name="gateway_custom_rules_file" default="" doc="name of a user custom parameterisation (yaml)."/>
 
   <node pkg="rocon_gateway" type="gateway.py" name="gateway">
     <rosparam command="load" file="$(find rocon_gateway)/param/default.yaml" />
     <rosparam command="load" file="$(find rocon_gateway)/param/default_blacklist.yaml" />
-    <rosparam command="load" file="$(find rocon_app_manager)/param/app_manager_advertisements.yaml" />
-    <rosparam command="load" file="$(find rocon_app_manager)/param/app_manager_flips.yaml" />
+    <rosparam command="load" file="$(find rocon_app_manager)/param/advertisements.yaml" />
     <rosparam param="hub_whitelist" subst_value="True">$(arg hub_whitelist)</rosparam>
     <param name="hub_uri" value="$(arg hub_uri)"/>
-    <param name="firewall" value="$(arg gateway_firewall)"/>
-    <param name="name" value="$(arg gateway_name)"/> <!-- <rosparam param="name" subst_value="true">$(arg robot_name)</rosparam> -->
+    <param name="firewall" value="true"/>  <!-- nothing allowed in! -->
+    <param name="name" value="$(arg gateway_name)"/>
     <param name="watch_loop_period" value="$(arg gateway_watch_loop_period)"/>
     <param name="disable_uuids" value="$(arg disable_uuids)"/>
-    <param name="disable_zeroconf" value="$(arg disable_zeroconf)"/>
+    <param name="disable_zeroconf" value="false" if=$(arg zeroconf)/>
+    <param name="disable_zeroconf" value="true" unless=$(arg zeroconf)/>
     <param name="custom_rules_file" value="$(arg gateway_custom_rules_file)"/>
   </node>
 </launch>

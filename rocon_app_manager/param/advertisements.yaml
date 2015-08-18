@@ -1,0 +1,8 @@
+##############################################################################
+# Default advertisements from an app manager working as a concert client
+##############################################################################
+
+default_advertisements: 
+    - name: .*platform_info
+      node: .*app_manager
+      type: publisher

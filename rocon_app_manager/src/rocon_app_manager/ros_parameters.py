@@ -1,50 +1,110 @@
 #
 # License: BSD
-#   https://raw.github.com/robotics-in-concert/rocon_app_platform/license/LICENSE
+#   https://raw.github.com/robotics-in-py/rocon_app_platform/license/LICENSE
 #
 ##############################################################################
 # Imports
 ##############################################################################
 
+import rosgraph
 import rospy
+import rocon_console.console as console
 
 ###############################################################################
 # Functions
 ###############################################################################
 
 
-def setup_ros_parameters():
-    '''
-      Returns validated parameters for this module from the ros param server.
-    '''
-    param = {}
-    param['robot_type'] = rospy.get_param('~robot_type', 'robot')  #@IgnorePep8
-    param['robot_name'] = rospy.get_param('~robot_name', 'app_manager')  #@IgnorePep8
-    # image filename
-    param['robot_icon'] = rospy.get_param('~robot_icon', '')  #  #@IgnorePep8
-    param['auto_start_rapp'] = rospy.get_param('~auto_start_rapp', None)  #@IgnorePep8
-    param['rapp_package_whitelist'] = rospy.get_param('~rapp_package_whitelist', [])
-    param['rapp_package_blacklist'] = rospy.get_param('~rapp_package_blacklist', [])
-    # Todo fix these up with proper whitelist/blacklists
-    param['remote_controller_whitelist'] = rospy.get_param('~remote_controller_whitelist', [])
-    param['remote_controller_blacklist'] = rospy.get_param('~remote_controller_blacklist', [])
-    # Useful for local machine/simulation tests (e.g. chatter_concert)
-    param['local_remote_controllers_only'] = rospy.get_param('~local_remote_controllers_only', False)
-    # Check if rocon is telling us to be verbose about starting apps (this comes from the
-    # rocon_launch --screen option).
-    rocon_screen = rospy.get_param('/rocon/screen', False)
-    # Also check if a user has privately told this app manager to start with verbose output.
-    app_manager_screen = rospy.get_param('~screen', False)
-    param['app_output_to_screen'] = rocon_screen or app_manager_screen
-    param['auto_rapp_installation'] = rospy.get_param('~auto_rapp_installation', False)
+class StandaloneParameters:
+    """
+    The variables of this class are default constructed from parameters on the
+    ros parameter server. Each parameter is nested in the private namespace of
+    the node which instantiates this class.
 
-    # to delay services creation until gateway appears (services/topics names should not change after being published)
-    param['use_gateway_uuids'] = rospy.get_param('~use_gateway_uuids',True)
+    :ivar robot_type: used for `rocon_uri`_ rapp compatibility checks *['robot']*
+    :vartype robot_type: str
+    :ivar robot_name: also used for `rocon_uri`_ rapp compatibility checks *['robot']*
+    :vartype robot_name: str
+    :ivar auto_start_rapp: indicates via a `resource name`_ (e.g. gopher_rapps/delivery) a rapp to launch on startup *[None]*
+    :vartype robot_type: str
+    :ivar rapp_package_whitelist: restrict rapp search (default is the whole workspace) to these packages *[[]]*
+    :vartype rapp_package_whitelist: [ str ]
+    :ivar rapp_package_blacklist: if no whitelist, blacklist these packages from the search *[[]]*
+    :vartype rapp_package_blacklist: [ str ]
+    :ivar screen: verbose rapp output to screen *[False]*
+    :vartype screen: bool
+    :ivar auto_rapp_installation: install dependencies on rapp start  *[False]*
+    :vartype auto_rapp_installation: bool
+    :ivar preferred: configure a dict of preferred child rapps when there are several choices *[{}]*
+    :vartype preferred: {str}
+    :ivar public_namespace: a hint for where rapps should lay down public connections *['/applications']*
+    :vartype public_namespace: str
+    :ivar simulation: pass in as a flag when running gazebo, this will provide an arg to the rapp to change its behaviour *[False]*
+    :vartype simulation: bool
 
-    # Preferred rapp configuration
-    param['preferred'] = rospy.get_param('~preferred',[])
+    Each element in the dict of preferred rapps should identify the preferred child rapp
+    for each parent rapp specification. e.g. if the parent rapp is *rocon_apps/chirp* and there are
+    child rapps *rocon_apps/moo*, *gopher_rapps/groot*, then *preferred = {'rocon_apps/chirp': 'gopher_rapps/groot'}*
+    would ensure that groot is played each time the *rocon_apps/chirp* is requested. This is usually supplied to
+    a ros launcher via yaml.
 
-    # Simulation
-    param['simulation'] = rospy.get_param('~simulation', False)
+    The screen flag also checks for the ros parameter in */rocon/screen* to assist in providing verbose
+    output when used in conjunction with `rocon_launch`_.
 
-    return param
+    .. _rocon_launch: http://wiki.ros.org/rocon_launch
+    .. _rocon_uri: http://wiki.ros.org/rocon_uri
+    .. _resource name: http://wiki.ros.org/Names#Package_Resource_Names
+    """
+    def __init__(self):
+        # see sphinx docs above for more detailed explanations of each parameter
+        self.robot_type = rospy.get_param('~robot_type', 'robot')
+        self.robot_name = rospy.get_param('~robot_name', 'cybernetic_pirate')
+        self.auto_start_rapp = rospy.get_param('~auto_start_rapp', None)
+        self.rapp_package_whitelist = rospy.get_param('~rapp_package_whitelist', [])
+        self.rapp_package_blacklist = rospy.get_param('~rapp_package_blacklist', [])
+        rocon_screen = rospy.get_param('/rocon/screen', False)
+        rapp_manager_screen = rospy.get_param('~screen', False)
+        self.screen = rocon_screen or rapp_manager_screen
+        self.auto_rapp_installation = rospy.get_param('~auto_rapp_installation', False)
+        preferred = rospy.get_param('~preferred', [])
+        self.application_namespace = rospy.get_param('~application_namespace', "/applications")
+        self.simulation = rospy.get_param('~simulation', False)
+        # processing
+        self.auto_start_rapp = self.auto_start_rapp if self.auto_start_rapp else None  # empty string -> None
+        self.application_namespace = rosgraph.names.make_global_ns(self.application_namespace)
+        # when pulled from yaml (see rocon_app_manager/param/preferred_defaults.yaml), it splices
+        # the resource name for the key, e.g. 'preferred/rocon_apps/chirp'. As a result, preferred looks like:
+        # {'rocon_apps': {'chirp': 'rocon_apps/moo_chirp', 'talker': 'rocon_apps/talker'}}
+        self.preferred = {}
+        for pkg, preferred_rapps_dict in preferred.iteritems():
+            for parent_rapp_basename, preferred_rapp_resource_name in preferred_rapps_dict.iteritems():
+                self.preferred[pkg + "/" + parent_rapp_basename] = preferred_rapp_resource_name
+
+    def __str__(self):
+        s = console.bold + "\nRapp Manager Standalone Parameters:\n" + console.reset
+        for key in sorted(self.__dict__):
+            s += console.cyan + "    %s: " % key + console.yellow + "%s\n" % (self.__dict__[key] if self.__dict__[key] is not None else '-')
+        s += console.reset
+        return s
+
+
+class ConcertParameters:
+    """
+    The variables of this class are default constructed from parameters on the
+    ros parameter server. Each parameter is nested in the private namespace of
+    the node which instantiates this class.
+
+    :ivar concert_whitelist: used for `rocon_uri`_ rapp compatibility checks *['rapp_manager_script']*
+    :vartype robot_type: str
+    """
+    def __init__(self):
+        self.concert_whitelist = rospy.get_param('~concert_whitelist', [])
+        # not yet implemented
+        # self.local_concerts_only = rospy.get_param('~local_concerts_only', False)
+
+    def __str__(self):
+        s = console.bold + "\nRapp Manager Concert Parameters:\n" + console.reset
+        for key in sorted(self.__dict__):
+            s += console.cyan + "    %s: " % key + console.yellow + "%s\n" % (self.__dict__[key] if self.__dict__[key] is not None else '-')
+        s += console.reset
+        return s

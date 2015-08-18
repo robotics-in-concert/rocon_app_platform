@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # License: BSD
-#   https://raw.github.com/robotics-in-concert/rocon_app_platform/master/rocon_app_manager/LICENSE
+#   https://raw.github.com/robotics-in-py/rocon_app_platform/master/rocon_app_manager/LICENSE
 #
 ##############################################################################
 # Imports
@@ -38,3 +38,9 @@ class MissingCapabilitiesException(Exception):
     '''
     def __init__(self, missing_caps):
         self.missing_caps = missing_caps
+
+
+class GatewayNotFoundException(RappException):
+    '''
+      Raised if the gateway was not found.
+    '''

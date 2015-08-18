@@ -1,10 +1,70 @@
 <!--
-  Standard launch configuration for an app manager in standalone mode.
-  i.e. no android, no multimaster concert. You should be able to play
-  the basic apps (chirp and talker etc with this).
+  Standard launch configuration rocon app management on a single robot.
+
+  It also includes the rocon master info node, to assist in connecting to gui's
+  and optional configuration for launching capabilities and interactions in parallel.
  -->
 <launch>
+  <!-- ****************************** Robot Args ****************************** -->
+  <arg name="robot_name"        default="Cybernetic Pirate" doc="used for rocon_uri rapp compatibility checks"/>
+  <arg name="robot_type"        default="turtlebot" doc="used for rocon_uri rapp compatibility checks"/>
+  <arg name="robot_icon"        default="rocon_icons/cybernetic_pirate.png"   doc="easily identifiable icon for this robot"/>
+  <arg name="robot_description" default="To err is human, to 'arr is pirate." doc="informative doc string about this robot"/>
+
+  <!-- ****************************** Rapp Manager ****************************** -->
+  <arg name="auto_start_rapp" default="" doc="autostart a rapp, e.g. 'rocon_apps/chirp'"/>
+  <arg name="rapp_package_whitelist" default="[rocon_apps]" doc="comma separated list of package names to restrict rapp search"/>
+  <arg name="rapp_package_blacklist" default="[]" doc="comma separated list of package names to blacklist from the rapp search"/>/>
+  <arg name="rapp_preferred_configuration_file" default="$(find rocon_app_manager)/param/preferred_default.yaml" doc="pointer to a yaml file listing preferred rapps"/>
+  <arg name="screen" default="true" doc="verbose output from running apps"/>
+  <!-- See 'http://wiki.ros.org/rocon_app_manager/Tutorials/indigo/Automatic Rapp Installation'
+       on how to enable automatic rapp installation -->
+  <arg name="auto_rapp_installation" default="false" doc="hook into automatic rapp installations"/>
+  <arg name="simulation" default="false" doc="passed down to rapps to let them know if it is a simulation or otherwise"/>
+
+  <group ns="rocon">
+    <node pkg="rocon_app_manager" type="standalone.py" name="app_manager">
+      <rosparam command="load" file="$(arg rapp_preferred_configuration_file)" />
+      <rosparam param="rapp_package_whitelist" subst_value="True">$(arg rapp_package_whitelist)</rosparam>
+      <rosparam param="rapp_package_blacklist" subst_value="True">$(arg rapp_package_blacklist)</rosparam>
+      <param name="robot_name" value="$(arg robot_name)"/>
+      <param name="robot_type" value="$(arg robot_type)"/>
+      <param name="auto_start_rapp" value="$(arg auto_start_rapp)"/>
+      <param name="screen" value="$(arg screen)"/>
+      <param name="simulation" value="$(arg simulation)"/>
+      <param name="auto_rapp_installation" value="$(arg auto_rapp_installation)" />
+    </node>
+  </group>
+
+  <!-- ***************************** Rocon Master Info ************************** -->
+  <!--
+    Used as a convenience to advertise useful information about this platform to remote guis
+                                such as the rocon_qt_app_manager.
+  -->
+
+  <include file="$(find rocon_master_info)/launch/rocon_master_info.launch">
+    <arg name="name" value="$(arg robot_name)" />
+    <arg name="icon" value="$(arg robot_icon)" />
+    <arg name="description" value="$(arg robot_description)" />
+  </include>
+
+  <!-- ******************************** Zeroconf ******************************** -->
+  <!-- Used as a helper to discover information about this master from remote guis -->
+  
+  <arg name="zeroconf"      default="true"/>
+  <arg name="zeroconf_name" default="$(arg robot_name)"/>
+  <arg name="zeroconf_port" default="11311"/>
+
+  <group if="$(arg zeroconf)" ns="rocon">
+    <include file="$(find rocon_app_manager)/launch/includes/_zeroconf.xml">
+      <arg name="name" value="$(arg zeroconf_name)"/>
+      <arg name="port" value="$(arg zeroconf_port)"/>
+    </include>
+  </group>
+
   <!-- ****************************** Capabilities ****************************** -->
+  <!-- Optionally load up a capability server underneath the rapp manager (default: no) -->
+  
   <arg name="capabilities"                       default="false" doc="enable/disable a capability server" />
   <arg name="capabilities_parameters"            default="$(find rocon_app_manager)/param/capabilities.yaml" doc="detailed parameter configuration for the providers" />
   <arg name="capabilities_blacklist"             default="[]" doc="blacklist specific capabilities" />
@@ -22,43 +82,8 @@
     </include>
   </group>
 
-  <!-- ****************************** Rapp Manager ****************************** -->
-  <arg name="auto_rapp_installation" default="false" doc="http://wiki.ros.org/rocon_app_manager/Tutorials/indigo/Automatic Rapp Installation" />
-  <arg name="auto_start_rapp"        default="" doc="autostart a rapp, e.g. rocon_apps/talker" />
-  <arg name="rapp_package_whitelist" default="[rocon_apps]" doc="comma separated list of package names" />
-  <arg name="rapp_package_blacklist" default="[]"/>
-  <arg name="rapp_preferred_configuration_file" default="$(find rocon_app_manager)/param/preferred_default.yaml"/>
-  <arg name="robot_name"             default="Cybernetic Pirate"/>
-  <arg name="robot_type"             default="pc"/>
-  <arg name="robot_icon"             default="rocon_icons/cybernetic_pirate.png"/>
-  <arg name="screen"                 default="true" doc="verbose output from running apps" />
-  <arg name="simulation"             default="false" doc="passed down to rapps to let them know if it is a simulation or otherwise" />
-
-  <include file="$(find rocon_app_manager)/launch/includes/_app_manager.xml">
-    <arg name="robot_name" value="$(arg robot_name)" />
-    <arg name="robot_type" value="$(arg robot_type)" />
-    <arg name="robot_icon" value="$(arg robot_icon)" />
-    <arg name="use_gateway_uuids" value="false" />
-    <arg name="rapp_package_whitelist" value="$(arg rapp_package_whitelist)" />
-    <arg name="rapp_package_blacklist" value="$(arg rapp_package_blacklist)" />
-    <arg name="rapp_preferred_configuration_file" value="$(arg rapp_preferred_configuration_file)" />
-    <arg name="auto_start_rapp" value="$(arg auto_start_rapp)" />
-    <arg name="screen" value="$(arg screen)" />
-    <arg name="simulation" value="$(arg simulation)"/>
-    <arg name="auto_rapp_installation" value="$(arg auto_rapp_installation)" />
-    <arg name="capability_server_name" default="$(arg capabilities_server_name)"/>
-  </include>
-
-  <!-- ***************************** Rocon Master Info ************************** -->
-  <arg name="robot_description"      default="To err is human, to 'arr is pirate."/>
-
-  <include file="$(find rocon_app_manager)/launch/includes/_rocon_master_info.xml">
-    <arg name="name" value="$(arg robot_name)" />
-    <arg name="description" value="$(arg robot_description)" />
-    <arg name="icon" value="$(arg robot_icon)" />
-  </include>
-
   <!-- ***************************** Interactions ******************************* -->
+  <!-- Optionally load up interactions next to the rapp manager (default: no) -->
   <arg name="interactions"          default="false"/>
   <arg name="interactions_list"    default="[]"/>
   <arg name="rosbridge_address"    default="localhost"/>
@@ -74,15 +99,4 @@
     </include>
   </group>
 
-  <!-- ******************************** Zeroconf ******************************** -->
-  <arg name="disable_zeroconf" default="false"/>
-  <arg name="zeroconf_name"    default="$(arg robot_name)"/>
-  <arg name="zeroconf_port"    default="11311"/>
-
-  <group unless="$(arg disable_zeroconf)">
-    <include file="$(find rocon_app_manager)/launch/includes/_zeroconf.xml">
-      <arg name="name" value="$(arg zeroconf_name)"/>
-      <arg name="port" value="$(arg zeroconf_port)"/>
-    </include>
-  </group>
 </launch>

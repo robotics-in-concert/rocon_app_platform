@@ -1,6 +1,6 @@
 #
 # License: BSD
-#   https://raw.github.com/robotics-in-concert/rocon_app_platform/license/LICENSE
+#   https://raw.github.com/robotics-in-py/rocon_app_platform/license/LICENSE
 #
 ##############################################################################
 
@@ -26,28 +26,24 @@ plurality_converter["action_clients"] = rocon_python_comms.ACTION_CLIENT
 plurality_converter["action_servers"] = rocon_python_comms.ACTION_SERVER
 
 ##############################################################################
-# Utilities
+# Rapp Launcher Preparation
 ##############################################################################
 
 
-def dict_to_KeyValue(d):
-    '''
-      Converts a dictionary to key value ros msg type.
-
-      :param d: dictionary
-      :type d: dict
-
-      :returns: KeyValue ros message
-      :rtype: [rocon_std_msgs.KeyValue]
-    '''
-    l = []
-    for k, v in d.iteritems():
-        l.append(rocon_std_msgs.KeyValue(k, str(v)))
-    return l
+class LaunchArgMappings:
+    """
+    Launch arguments that are transferrable to rapps from the rapp manager via
+    the rapp manager manufactured relay launcher.
+    """
+    def __init__(self):
+        self.application_namespace = "/applications"
+        self.robot_name = "turtlebot"
+        self.rocon_uri = "rocon:/"
+        self.simulation = False
+        self.capability_server_nodelet_manager_name = None
 
 
-def _prepare_launch_text(launch_file, launch_args, public_parameters, application_namespace,
-                         gateway_name, rocon_uri_string, simulation, capability_server_nodelet_manager_name=None):
+def _prepare_launch_text(launch_file, rapp_launch_args, public_parameters, launch_arg_mappings):
     '''
       Prepare the launch file text. This essentially wraps the rapp launcher
       with the following roslaunch elements:
@@ -59,43 +55,24 @@ def _prepare_launch_text(launch_file, launch_args, public_parameters, applicatio
       automatically generated roslaunch args (e.g. namespace, name,
       rocon_uri properties) should get passed to the rapp. Note that we
       don't pass the whole set, because roslaunch args will throw an error
-      if the rapp itself isn't expecting them. The logoc for determing this is
+      if the rapp itself isn't expecting them. The logic for determining this is
       in get_standard_args.
 
-      :param launch_file: fully resolved launch file path
-      :type launch_file: str
-      :param launch_args: strings identifying the keys of the standard roslaunch args
-             to send (not the args themselves)
-      :type launch_args: [str]
-      :param application_namespace: unique name granted indirectly via the
-             gateways, we namespace everything under this
-      :type application_namespace: str
-      :param gateway_name: unique name granted to the gateway
-      :type gateway_name: str
-      :param rocon_uri_string: used to pass down information about the platform that is running this app to the app itself.
-      :type rocon_uri_string: str - a rocon uri string
-      :param simulation: true if rapp manager is for simulated robot
-      :type simulation: boolen
+      :param str launch_file: fully resolved launch file path
+      :param str rapp_launch_args: strings identifying the keys of the standard roslaunch args
+             present in the underlying rapp (not the args themselves)
+      :param LaunchArgsTable launch_args_table: all launch args and their values that can be passed into the rapp from the rapp manager
 
       The rocon_uri_string variable is a fixed identifier for this app manager's platform - i.e. no special
       characters or wildcards should be contained therein.
     '''
-    # Prepare argument mapping
-    launch_arg_mapping = {}
-    launch_arg_mapping['application_namespace'] = application_namespace
-    if gateway_name is not None:
-        launch_arg_mapping['gateway_name'] = gateway_name.lower().replace(' ', '_')
-    launch_arg_mapping['rocon_uri'] = rocon_uri_string
-    launch_arg_mapping['capability_server_nodelet_manager_name'] = capability_server_nodelet_manager_name
-    launch_arg_mapping['simulation'] = simulation
-
     # we used to push the include here into its own namespace (i.e. <include ns="%s" file="%s">) but it's better to let the rapp
     # designer choose via the 'application_namespace' lauch_arg_mapping provided
     launch_text = '<launch>\n  <include file="%s">' % (launch_file)
 
-    for arg in launch_args:
+    for arg in rapp_launch_args:
         try:
-            launch_text += '\n    <arg name="%s" value="%s"/>' % (arg, launch_arg_mapping[arg])
+            launch_text += '\n    <arg name="%s" value="%s"/>' % (arg, launch_arg_mappings.__dict__[arg])
         except KeyError, e:
             rospy.logwarn("Expected argument {arg} not found in launcher arg_mapping list. using empty string instead.".format(arg=arg))
             launch_text += '\n    <arg name="%s" value="%s"/>' % (arg, "")
@@ -123,7 +100,7 @@ def resolve_chain_remappings(nodes):
                 rospy.logwarn("Rapp Manager : Remapping rule for %s already exists. Ignoring remapping rule from %s to %s", str(fr), str(fr), str(to))
             else:
                 if fr == to:
-                    rospy.logwarn("Rapp Manager : ignoring uncessary remapping rule (%s, %s)"%(str(fr),str(to)))
+                    rospy.logwarn("Rapp Manager : ignoring uncessary remapping rule (%s, %s)" % (str(fr), str(to)))
                 else:
                     # if there is a value which matches with remap_from, the value should be replaced with the new remap_to
                     keys = [k for k, v in new_remap_args_dict.items() if v == str(fr)]
@@ -133,7 +110,7 @@ def resolve_chain_remappings(nodes):
         n.remap_args = new_remap_args_dict.items()
 
 
-def prepare_launcher(data, public_parameters, application_namespace, gateway_name, rocon_uri_string, capability_nodelet_manager_name, force_screen, simulation, temp):
+def prepare_launcher(data, public_parameters, force_screen, launch_arg_mappings, temp):
     '''
       prepare roslaunch to start rapp.
     '''
@@ -142,11 +119,7 @@ def prepare_launcher(data, public_parameters, application_namespace, gateway_nam
     launch_text = _prepare_launch_text(data['launch'],
                                        data['launch_args'],
                                        public_parameters,
-                                       application_namespace,
-                                       gateway_name,
-                                       rocon_uri_string,
-                                       simulation,
-                                       capability_nodelet_manager_name
+                                       launch_arg_mappings
                                        )
     temp.write(launch_text)
     temp.close()  # unlink it later
@@ -250,7 +223,7 @@ def apply_remapping_rules_from_start_app_request(launch_spec, data, remappings, 
             else:
                 # don't pass these in as remapping rules - they should map fine for the node as is
                 # just by getting pushed down the namespace.
-                #     https://github.com/robotics-in-concert/rocon_app_platform/issues/61
+                #     https://github.com/robotics-in-py/rocon_app_platform/issues/61
                 # we still need to pass them back to register for flipping though.
                 if roslib.names.is_global(interface_name):
                     flipped_name = interface_name
@@ -289,3 +262,21 @@ def apply_requested_public_parameters(default_parameters, requested_parameters):
         public_parameters[key] = val
 
     return public_parameters
+
+##############################################################################
+# Other
+##############################################################################
+
+
+def dict_to_key_value_msg(d):
+    '''
+      Converts a dictionary to key value ros msg type.
+      :param d: dictionary
+      :type d: dict
+      :returns: KeyValue ros message
+      :rtype: [rocon_std_msgs.KeyValue]
+    '''
+    l = []
+    for k, v in d.iteritems():
+        l.append(rocon_std_msgs.KeyValue(k, str(v)))
+    return l

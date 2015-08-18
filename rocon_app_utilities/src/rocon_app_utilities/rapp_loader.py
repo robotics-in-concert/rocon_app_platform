@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # License: BSD
-#   https://raw.github.com/robotics-in-concert/rocon_app_platform/license/LICENSE
+#   https://raw.github.com/robotics-in-py/rocon_app_platform/license/LICENSE
 #
 #################################################################################
 from .exceptions import InvalidRappException, RappResourceNotExistException, RappMalformedException, XmlParseException
@@ -183,7 +183,7 @@ def _load_public_parameters(base_path, public_parameters_resource):
     with open(public_parameters_file_path, 'r') as f:
         y = yaml.load(f.read())
         y = y or {}
-        
+
     return public_parameters_file_path, y
 
 
@@ -201,7 +201,7 @@ def _get_standard_args(roslaunch_file):
 
       :raises RappMalformedException: if launch file format is invalid
     '''
-    standard_args = ['gateway_name', 'application_namespace', 'rocon_uri', 'capability_server_nodelet_manager_name', 'simulation']
+    standard_args = ['application_namespace', 'rocon_uri', 'capability_server_nodelet_manager_name', 'simulation']
 
     try:
         available_args = _get_available_args(roslaunch_file)

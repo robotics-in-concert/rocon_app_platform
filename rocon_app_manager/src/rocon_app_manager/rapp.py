@@ -1,6 +1,6 @@
 #
 # License: BSD
-#   https://raw.github.com/robotics-in-concert/rocon_app_platform/license/LICENSE
+#   https://raw.github.com/robotics-in-py/rocon_app_platform/license/LICENSE
 #
 ##############################################################################
 # Imports
@@ -33,12 +33,6 @@ class Rapp(object):
     # will fill these args in when starting the rapp
 
     def __init__(self, rapp_specification):
-        '''
-           :param package: this rapp is nested in
-           :type package: :py:class:`catkin_pkg.package.Package`
-           :param package_relative_rapp_filename: string specified by the package export
-           :type package_relative_rapp_filename: os.path
-        '''
         self._connections = _create_empty_connection_type_dictionary()
         self._raw_data = rapp_specification
         self.data = rapp_specification.data
@@ -118,46 +112,36 @@ class Rapp(object):
         '''
         Convert the published parameters as a rocon_std_msgs.KeyValue list.
         '''
-        return utils.dict_to_KeyValue(self.data['published_parameters'])
+        return utils.dict_to_key_value_msg(self.data['published_parameters'])
 
-    def start(self, application_namespace, gateway_name, rocon_uri_string, remappings=[], parameters=[], force_screen=False, simulation=False,
-              caps_list=None):
+    def start(self, launch_arg_mappings, remappings=[], parameters=[], force_screen=False, caps_list=None):
         '''
           Some important jobs here.
 
           1) run the rapp launcher under the unique robot name namespace
 
           This guarantees that flipped entities generate unique node id's that won't collide when communicating
-          with each other (refer to https://github.com/robotics-in-concert/rocon_multimaster/issues/136).
+          with each other (refer to https://github.com/robotics-in-py/rocon_multimaster/issues/136).
 
           2) Apply remapping rules while ignoring the namespace underneath.
 
-          :param application_namespace: unique name granted indirectly via the gateways, we namespace everything under this
-          :type application_namespace: str
-          :param gateway_name: unique name granted to the gateway
-          :type gateway_name: str
-          :param rocon_uri_string: uri of the app manager's platform (used as a check for compatibility)
-          :type rocon_uri_string: str - a rocon uri string
+          :param utils.LaunchArgMappings launch_arg_mappings : args to be passed down from the rapp manager to rapp
           :param remapping: rules for the app flips.
           :type remapping: list of rocon_std_msgs.msg.Remapping values.
           :param parameters: requested public_parameters
           :type parameters: list of rocon_std_msgs.msg.KeyValue
-          :param force_screen: whether to roslaunch the app with --screen or not
-          :type force_screen: boolean
-          :param simulation: whether the rapp manager is for simulated robot or not
-          :type simulation: boolean
+          :param bool force_screen: whether to roslaunch the app with --screen or not
           :param caps_list: this holds the list of available capabilities, if app needs capabilities
           :type caps_list: CapsList
         '''
         data = self.data
+        application_namespace = launch_arg_mappings.application_namespace
 
         try:
-            capability_nodelet_manager_name = caps_list.nodelet_manager_name if caps_list else None
-
             published_parameters = utils.apply_requested_public_parameters(data['public_parameters'], parameters)
 
             temp = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
-            self._launch = utils.prepare_launcher(data, published_parameters, application_namespace, gateway_name, rocon_uri_string, capability_nodelet_manager_name, force_screen, simulation, temp)
+            self._launch = utils.prepare_launcher(data, published_parameters, force_screen, launch_arg_mappings, temp)
 
             # Better logic for the future, 1) get remap rules from capabilities. 2) get remap rules from requets. 3) apply them all. It would be clearer to understand the logic and easily upgradable
             if 'required_capabilities' in data:  # apply capability-specific remappings needed
@@ -174,7 +158,7 @@ class Rapp(object):
 
             connections = copy.deepcopy(self._connections)
             return True, "Success", connections
-            #return True, "Success", self._connections['subscribers'], self._connections['publishers'], \
+            # return True, "Success", self._connections['subscribers'], self._connections['publishers'], \
             #    self._connections['services'], self._connections['action_clients'], self._connections['action_servers']
 
         except rospy.ServiceException as e:
@@ -223,7 +207,7 @@ class Rapp(object):
          to make any decision making about that (for now), so just return
          running or not.
 
-         Used by the rapp_manager.
+         Used by the rapp_manager_script.
 
          :returns: True if the rapp is executing or False otherwise.
          :rtype: Bool
@@ -235,10 +219,11 @@ class Rapp(object):
             return False
         return True
 
-
 ##############################################################################
 # Utilities
 ##############################################################################
+
+
 def convert_rapps_from_rapp_specs(rapp_specs):
     '''
       Converts rocon_app_utilities.Rapp into rocon_app_manager.Rapp
@@ -257,6 +242,7 @@ def convert_rapps_from_rapp_specs(rapp_specs):
         runnable_rapps[name] = r
 
     return runnable_rapps
+
 
 def _create_empty_connection_type_dictionary():
     '''

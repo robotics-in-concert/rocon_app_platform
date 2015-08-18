@@ -1,6 +1,6 @@
 #
 # License: BSD
-#   https://raw.github.com/robotics-in-concert/rocon_app_platform/license/LICENSE
+#   https://raw.github.com/robotics-in-py/rocon_app_platform/license/LICENSE
 #
 #################################################################################
 
