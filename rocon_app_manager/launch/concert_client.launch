@@ -65,12 +65,11 @@
   <!-- Used as a helper to discover both the concert and for remote guis to find this master -->
 
   <arg name="zeroconf"       default="true"/>
-  <arg name="zeroconf_name"  default="$(arg robot_name)"/>
   <arg name="zeroconf_port"  default="11311"/>
 
   <group if="$(arg zeroconf)" ns="rocon">
     <include file="$(find rocon_app_manager)/launch/includes/_zeroconf.xml">
-      <arg name="name" value="$(arg zeroconf_name)"/>
+      <arg name="name" value="$(arg robot_name)"/>
       <arg name="port" value="$(arg zeroconf_port)"/>
     </include>
   </group>
@@ -122,8 +121,8 @@
 
   <!-- ***************************** Interactions ******************************* -->
   <!-- Optionally load up interactions next to the rapp manager (default: no) -->
-  <arg name="interactions"          default="false"/>
-  <arg name="interactions_list"    default="[]"/>
+  <arg name="interactions"         default="false" doc="enable/disable interactions"/>
+  <arg name="interactions_list"    default="[]"    doc="comma separated list of package resource names pointing to yaml interaction configurations (doesn't need the .interactions extension), e.g. [rocon_interactions/pairing]"/>
   <arg name="rosbridge_address"    default="localhost"/>
   <arg name="rosbridge_port"       default="9090"/>
   <arg name="webserver_address"    default="webapp.robotconcert.org"/>
