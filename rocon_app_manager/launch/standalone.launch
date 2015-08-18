@@ -41,13 +41,14 @@
     Used as a convenience to advertise useful information about this platform to remote guis
                                 such as the rocon_qt_app_manager.
   -->
-   <!-- ******************************** Master ******************************* -->
-  <include file="$(find rocon_master_info)/launch/rocon_master_info.launch">
-    <arg name="name" value="$(arg robot_name)" />
-    <arg name="type" value="$(arg robot_type)" />
-    <arg name="icon" value="$(arg robot_icon)" />
-    <arg name="description" value="$(arg robot_description)" />
-  </include>
+  <group ns="rocon">
+    <include file="$(find rocon_master_info)/launch/rocon_master_info.launch">
+      <arg name="name" value="$(arg robot_name)" />
+      <arg name="type" value="$(arg robot_type)" />
+      <arg name="icon" value="$(arg robot_icon)" />
+      <arg name="description" value="$(arg robot_description)" />
+    </include>
+  </group>
 
   <!-- ******************************** Zeroconf ******************************** -->
   <!-- Used as a helper to discover information about this master from remote guis -->
