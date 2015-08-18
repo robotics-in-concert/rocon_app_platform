@@ -20,7 +20,8 @@ catkin_python_setup()
 
 install(
     PROGRAMS 
-        scripts/rapp_manager.py
+        scripts/concert_client.py
+        scripts/standalone.py
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
     )
 
