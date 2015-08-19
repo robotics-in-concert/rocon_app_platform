@@ -1,8 +1,9 @@
 <!--
-  Standard launch configuration rocon app management on a single robot.
+  Standard launch configuration for rocon app management on a single robot.
 
-  It also includes the rocon master info node, to assist in connecting to gui's
-  and optional configuration for launching capabilities and interactions in parallel.
+  This combines several launchers into a usable blackbox that is a common pattern
+  for most rapp enabled robots. It isn't designed to be *the* pattern, so feel free
+  to pull the relevant parts to make your own launchers.
  -->
 <launch>
   <!-- ****************************** Robot Args ****************************** -->
@@ -91,7 +92,7 @@
   <arg name="rosbridge_port"       default="9090"/>
   <arg name="webserver_address"    default="webapp.robotconcert.org"/>
 
-  <group if="$(arg interactions)">
+  <group if="$(arg interactions)" ns="rocon">
     <include file="$(find rocon_app_manager)/launch/includes/_interactions.xml">
       <arg name="interactions_list" value="$(arg interactions_list)"/>
       <arg name="rosbridge_address" value="$(arg rosbridge_address)"/>

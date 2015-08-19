@@ -146,7 +146,13 @@ class Standalone(object):
         self._publish_status()
         self._publish_rapp_list()
         self.publishers.incompatible_rapp_list.publish([], [], self.platform_filtered_apps, self.capabilities_filtered_apps)
+
         # TODO: Currently blacklisted apps and non-whitelisted apps are not provided yet
+
+        if self.parameters.auto_start_rapp:  # None and '' are both false here
+            request = rapp_manager_srvs.StartRappRequest()
+            request.name = self.parameters.auto_start_rapp
+            unused_response = self._process_start_rapp(request)
 
     def _init_capabilities(self):
         try:
@@ -456,11 +462,11 @@ class Standalone(object):
         except AttributeError:
             resp.stopped = False
             resp.error_code = rapp_manager_msgs.ErrorCodes.RAPP_IS_NOT_RUNNING
-            resp.message = "Tried to stop a rapp, but no rapp found running."
+            resp.message = "tried to stop a rapp, but no rapp found running."
             rospy.logwarn("Rapp Manager : %s" % resp.message)
             return resp
 
-        rospy.loginfo("Rapp Manager : Stopping rapp '" + rapp_name + "'.")
+        rospy.loginfo("Rapp Manager : stopping rapp '" + rapp_name + "'.")
 
         success, reason, rapp = self._check_runnable(rapp_name)
         if not success:
@@ -474,7 +480,7 @@ class Standalone(object):
 
         if resp.stopped:
             if 'required_capabilities' in rapp.data:
-                rospy.loginfo("Rapp Manager : Stopping required capabilities.")
+                rospy.loginfo("Rapp Manager : stopping required capabilities.")
                 result, message = stop_capabilities_from_caps_list(rapp.data['required_capabilities'], self.caps_list)
                 if not result:  # if not none, it failed to stop capabilities
                     resp.stopped = False
