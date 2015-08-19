@@ -10,10 +10,13 @@
   
   <node pkg="rocon_interactions" type="interactions_manager.py" name="interactions">
     <rosparam param="interactions" subst_value="true">$(arg interactions_list)</rosparam>
-
-    <param name="pairing"             value="true"/>
-    <param name="rosbridge_address"   value="$(arg rosbridge_address)"/>
-    <param name="rosbridge_port"      value="$(arg rosbridge_port)"/>
-    <param name="webserver_address"   value="$(arg webserver_address)"/>
+    <param name="pairing"                 value="true"/>
+    <param name="rosbridge_address"       value="$(arg rosbridge_address)"/>
+    <param name="rosbridge_port"          value="$(arg rosbridge_port)"/>
+    <param name="webserver_address"       value="$(arg webserver_address)"/>
+    <remap from="interactions/rapp_list"  to="app_manager/rapp_list"/>
+    <remap from="interactions/status"     to="app_manager/status"/>
+    <remap from="interactions/start_rapp" to="app_manager/start_rapp"/>
+    <remap from="interactions/stop_rapp"  to="app_manager/stop_rapp"/>
   </node>
 </launch>

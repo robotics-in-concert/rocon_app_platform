@@ -1,8 +1,9 @@
 <!--
-  Standard launch configuration rocon app management on a single robot.
+  Standard launch configuration for rocon app management on a single robot.
 
-  It also includes the rocon master info node, to assist in connecting to gui's
-  and optional configuration for launching capabilities and interactions in parallel.
+  This combines several launchers into a usable blackbox that is a common pattern
+  for most rapp enabled robots. It isn't designed to be *the* pattern, so feel free
+  to pull the relevant parts to make your own launchers.
  -->
 <launch>
   <!-- ****************************** Robot Args ****************************** -->
@@ -41,23 +42,24 @@
     Used as a convenience to advertise useful information about this platform to remote guis
                                 such as the rocon_qt_app_manager.
   -->
-
-  <include file="$(find rocon_master_info)/launch/rocon_master_info.launch">
-    <arg name="name" value="$(arg robot_name)" />
-    <arg name="icon" value="$(arg robot_icon)" />
-    <arg name="description" value="$(arg robot_description)" />
-  </include>
+  <group ns="rocon">
+    <include file="$(find rocon_master_info)/launch/rocon_master_info.launch">
+      <arg name="name" value="$(arg robot_name)" />
+      <arg name="type" value="$(arg robot_type)" />
+      <arg name="icon" value="$(arg robot_icon)" />
+      <arg name="description" value="$(arg robot_description)" />
+    </include>
+  </group>
 
   <!-- ******************************** Zeroconf ******************************** -->
   <!-- Used as a helper to discover information about this master from remote guis -->
   
   <arg name="zeroconf"      default="true"/>
-  <arg name="zeroconf_name" default="$(arg robot_name)"/>
   <arg name="zeroconf_port" default="11311"/>
 
   <group if="$(arg zeroconf)" ns="rocon">
     <include file="$(find rocon_app_manager)/launch/includes/_zeroconf.xml">
-      <arg name="name" value="$(arg zeroconf_name)"/>
+      <arg name="name" value="$(arg robot_name)"/>
       <arg name="port" value="$(arg zeroconf_port)"/>
     </include>
   </group>
@@ -84,13 +86,13 @@
 
   <!-- ***************************** Interactions ******************************* -->
   <!-- Optionally load up interactions next to the rapp manager (default: no) -->
-  <arg name="interactions"          default="false"/>
-  <arg name="interactions_list"    default="[]"/>
+  <arg name="interactions"         default="false" doc="enable/disable interactions"/>
+  <arg name="interactions_list"    default="[]"    doc="comma separated list of package resource names pointing to yaml interaction configurations (doesn't need the .interactions extension), e.g. [rocon_interactions/pairing]"/>
   <arg name="rosbridge_address"    default="localhost"/>
   <arg name="rosbridge_port"       default="9090"/>
   <arg name="webserver_address"    default="webapp.robotconcert.org"/>
 
-  <group if="$(arg interactions)">
+  <group if="$(arg interactions)" ns="rocon">
     <include file="$(find rocon_app_manager)/launch/includes/_interactions.xml">
       <arg name="interactions_list" value="$(arg interactions_list)"/>
       <arg name="rosbridge_address" value="$(arg rosbridge_address)"/>

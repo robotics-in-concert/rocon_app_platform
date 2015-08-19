@@ -1,0 +1,12 @@
+<!--
+  A pairing demo.
+ -->
+<launch>
+  <include file="$(find rocon_app_manager)/launch/standalone.launch">
+    <arg name="robot_description" value="Demonstrate paired interactions with the rapp manager"/>
+    <arg name="screen"            value="true"/>
+    <arg name="zeroconf"          value="true"/>
+    <arg name="interactions"      value="true"/>
+    <arg name="interactions_list" value="[rocon_interactions/pairing]"/>
+  </include>
+</launch>
