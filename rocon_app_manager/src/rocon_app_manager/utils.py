@@ -67,8 +67,8 @@ def _prepare_launch_text(launch_file, rapp_launch_args, public_parameters, launc
       characters or wildcards should be contained therein.
     '''
     # we used to push the include here into its own namespace (i.e. <include ns="%s" file="%s">) but it's better to let the rapp
-    # designer choose via the 'application_namespace' lauch_arg_mapping provided
-    launch_text = '<launch>\n  <include file="%s">' % (launch_file)
+    # designer choose via the 'application_namespace' lauch_arg_mapping provided, so we push it to / as an arbitrary starting point.
+    launch_text = '<launch>\n  <include file="%s" ns="/">' % (launch_file)
 
     for arg in rapp_launch_args:
         try:
