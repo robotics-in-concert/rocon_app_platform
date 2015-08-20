@@ -26,7 +26,7 @@ class StandaloneParameters:
     :ivar robot_name: also used for `rocon_uri`_ rapp compatibility checks *['robot']*
     :vartype robot_name: str
     :ivar auto_start_rapp: indicates via a `resource name`_ (e.g. gopher_rapps/delivery) a rapp to launch on startup *[None]*
-    :vartype robot_type: str
+    :vartype auto_start_rapp: str
     :ivar rapp_package_whitelist: restrict rapp search (default is the whole workspace) to these packages *[[]]*
     :vartype rapp_package_whitelist: [ str ]
     :ivar rapp_package_blacklist: if no whitelist, blacklist these packages from the search *[[]]*
