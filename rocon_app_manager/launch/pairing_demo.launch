@@ -7,6 +7,6 @@
     <arg name="screen"            value="true"/>
     <arg name="zeroconf"          value="true"/>
     <arg name="interactions"      value="true"/>
-    <arg name="interactions_list" value="[rocon_interactions/pairing]"/>
+    <arg name="interactions_list" value="[rocon_interactions/pairing, rocon_interactions/web, rocon_interactions/pc]"/>
   </include>
 </launch>
