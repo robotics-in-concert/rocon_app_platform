@@ -2,11 +2,14 @@
   A pairing demo.
  -->
 <launch>
+  <arg name="auto_start_pairing"   default="" doc="auto start a pre-configured rapp for interactions, e.g. 'Talker'"/>
+
   <include file="$(find rocon_app_manager)/launch/standalone.launch">
-    <arg name="robot_description" value="Demonstrate paired interactions with the rapp manager"/>
-    <arg name="screen"            value="true"/>
-    <arg name="zeroconf"          value="true"/>
-    <arg name="interactions"      value="true"/>
-    <arg name="interactions_list" value="[rocon_interactions/pairing, rocon_interactions/web, rocon_interactions/pc]"/>
+    <arg name="robot_description"  value="Demonstrate paired interactions with the rapp manager"/>
+    <arg name="screen"             value="true"/>
+    <arg name="zeroconf"           value="true"/>
+    <arg name="interactions"       value="true"/>
+    <arg name="interactions_list"  value="[rocon_interactions/pairing, rocon_interactions/web, rocon_interactions/pc]"/>
+    <arg name="auto_start_pairing" value="$(arg auto_start_pairing)"/>
   </include>
 </launch>

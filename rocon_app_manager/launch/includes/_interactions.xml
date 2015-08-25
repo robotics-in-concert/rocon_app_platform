@@ -3,14 +3,16 @@
   especially useful if you want to enable pairing of interactions with rapps. 
  -->
 <launch>
-  <arg name="interactions_list" default="[]"/>  <!-- list of resource names pointing to yaml interaction configurations, e.g. [rocon_app_manager_tutorials/pairing] -->
-  <arg name="rosbridge_address" default="localhost"/>
-  <arg name="rosbridge_port"    default="9090"/>
-  <arg name="webserver_address" default="localhost"/>
+  <arg name="interactions_list"  default="[]"/>  <!-- list of resource names pointing to yaml interaction configurations, e.g. [rocon_app_manager_tutorials/pairing] -->
+  <arg name="auto_start_pairing" default="" doc="auto start a pre-configured rapp for interactions, e.g. 'Talker'"/>
+  <arg name="rosbridge_address"  default="localhost"/>
+  <arg name="rosbridge_port"     default="9090"/>
+  <arg name="webserver_address"  default="localhost"/>
   
   <node pkg="rocon_interactions" type="interactions_manager.py" name="interactions">
     <rosparam param="interactions" subst_value="true">$(arg interactions_list)</rosparam>
     <param name="pairing"                 value="true"/>
+    <param name="auto_start_pairing"      value="$(arg auto_start_pairing)"/>
     <param name="rosbridge_address"       value="$(arg rosbridge_address)"/>
     <param name="rosbridge_port"          value="$(arg rosbridge_port)"/>
     <param name="webserver_address"       value="$(arg webserver_address)"/>
