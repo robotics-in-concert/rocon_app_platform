@@ -100,7 +100,6 @@
       <arg name="rosbridge_port"     value="$(arg rosbridge_port)"/>
       <arg name="webserver_address"  value="$(arg webserver_address)"/>
       <arg name="auto_start_pairing" value="$(arg auto_start_pairing)"/>
-      
     </include>
   </group>
 

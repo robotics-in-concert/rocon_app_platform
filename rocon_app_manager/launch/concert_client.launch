@@ -126,13 +126,15 @@
   <arg name="rosbridge_address"    default="localhost"/>
   <arg name="rosbridge_port"       default="9090"/>
   <arg name="webserver_address"    default="webapp.robotconcert.org"/>
+  <arg name="auto_start_pairing"   default="" doc="auto start a pre-configured rapp for interactions, e.g. 'Talker'"/>
 
   <group if="$(arg interactions)" ns="rocon">
     <include file="$(find rocon_app_manager)/launch/includes/_interactions.xml">
-      <arg name="interactions_list" value="$(arg interactions_list)"/>
-      <arg name="rosbridge_address" value="$(arg rosbridge_address)"/>
-      <arg name="rosbridge_port"    value="$(arg rosbridge_port)"/>
-      <arg name="webserver_address" value="$(arg webserver_address)"/>
+      <arg name="interactions_list"  value="$(arg interactions_list)"/>
+      <arg name="auto_start_pairing" value="$(arg auto_start_pairing)"/>
+      <arg name="rosbridge_address"  value="$(arg rosbridge_address)"/>
+      <arg name="rosbridge_port"     value="$(arg rosbridge_port)"/>
+      <arg name="webserver_address"  value="$(arg webserver_address)"/>
     </include>
   </group>
 </launch>
