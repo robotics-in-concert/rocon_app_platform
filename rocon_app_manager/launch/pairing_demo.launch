@@ -12,4 +12,7 @@
     <arg name="interactions_list"  value="[rocon_interactions/pairing, rocon_interactions/web, rocon_interactions/pc]"/>
     <arg name="auto_start_pairing" value="$(arg auto_start_pairing)"/>
   </include>
+
+  <!-- publish some markers for viewing in an rviz interaction -->
+  <node pkg="rocon_interactions" type="tutorial_markers.py" name="tutorial_markers"/>
 </launch>
