@@ -79,7 +79,7 @@ class ConcertClient(Standalone):
         queue_size_five = 5
         self.concert_publishers = rocon_python_comms.utils.Publishers(
             [
-                ('~concert_parameters', std_msgs.String, latched, queue_size_five),
+                ('~introspection/concert_parameters', std_msgs.String, latched, queue_size_five),
                 ('/concert/clients/' + self.parameters.robot_name + '/platform_info', rocon_std_msgs.MasterInfo, latched, queue_size_five),
             ]
         )

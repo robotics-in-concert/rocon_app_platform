@@ -134,10 +134,10 @@ class Standalone(object):
         queue_size_five = 5
         self.publishers = rocon_python_comms.utils.Publishers(
             [
-                ('~parameters', std_msgs.String, latched, queue_size_five),
+                ('~introspection/parameters', std_msgs.String, latched, queue_size_five),
                 ('~status', rapp_manager_msgs.Status, latched, queue_size_five),
                 ('~rapp_list', rapp_manager_msgs.RappList, latched, queue_size_five),
-                ('~incompatible_rapp_list', rapp_manager_msgs.IncompatibleRappList, latched, queue_size_five)
+                ('~introspection/incompatible_rapp_list', rapp_manager_msgs.IncompatibleRappList, latched, queue_size_five)
             ]
         )
         # small pause (convenience only) to let connections to come up
