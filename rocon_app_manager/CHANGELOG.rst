@@ -1,5 +1,14 @@
+=========
 Changelog
 =========
+
+0.8.0 (2015-10-10)
+------------------
+* provide args to the user so they can prepare for unique namespacing if necessary
+* move rapp launching into the root namespace and let the user decide where handles should go
+* advertise the rapp manager handles on the gateway by default for concert clients
+* simplified launchers into standalone and concert client
+* split standalone and concert classes rather than trying to mash them as one
 
 0.7.13 (2015-07-09)
 -------------------
