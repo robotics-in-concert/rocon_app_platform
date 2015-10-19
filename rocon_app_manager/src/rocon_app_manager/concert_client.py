@@ -25,6 +25,7 @@ rocon indigo.
 
 import gateway_msgs.msg as gateway_msgs
 import gateway_msgs.srv as gateway_srvs
+import rocon_gateway
 import rocon_gateway_utils
 import rocon_python_comms
 import rocon_std_msgs.msg as rocon_std_msgs
@@ -125,14 +126,16 @@ class ConcertClient(Standalone):
         req.cancel = cancel_flag
         flip_request_service = rospy.ServiceProxy('~flip', gateway_srvs.Remote)
 
-        concert_namespace_rule = rocon_gateway_utils.create_gateway_rule(name="/concert/.*", connection_type=gateway_msgs.ConnectionType.PUBLISHER)
-        applications_namespace_rule = rocon_gateway_utils.create_gateway_rule(name=self.parameters.application_namespace + "/.*", connection_type=gateway_msgs.ConnectionType.PUBLISHER)
-        for concert_remote_gateway in self.concert_parameters.concert_whitelist:
-            req.remotes.append(rocon_gateway_utils.create_gateway_remote_rule(concert_remote_gateway, concert_namespace_rule))
-            req.remotes.append(rocon_gateway_utils.create_gateway_remote_rule(concert_remote_gateway, applications_namespace_rule))
-        if not self.concert_parameters.concert_whitelist:
-            req.remotes.append(rocon_gateway_utils.create_gateway_remote_rule(".*", concert_namespace_rule))
-            req.remotes.append(rocon_gateway_utils.create_gateway_remote_rule(".*", applications_namespace_rule))
+        for connection_type in rocon_gateway.connection_types:
+            concert_namespace_rule = rocon_gateway_utils.create_gateway_rule(name="/concert/.*", connection_type=connection_type)
+            # self.parameters.application namespace always finishes with a trailing slash because of 'rosgraph.names.make_global_ns()' called on it.
+            applications_namespace_rule = rocon_gateway_utils.create_gateway_rule(name=self.parameters.application_namespace + ".*", connection_type=connection_type)
+            for concert_remote_gateway in self.concert_parameters.concert_whitelist:
+                req.remotes.append(rocon_gateway_utils.create_gateway_remote_rule(concert_remote_gateway, concert_namespace_rule))
+                req.remotes.append(rocon_gateway_utils.create_gateway_remote_rule(concert_remote_gateway, applications_namespace_rule))
+            if not self.concert_parameters.concert_whitelist:
+                req.remotes.append(rocon_gateway_utils.create_gateway_remote_rule(".*", concert_namespace_rule))
+                req.remotes.append(rocon_gateway_utils.create_gateway_remote_rule(".*", applications_namespace_rule))
 
         warning_throttle_counter = 0
         rate = rospy.Rate(10)  # 10hz
