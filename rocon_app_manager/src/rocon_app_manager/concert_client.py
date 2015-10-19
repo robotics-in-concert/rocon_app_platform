@@ -48,7 +48,8 @@ class ConcertClient(Standalone):
 
     **Features**
 
-    * **application namespace** - communicates with a gateway to set a unique landing space for topics in /concert/clients/_name_
+    * **concert namespace** - shares all connections landing in /concert/* (rapp launchers can get a unique ns for remaps via /concert/clients/$(arg robot_name)).
+    * **application namespace** - shares all connections landing in this namespace (rapp launchers can do remaps via application_namespace arg).
 
     **Publishers**
 
@@ -56,6 +57,7 @@ class ConcertClient(Standalone):
     * **/concert/clients/_name_/platform_info** (*rocon_std_msgs.MasterInfo*) - a master info relay to the concert
 
     .. todo:: if we want low latency flipping, call the gateway watcher set period service with low period after starting a rapp
+    .. todo:: flip rules for rapp public interfaces, though these may not be necessary anymore
     '''
 
     ##########################################################################
