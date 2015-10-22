@@ -10,6 +10,9 @@ project(rocon_app_manager)
 ##############################################################################
 
 find_package(catkin REQUIRED COMPONENTS roslint)
+if (CATKIN_ENABLE_TESTING)
+  find_package(catkin REQUIRED COMPONENTS rostest)
+endif()
 catkin_package()
 
 catkin_python_setup()
