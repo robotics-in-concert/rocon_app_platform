@@ -1,0 +1,13 @@
+<launch>
+  <!-- args passed down from the rapp manager -->
+  <arg name="application_namespace" default="applications"/>
+  <!-- rapp parameters -->
+  <arg name="message" default="hello world"/>
+  <arg name="frequency" default="10"/>
+  <!-- <group ns="$(arg application_namespace)"> -->
+    <node name="talker" pkg="rocon_apps" type="talker" required="true">
+      <param name="message" value="$(arg message)"/>
+      <param name="frequency" value="$(arg frequency)"/>
+    </node>
+  <!-- </group> -->
+</launch>

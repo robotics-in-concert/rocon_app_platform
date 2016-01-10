@@ -1,3 +1,3 @@
 compatibility: rocon:/*
-launch: rocon_apps/talker.launch
+launch: invalid_child.launch
 parent_name: invalid/invalid_child
