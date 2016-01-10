@@ -47,7 +47,7 @@ class TestRemappings(unittest.TestCase):
         force_screen = True
         simulation = False
 
-        self_launch = rocon_app_manager.utils.prepare_launcher(data, {}, application_namespace, rocon_uri , None, force_screen, simulation, temp)
+        self_launch = rocon_app_manager.utils.prepare_launcher(data, {}, force_screen, rocon_app_manager.utils.LaunchArgMappings(), temp)
 
         pubif_data = {'public_interface': {
             'services': [],

@@ -61,7 +61,8 @@ def _prepare_launch_text(launch_file, rapp_launch_args, public_parameters, launc
       :param str launch_file: fully resolved launch file path
       :param str rapp_launch_args: strings identifying the keys of the standard roslaunch args
              present in the underlying rapp (not the args themselves)
-      :param LaunchArgsTable launch_args_table: all launch args and their values that can be passed into the rapp from the rapp manager
+      :param ??? public_parameters: user provided args via the launcher
+      :param LaunchArgMappings launch_arg_mappings : args to be passed down from the rapp manager to rapp
 
       The rocon_uri_string variable is a fixed identifier for this app manager's platform - i.e. no special
       characters or wildcards should be contained therein.
