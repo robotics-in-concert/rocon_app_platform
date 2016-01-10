@@ -39,7 +39,7 @@ def test_prepare_launch_text_launchfile():
     print launchtext
     assert launchtext.strip() == """
 <launch>
-  <include file="path_to_launcher">
+  <include file="path_to_launcher" ns="/">
   </include>
 </launch>
 """.strip()
@@ -54,7 +54,7 @@ def test_prepare_launch_text_launchfile_appnamespace():
     print "'" + launchtext + "'"
     assert launchtext.strip() == """
 <launch>
-  <include file="path_to_launcher">
+  <include file="path_to_launcher" ns="/">
     <arg name="application_namespace" value="/applications"/>
   </include>
 </launch>
@@ -70,7 +70,7 @@ def test_prepare_launch_text_launchfile_public_parameters():
     print "'" + launchtext + "'"
     assert launchtext.strip() == """
 <launch>
-  <include file="path_to_launcher">
+  <include file="path_to_launcher" ns="/">
     <arg name="public_param" value="pubparam_value"/>
   </include>
 </launch>
@@ -86,7 +86,7 @@ def test_prepare_launch_text_launchfile_rocon_uri():
     print "'" + launchtext + "'"
     assert launchtext.strip() == """
 <launch>
-  <include file="path_to_launcher">
+  <include file="path_to_launcher" ns="/">
     <arg name="rocon_uri" value="rocon:/"/>
   </include>
 </launch>
@@ -102,7 +102,7 @@ def test_prepare_launch_text_launchfile_simulation():
     print "'" + launchtext + "'"
     assert launchtext.strip() == """
 <launch>
-  <include file="path_to_launcher">
+  <include file="path_to_launcher" ns="/">
     <arg name="simulation" value="False"/>
   </include>
 </launch>
