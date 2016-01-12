@@ -77,11 +77,17 @@
   <!-- ******************************** Gateway ******************************** -->
   <arg name="gateway_uuids"             default="false" doc="all gateways represent their robots with unique uuid's postfixed to the name" />
   <arg name="gateway_watch_loop_period" default="10"    doc="the polling period for multimaster advertising/flipping" />
-  <arg name="hub_whitelist"             default="[]"    doc="list of hub names/regex patterns to use if zeroconf is enabled" />
+  <arg name="hub_whitelist"             default="[]"    doc="list of hub names/regex patterns to use if zeroconf is enabled"/>
   <arg name="hub_uri"                   default=""      doc="where the gateway can find a hub if zeroconf is disabled"/>
   <arg name="gateway_custom_rules_file" default="" doc="name of a user custom parameterisation (yaml)."/>
+  <arg name="launch_cache"              default="true"  doc="whether to launch connection_cache node with gateway."/>
 
   <group ns="rocon">
+    <group if="$(arg launch_cache)">
+      <!-- ROS improvements -->
+      <include file="$(find rocon_python_comms)/launch/connection_cache.launch"/>
+    </group>
+
     <node pkg="rocon_gateway" type="gateway.py" name="gateway">
       <rosparam command="load" file="$(find rocon_gateway)/param/default.yaml" />
       <rosparam command="load" file="$(find rocon_gateway)/param/default_blacklist.yaml" />
@@ -96,6 +102,9 @@
       <param name="disable_zeroconf" value="false" if="$(arg zeroconf)"/>
       <param name="disable_zeroconf" value="true" unless="$(arg zeroconf)"/>
       <param name="custom_rules_file" value="$(arg gateway_custom_rules_file)"/>
+      <!-- remapping subscriber to plug into connection cache -->
+      <remap from="~connections_list" to="connection_cache/list"/>
+      <remap from="~connections_diff" to="connection_cache/diff"/>
     </node>
   </group>
 
