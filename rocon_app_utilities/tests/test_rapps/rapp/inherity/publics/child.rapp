@@ -1,5 +1,5 @@
 display: Child Talker in publics
 description: public public child  
 compatibility: rocon:/*
-launch: rocon_apps/talker.launch
+launch: child.launch
 parent_name: publics/parent.rapp

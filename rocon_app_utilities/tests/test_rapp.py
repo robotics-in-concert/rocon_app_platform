@@ -81,26 +81,26 @@ def test_rapp_inheritance():
 
     # full inheritance
     path = '/test_rapps/rapp/inherity/full'
+    icon_path = os.path.join(os.getcwd(), "test_rapps", "rapp", "inherity", "foo.png") 
     console.pretty_println(' - %s'%path) 
     child = inherit_pair(path)
 
     d = [('display',           'Talker'),
          ('description',       'Default ros style talker tutorial'),
-         ('public_interface',  'rocon_apps/talker.interface'),
-         ('public_parameters', 'rocon_apps/talker.parameters'),
-         ('icon',              'rocon_apps/talker.png')]
+         ('public_interface',  {'services': [], 'publishers': [{'type': 'std_msgs/String', 'name': 'chatter'}], 'action_clients': [], 'subscribers': [], 'action_servers': []}),
+         ('public_parameters', {'message': 'hello world', 'frequency': 10}),
+         ('icon',              icon_path)]
     assert_true(validate(child.raw_data, d))
     
-
     # icon and publics
     path = '/test_rapps/rapp/inherity/icon_and_publics'
-    console.pretty_println(' - %s'%path) 
+    console.pretty_println(' - %s' % path) 
     child = inherit_pair(path)
     d = [('display',           'Child Talker in icon and publics'),
          ('description',       'Hola Child...........'),
-         ('public_interface',  'rocon_apps/talker.interface'),
-         ('public_parameters', 'rocon_apps/talker.parameters'),
-         ('icon',              'rocon_apps/talker.png')]
+         ('public_interface',  {'services': [], 'publishers': [{'type': 'std_msgs/String', 'name': 'chatter'}], 'action_clients': [], 'subscribers': [], 'action_servers': []}),
+         ('public_parameters', {'message': 'hello world', 'frequency': 10}),
+         ('icon',              icon_path)]
     assert_true(validate(child.raw_data, d))
 
     # publics
@@ -109,21 +109,21 @@ def test_rapp_inheritance():
     child = inherit_pair(path)
     d = [('display',           'Child Talker in publics'),
          ('description',       'public public child'),
-         ('public_interface',  'rocon_apps/talker.interface'),
-         ('public_parameters', 'rocon_apps/talker.parameters')]
+         ('public_interface',  {'services': [], 'publishers': [{'type': 'std_msgs/String', 'name': 'chatter'}], 'action_clients': [], 'subscribers': [], 'action_servers': []}),
+         ('public_parameters', {'message': 'hello world', 'frequency': 10})]
     assert_true(validate(child.raw_data, d))
 
     # from meta
     path ='/test_rapps/rapp/inherity/from_meta'
     console.pretty_println(' - %s'%path) 
     child = inherit_pair(path)
+    print("Child: %s" % child.raw_data)
     d = [('display',           'Talker in from meta'),
          ('description',       'from meta meta meta metaaaaaaaaa'),
-         ('public_interface',  'rocon_apps/talker.interface'),
-         ('public_parameters', 'rocon_apps/talker.parameters'),
-         ('icon',              'rocon_apps/talker.png')]
+         ('public_interface',  {'services': [], 'publishers': [{'type': 'std_msgs/String', 'name': 'chatter'}], 'action_clients': [], 'subscribers': [], 'action_servers': []}),
+         ('public_parameters', {'message': 'hello world', 'frequency': 10}),
+         ('icon',              icon_path)]
     assert_true(validate(child.raw_data, d))
-
 
     # from another child
     path = '/test_rapps/rapp/inherity/from_child'
@@ -131,7 +131,7 @@ def test_rapp_inheritance():
     child = inherit_pair(path)
     d = [('display',           'Talker'),
          ('description',       'Default ros style talker tutorial'),
-         ('icon',              'rocon_apps/talker.png')]
+         ('icon',              icon_path)]
     assert_true(validate(child.raw_data, d))
 
 def print_title(title):
@@ -141,6 +141,6 @@ def print_title(title):
 
 def verify_one(Except, func, filename):
     f = pwd + filename
-    data = load_rapp_yaml_from_file(f)
+    (yaml_data, app_data) = load_rapp_yaml_from_file(f)
     console.pretty_println(' - %s'%f)
-    assert_raises(Except, func, data)
+    assert_raises(Except, func, app_data)

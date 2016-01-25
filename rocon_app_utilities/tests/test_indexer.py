@@ -85,21 +85,21 @@ class TestRappIndexer():
         rapp = self.indexer.get_raw_rapp('basic/child')
         print(str(rapp))
         assert_true(rapp.raw_data['compatibility'] == 'rocon:/*')
-        assert_true(rapp.raw_data['launch'] == 'rocon_apps/talker.launch')
+        assert_true(rapp.raw_data['launch'] == os.path.join(os.getcwd(), "test_rapps", "indexer", "basic", 'child.launch'))
         assert_true(rapp.raw_data['parent_name'] == 'basic/parent')
 
 
     def test_get_rapp(self):
         def compare(a,b,field):
             return a.raw_data[field] == b.raw_data[field]
-
+ 
         print_title('Test Get Rapp')
         console.pretty_println('TODO')
-        
+
         # Basic
         """
         These are not testable at the moment since test case only includes file pointers which does not exist...
-
+ 
         console.pretty_println('Basic', console.bold)
         inherited_rapp = self.indexer.get_rapp('basic/child')
         parent_rapp = self.indexer.get_raw_rapp('basic/parent')
@@ -110,7 +110,7 @@ class TestRappIndexer():
         assert_true(compare(inherited_rapp, parent_rapp, 'public_parameters'))
         assert_true(compare(inherited_rapp, parent_rapp, 'public_interface'))
         assert_true(compare(inherited_rapp, child_rapp,  'launch'))
-
+ 
         # Chained Child -> Parent -> Ancestor
         console.pretty_println('Chained', console.bold)
         inherited_rapp = self.indexer.get_rapp('chained/child')
@@ -123,7 +123,7 @@ class TestRappIndexer():
         assert_true(compare(inherited_rapp, parent_rapp, 'display'))
         assert_true(compare(inherited_rapp, ancestor_rapp, 'public_interface'))
         assert_true(compare(inherited_rapp, ancestor_rapp, 'public_parameters'))
-
+ 
         # Multiple Child
         console.pretty_println('Multiple Child', console.bold)
         inherited_rapp = self.indexer.get_rapp('multi_children/child1')
@@ -135,7 +135,7 @@ class TestRappIndexer():
         assert_true(compare(inherited_rapp, parent_rapp, 'public_interface'))
         assert_true(compare(inherited_rapp, child_rapp, 'display'))
         assert_true(compare(inherited_rapp, child_rapp,  'launch'))
-
+ 
         inherited_rapp = self.indexer.get_rapp('multi_children/child2')
         child_rapp = self.indexer.get_raw_rapp('multi_children/child2')
         assert_true(inherited_rapp.type == 'Implementation Ancestor')
@@ -144,15 +144,15 @@ class TestRappIndexer():
         assert_true(compare(inherited_rapp, parent_rapp, 'public_interface'))
         assert_true(compare(inherited_rapp, child_rapp, 'display'))
         assert_true(compare(inherited_rapp, child_rapp,  'launch'))
-
+ 
         # Cyclic
         console.pretty_println('Cyclic', console.bold)
         assert_raises(RappCyclicChainException, self.indexer.get_rapp, 'cyclic/child')
         """
-
+ 
     def test_get_compatible_rapps(self):
         print_title('Test Get Compatible Rapps')
-
+ 
         self.setup(compat_data)
         # string rocon uri test
         console.pretty_println('String Rocon URI Given')
@@ -161,28 +161,27 @@ class TestRappIndexer():
         print(str(compatible_rapps))
         print(str(incompatible_rapps))
         print(str(invalid_rapps))
-
+ 
         for r in compatible_rapps:
             print(r)
-
+ 
         for r in incompatible_rapps:
             print(r)
-
+ 
         for r in invalid_rapps:
             print(r + " : " + invalid_rapps[r])
         assert_true(len(compatible_rapps.keys()) == 1 and len(incompatible_rapps.keys()) == 1)
-
+ 
         incompat = [r for r in compatible_rapps.values() if not r.is_compatible(compat)]
         compat = [r for r in incompatible_rapps.values() if r.is_compatible(compat)]
         assert_true(len(incompat) == 0)
         assert_true(len(compat) == 0)
-        
+         
     def test_to_dot(self):
         print_title('Test To Dot')
-        
+         
         console.pretty_println('Not Implemented')
-        assert_raises(NotImplementedError,self.indexer.to_dot) 
-
+        assert_raises(NotImplementedError,self.indexer.to_dot)
 
 
 def print_title(title):
@@ -203,5 +202,4 @@ def load_data(data, verbose=False):
     if verbose:
         for n in loaded:
             console.pretty_println(' - %s'% n)
-
     return loaded 

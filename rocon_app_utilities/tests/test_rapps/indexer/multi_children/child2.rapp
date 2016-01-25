@@ -1,4 +1,4 @@
 display: Child2
 compatibility: rocon:/*
-launch: rocon_apps/talker.launch
+launch: child2.launch
 parent_name: multi_children/parent

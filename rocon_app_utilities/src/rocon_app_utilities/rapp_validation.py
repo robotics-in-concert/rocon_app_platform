@@ -7,6 +7,7 @@
 
 from .exceptions import *
 
+
 def classify_rapp_type(data):
     '''
       Classify the current rapp among VirtualAncestor, ImplementationAnacestor, ImplementationChild
