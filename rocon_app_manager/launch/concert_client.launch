@@ -105,9 +105,6 @@
       <param name="disable_zeroconf" value="false" if="$(arg zeroconf)"/>
       <param name="disable_zeroconf" value="true" unless="$(arg zeroconf)"/>
       <param name="custom_rules_file" value="$(arg gateway_custom_rules_file)"/>
-      <!-- remapping subscriber to plug into connection cache -->
-      <remap from="~connections_list" to="connection_cache/list"/>
-      <remap from="~connections_diff" to="connection_cache/diff"/>
     </node>
   </group>
 
