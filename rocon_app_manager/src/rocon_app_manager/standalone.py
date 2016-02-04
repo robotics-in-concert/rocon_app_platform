@@ -105,6 +105,11 @@ class Standalone(object):
         self.parameters = StandaloneParameters()
         self.rocon_uri = rocon_uri.generate_platform_rocon_uri(self.parameters.robot_type, self.parameters.robot_name)
         rospy.loginfo("Rapp Manager : rocon_uri: %s" % self.rocon_uri)
+        # attempt to parse it, try and make it official
+        try:
+            rocon_uri.RoconURI(self.rocon_uri)
+        except rocon_uri.exceptions.RoconURIValueError as e:
+            rospy.logerr("Rapp Manager : rocon_uri is not official, rapp compatibility will probably fail [%s]" % str(e))
         self.caps_list = {}
 
         rospy.loginfo("Rapp Manager : indexing rapps...")
