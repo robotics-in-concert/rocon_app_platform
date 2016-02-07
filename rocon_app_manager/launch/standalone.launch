@@ -21,7 +21,6 @@
   <!-- See 'http://wiki.ros.org/rocon_app_manager/Tutorials/indigo/Automatic Rapp Installation'
        on how to enable automatic rapp installation -->
   <arg name="auto_rapp_installation" default="false" doc="hook into automatic rapp installations"/>
-  <arg name="simulation" default="false" doc="passed down to rapps to let them know if it is a simulation or otherwise"/>
 
   <group ns="rocon">
     <node pkg="rocon_app_manager" type="standalone.py" name="app_manager">
@@ -32,7 +31,6 @@
       <param name="robot_type" value="$(arg robot_type)"/>
       <param name="auto_start_rapp" value="$(arg auto_start_rapp)"/>
       <param name="screen" value="$(arg screen)"/>
-      <param name="simulation" value="$(arg simulation)"/>
       <param name="auto_rapp_installation" value="$(arg auto_rapp_installation)" />
     </node>
   </group>
@@ -53,7 +51,7 @@
 
   <!-- ******************************** Zeroconf ******************************** -->
   <!-- Used as a helper to discover information about this master from remote guis -->
-  
+
   <arg name="zeroconf"      default="true"/>
   <arg name="zeroconf_port" default="11311"/>
 
@@ -66,7 +64,7 @@
 
   <!-- ****************************** Capabilities ****************************** -->
   <!-- Optionally load up a capability server underneath the rapp manager (default: no) -->
-  
+
   <arg name="capabilities"                       default="false" doc="enable/disable a capability server" />
   <arg name="capabilities_parameters"            default="$(find rocon_app_manager)/param/capabilities.yaml" doc="detailed parameter configuration for the providers" />
   <arg name="capabilities_blacklist"             default="[]" doc="blacklist specific capabilities" />

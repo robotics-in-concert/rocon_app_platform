@@ -436,7 +436,6 @@ class Standalone(object):
         launch_arg_mappings.application_namespace = self.parameters.application_namespace
         launch_arg_mappings.robot_name = self.parameters.robot_name
         launch_arg_mappings.rocon_uri = self.rocon_uri
-        launch_arg_mappings.simulation = self.parameters.simulation
         launch_arg_mappings.capability_nodelet_manager_name = caps_list.nodelet_manager_name if self.caps_list else None
 
         resp.started, resp.message, unused_connections = rapp.start(launch_arg_mappings,

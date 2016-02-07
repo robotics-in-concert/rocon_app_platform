@@ -39,7 +39,6 @@ class LaunchArgMappings:
         self.application_namespace = "/applications"
         self.robot_name = "turtlebot"
         self.rocon_uri = "rocon:/"
-        self.simulation = False
         self.capability_server_nodelet_manager_name = None
 
 

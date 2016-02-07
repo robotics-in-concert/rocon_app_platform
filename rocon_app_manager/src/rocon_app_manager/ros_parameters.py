@@ -39,8 +39,6 @@ class StandaloneParameters:
     :vartype preferred: {str}
     :ivar public_namespace: a hint for where rapps should lay down public connections *['/applications']*
     :vartype public_namespace: str
-    :ivar simulation: pass in as a flag when running gazebo, this will provide an arg to the rapp to change its behaviour *[False]*
-    :vartype simulation: bool
 
     Each element in the dict of preferred rapps should identify the preferred child rapp
     for each parent rapp specification. e.g. if the parent rapp is *rocon_apps/chirp* and there are
@@ -68,7 +66,6 @@ class StandaloneParameters:
         self.auto_rapp_installation = rospy.get_param('~auto_rapp_installation', False)
         preferred = rospy.get_param('~preferred', [])
         self.application_namespace = rospy.get_param('~application_namespace', "/applications")
-        self.simulation = rospy.get_param('~simulation', False)
         # processing
         self.auto_start_rapp = self.auto_start_rapp if self.auto_start_rapp else None  # empty string -> None
         self.application_namespace = rosgraph.names.make_global_ns(self.application_namespace)

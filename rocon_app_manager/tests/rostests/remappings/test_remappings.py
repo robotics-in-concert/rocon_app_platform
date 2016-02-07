@@ -32,20 +32,18 @@ class TestRemappings(unittest.TestCase):
 <launch>
   <arg name="application_namespace" default="applications"/>
   <arg name="rocon_uri" default="rocon:/"/>
-  <arg name="simulation" default="false"/>
 </launch>
 """.strip()
         launcher_to_include.write(launcher_text)
         launcher_to_include.close()
 
         data['launch'] = launcher_to_include.name
-        data['launch_args'] = ['rocon_uri', 'application_namespace', 'simulation']
+        data['launch_args'] = ['rocon_uri', 'application_namespace']
 
         temp = tempfile.NamedTemporaryFile(mode='w+t', delete=False)
         application_namespace = "applications"
         rocon_uri = "rocon:/"
         force_screen = True
-        simulation = False
 
         self_launch = rocon_app_manager.utils.prepare_launcher(data, {}, force_screen, rocon_app_manager.utils.LaunchArgMappings(), temp)
 
@@ -62,9 +60,9 @@ class TestRemappings(unittest.TestCase):
                 {'type': 'gopher_std_msgs/DeliveryTask', 'name': 'delivery'}
             ]}
         }
-    
+
         remappings=[]
-      
+
         connections, published_interfaces = rocon_app_manager.utils.apply_remapping_rules_from_start_app_request(self_launch, pubif_data, remappings, application_namespace)
 
         print("Connections:")
