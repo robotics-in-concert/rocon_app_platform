@@ -114,7 +114,7 @@ class ConcertClient(Standalone):
                 rate.sleep()
                 warning_throttle_counter += 1
                 if warning_throttle_counter % 10 == 0:
-                    rospy.logerr("Rapp Manager : unable to find the local gateway.")
+                    rospy.logwarn("Rapp Manager : unable to find the local gateway, will keep trying")
             except rospy.exceptions.ROSInterruptException:
                 rospy.loginfo("Rapp Manager : breaking out of gateway search loop [most likely just ros shutting down]")
                 raise GatewayNotFoundException()
