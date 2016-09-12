@@ -54,7 +54,6 @@ class ConcertClient(Standalone):
     **Publishers**
 
     * **~concert_parameters** (*std_msgs.String*) - displays the parameters used for this instantiation [latched]
-    * **/concert/clients/_name_/platform_info** (*rocon_std_msgs.MasterInfo*) - a master info relay to the concert
 
     .. todo:: if we want low latency flipping, call the gateway watcher set period service with low period after starting a rapp
     .. todo:: flip rules for rapp public interfaces, though these may not be necessary anymore
@@ -83,21 +82,12 @@ class ConcertClient(Standalone):
         self.concert_publishers = rocon_python_comms.utils.Publishers(
             [
                 ('~introspection/concert_parameters', std_msgs.String, latched, queue_size_five),
-                ('/concert/clients/' + self.parameters.robot_name + '/platform_info', rocon_std_msgs.MasterInfo, latched, queue_size_five),
-            ]
-        )
-        self.concert_subscribers = rocon_python_comms.utils.Subscribers(
-            [
-                ('~master_info', rocon_std_msgs.MasterInfo, self._relay_master_info)
             ]
         )
 
         # let the publishers come up
         rospy.rostime.wallsleep(0.5)
         self.concert_publishers.concert_parameters.publish(std_msgs.String("%s" % self.concert_parameters))
-
-    def _relay_master_info(self, msg):
-        self.concert_publishers.platform_info.publish(msg)
 
     def _match_robot_name_to_gateway_name(self):
         gateway_info_service = rocon_python_comms.SubscriberProxy('~gateway_info', gateway_msgs.GatewayInfo)
