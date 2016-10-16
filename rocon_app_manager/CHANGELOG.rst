@@ -2,6 +2,10 @@
 Changelog
 =========
 
+0.9.1 (2016-10-16)
+------------------
+* drop the master relay
+
 0.8.0 (2015-10-10)
 ------------------
 * provide args to the user so they can prepare for unique namespacing if necessary
