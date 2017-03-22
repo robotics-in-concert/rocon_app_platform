@@ -38,6 +38,7 @@
   <run_depend>rosmaster</run_depend>
   <run_depend>rospy</run_depend>
   <run_depend>std_msgs</run_depend>
+  <run_depend>zeroconf_avahi</run_depend>
   <export>
     <rosdoc config="rosdoc.yaml"/>
   </export>
